@@ -1,5 +1,5 @@
 ---
-title: "PvSeroTaT Serological Assay Quality Control Report"
+title: "PvSeroApp Serological Assay Quality Control Report"
 date: "`r Sys.Date()`"
 output: 
   html_document: 
@@ -13,7 +13,6 @@ params:
   date: NA
   stdcurve_plot: NA
   plateqc_plot: NA
-  check_repeats_table: NA
   blanks_plot: NA
   model_plot: NA
 ---
@@ -52,7 +51,6 @@ Any wells with < 15 beads/well are indicated in red, and should be double-checke
 
 ```{r bead counts plot}
 params$plateqc_plot
-#params$check_repeats_table
 ```
 
 #### Plot of Blank Samples
