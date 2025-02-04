@@ -1,0 +1,98 @@
+/* Light Mode */
+.light-mode {
+  --fluent-primary-text-color: black; !important;
+  --fluent-background-color: white; !important;
+}
+
+/* Dark Mode */
+.dark-mode {
+  --fluent-primary-text-color: #f3f2f1; !important;
+  --fluent-background-color: #252423; !important;
+}
+
+/* Apply styles to Fluent UI components */
+.ms-Fabric {
+  background-color: var(--fluent-background-color) !important;
+  color: var(--fluent-primary-text-color) !important;
+}
+
+.ms-Text {
+  color: var(--fluent-primary-text-color) !important;
+}
+
+/* CSS Styles for PvSeroTaT App */
+
+/* LIGHT MODE STYLES */
+body.light-mode {
+  background-color: white !important;
+  color: black !important; /* Default text color for light mode */
+}
+
+.light-mode .header, 
+.light-mode .footer {
+  background-color: #f3f2f1 !important;
+  color: var(--fluent-primary-text-color) !important;
+}
+
+.light-mode a {
+  color: #1a73e8 !important;  /* Blue links in light mode */
+  text-decoration: none !important; /* Ensure no underline */
+}
+
+/* Apply Theme to React Chart */
+.light-mode .fluent-chart {
+  --chart-bg: white;
+  --chart-text: black;
+}
+.dark-mode .header, 
+.dark-mode .footer {
+  background-color: #333 !important;
+  color: var(--fluent-primary-text-color) !important;
+}
+
+/*.dark-mode .ms-Button { FIGURE OUT WAY TO USE CONDITIONALLY !
+/*  background-color: #1e1e1e !important;  /* Dark mode button color */
+/*}
+
+/* Dark Mode Links */
+.dark-mode a {
+  color: #9aafff !important;  /* Light blue links in dark mode */
+  text-decoration: none !important; /* Ensure no underline */
+}
+
+.light-mode a:hover, 
+.dark-mode a:hover {
+  color: inherit !important; /* Keep original text color */
+  text-decoration: underline !important;
+}
+
+/* Smooth Transition */
+body, .ms-Fabric, .header, .footer, .main-content, .nav-panel {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* CSS for left and right buttons for multiple images/plots */
+.btn-primary {
+  font-size: 24px; !important;
+  padding: 10px 20px; !important;
+  }
+  
+.btn-primary-plate {
+  font-size: 24px; !important;
+  padding: 5px 5px; !important;
+  }
+          
+.plot-container {
+  display: flex; !important;
+  justify-content: space-between; !important;
+  align-items: center; !important;
+  }
+  
+.plate-window {
+  text-align: center; !important;
+  }
+  
+.plot-window {
+  flex-grow: 1; !important;
+  text-align: center; !important;
+  }
