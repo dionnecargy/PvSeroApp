@@ -134,6 +134,7 @@ shinyUI(
         div(
           style = "display: flex; align-items: center;",
           img(src = "logo.png", style = "height: 35px"),
+          Separator(vertical = TRUE),
           Text(variant = "xLarge", "PvSeroApp: Sero-surveillance Tool", style = list(root = list(color = "var(--fluent-primary-text-color)"),
                                                                                       marginLeft = "15px"))
         ),

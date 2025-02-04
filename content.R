@@ -1159,7 +1159,7 @@ check_page <- function() {
          a 5-parameter logistic function to the standard curve on a per-antigen level. 
          <br><br>Use the different tabs to visualise the quality control of your run!")),
     p(),
-    MessageBar("Click the buttons below to download the data and quality control report."),
+    MessageBar("Click the buttons below to download the data and quality control report. Please note that the quality control report is currently not available."), ########## 
     p(),
     div(
       style = "display: flex; gap: 10px;",
@@ -1175,12 +1175,12 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
-      PrimaryButton.shinyInput(
-        "downloadButtonReport",
-        text = "Quality Control Report (.HTML)", ##### MAKE INTO PDF !!! 
-        iconProps = list(iconName = "Download")
-      ),
-      div(style = "visibility: hidden;", downloadButton("report", "")),
+      # PrimaryButton.shinyInput(
+      #   "downloadButtonReport",
+      #   text = "Quality Control Report (.HTML)", ##### MAKE INTO PDF !!! 
+      #   iconProps = list(iconName = "Download")
+      # ),
+      # div(style = "visibility: hidden;", downloadButton("report", "")),
       PrimaryButton.shinyInput(
         "downloadButtonZip",
         text = "All Files (.ZIP)",
@@ -1350,7 +1350,7 @@ datavis_page <- function() {
   fluentPage(
     Text(variant = "xxLarge", "Data Visualisation"),
     Separator(),
-    MessageBar("Data Visualisation features can be made available upon request."),
+    MessageBar("Data Visualisation features can be made available upon request. Please note that the figure may take some time to load."),
     Stack(
       tokens = list(childrenGap = 20),
       children = list(

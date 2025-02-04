@@ -30,6 +30,14 @@ antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap <- read.csv(here::here("data/platemap.csv"))
 
+render_report <- function(input, output, params) {
+  rmarkdown::render(input,
+                    output_file = output,
+                    params = params,
+                    envir = new.env(parent = globalenv())
+  )
+}
+
 ###############################################################################
 ###### Server
 ###############################################################################
@@ -825,9 +833,7 @@ shinyServer(function(input, output, session){
   output$report <- downloadHandler( ##### this code is not working 
     filename = paste0(experiment_name(), "_", date(), "_QCreport.html"),
     content = function(file) {
-      # Copy the report file to a temporary directory before processing it, in
-      # case we don't have write permissions to the current working dir (which
-      # can happen when deployed).
+      
       tempReport <- file.path(tempdir(), "template.Rmd")
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
       
@@ -844,17 +850,14 @@ shinyServer(function(input, output, session){
         check_repeats_table = check_repeats_table(),
         model_results = model_results()
       )
-      
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
+          
+      callr::r(
+        render_report, 
+        list(input = tempReport, output = file, params = params)
       )
+      
     }
   )
-    
   
   # 4. Download zip file
   output$download_zip <- downloadHandler(
@@ -868,38 +871,37 @@ shinyServer(function(input, output, session){
       # Define file paths inside temp_dir
       data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_MFI_RAU.csv"))
       stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_stdcurve.csv"))
-      report_file <- file.path(temp_dir, paste0(experiment_name(), "_QCreport.html"))
+      # report_file <- file.path(temp_dir, paste0(experiment_name(), "_QCreport.html"))
       
       # Generate files
       write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
       write.csv(antigens_output()$stds, stds_file, row.names = FALSE)
       
-      # Render the report ##### this code is not working 
-      tempReport <- file.path(tempdir(), "template.Rmd")
-      file.copy("template.Rmd", tempReport, overwrite = TRUE)
-      
-      # Set up parameters to pass to Rmd document
-      params <- list(
-        raw_data_filename = raw_data_filename_reactive(),
-        experiment_name = experiment_name(),
-        date = date(),
-        experiment_notes = experiment_notes(),
-        platform = platform_reactive(),
-        stdcurve_plot = stdcurve_plot(),
-        plateqc_plot = plateqc_plot(),
-        blanks_plot = blanks_plot(),
-        check_repeats_table = check_repeats_table(),
-        model_results = model_results()
-      )
-      
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
-      rmarkdown::render(tempReport, output_file = report_file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
-      
+      # # Render the report ##### this code is not working 
+      # report_path <- file.path(tempdir(), "template.Rmd")
+      # file.copy("template.Rmd", report_path, overwrite = TRUE)
+      # if (!file.exists(report_path)) {
+      #   stop("Report file not found: ", report_path)
+      # }
+      # 
+      # # Set up parameters to pass to Rmd document
+      # params <- list(
+      #   raw_data_filename = raw_data_filename_reactive(),
+      #   experiment_name = experiment_name(),
+      #   date = date(),
+      #   experiment_notes = experiment_notes(),
+      #   platform = platform_reactive(),
+      #   stdcurve_plot = stdcurve_plot(),
+      #   plateqc_plot = plateqc_plot(),
+      #   blanks_plot = blanks_plot(),
+      #   model_results = model_results()
+      # )
+      # 
+      # callr::r(
+      #   render_report,
+      #   list(input = report_path, output = report_file, params = params)
+      # )
+      # 
       # Create ZIP with a clean structure
       old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
       zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
@@ -1020,32 +1022,47 @@ shinyServer(function(input, output, session){
       pivot_wider(names_from = pred_class_max, values_from = n) %>% 
       dplyr::select(`Sensitivity/Specificity` = Sens_Spec, 
                     Seropositive = seropositive, 
-                    Seronegative = seronegative) %>% 
-      mutate(Sens_Spec = factor(Sens_Spec, 
-                                levels = c("maximised",
-                                           "85% specificity", "90% specificity", "95% specificity",
-                                           "85% sensitivity", "90% sensitivity", "95% sensitivity"), 
-                                labels = c("Maximised: 81% Sensitivity / 81% Specificity",
-                                           "85% Sensitivity / 75% Specificity",
-                                           "90% Sensitivity / 61.6% Specificity",
-                                           "95% Sensitivity / 43.4% Specificity",
-                                           "75% Sensitivity / 85% Specificity", 
-                                           "67.5% Sensitivity / 90% Specificity", 
-                                           "52.4% Sensitivity / 95% Specificity")))
+                    Seronegative = seronegative)
     
   })
   
   # Render the table in the UI
   output$allclassifytable <- renderDataTable({
-    allclassify_df()  
-    }, selection = "single", 
-    options = list(
-      pageLength = 7,               # Number of rows per page
-      dom = 't',                    # 't' means only the table (no pagination, search, etc.)
-      searching = FALSE,            # Disable search box
-      lengthChange = FALSE          # Disable number of entries dropdown
-      ), 
-    rownames = FALSE)                            # Remove row numbers
+    df <- allclassify_df() %>% 
+      mutate(`Sensitivity/Specificity` = factor(`Sensitivity/Specificity`, 
+                                                levels = c("maximised",
+                                                           "85% specificity", "90% specificity", "95% specificity",
+                                                           "85% sensitivity", "90% sensitivity", "95% sensitivity"), 
+                                                labels = c("Maximised: 81% Sensitivity / 81% Specificity",
+                                                           "85% Sensitivity / 75% Specificity",
+                                                           "90% Sensitivity / 61.6% Specificity",
+                                                           "95% Sensitivity / 43.4% Specificity",
+                                                           "75% Sensitivity / 85% Specificity", 
+                                                           "67.5% Sensitivity / 90% Specificity", 
+                                                           "52.4% Sensitivity / 95% Specificity"))) %>% 
+      arrange(`Sensitivity/Specificity`)
+    
+    df$Order <- as.numeric(factor(df$`Sensitivity/Specificity`, 
+                                  levels = c("Maximised: 81% Sensitivity / 81% Specificity",
+                                             "85% Sensitivity / 75% Specificity",
+                                             "90% Sensitivity / 61.6% Specificity",
+                                             "95% Sensitivity / 43.4% Specificity",
+                                             "75% Sensitivity / 85% Specificity",
+                                             "67.5% Sensitivity / 90% Specificity",
+                                             "52.4% Sensitivity / 95% Specificity")))
+    
+    df <- df[order(df$Order), ]  # <-- Enforce order
+    
+    datatable(df %>% dplyr::select(-Order), selection = "single",
+              options = list(
+                pageLength = 7, 
+                dom = 't',
+                searching = FALSE,
+                lengthChange = FALSE
+              ), 
+              rownames = FALSE
+    )
+  })
   
   observeEvent(input$allclassifytable_rows_selected, {
     print(input$allclassifytable_rows_selected)

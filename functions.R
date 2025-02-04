@@ -876,7 +876,7 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
   
   all_classifications %>% 
       filter(Sens_Spec == selected_threshold) %>% 
-      pivot_longer(-c(pred_class_max, Sens_Spec, SampleID, Plate), names_to = "protein", values_to = "RAU") %>%
+      pivot_longer(-c(SampleID, plate, pred_class_max, Sens_Spec), names_to = "protein", values_to = "RAU") %>%
       mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
       ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
       geom_boxplot() +
