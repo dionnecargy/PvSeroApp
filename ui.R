@@ -127,6 +127,7 @@ shinyUI(
     "))
     ),
     tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css")),
+    tags$head(tags$link(rel = "shortcut icon", href = "PvSeroApp.ico")),
     div(
       style = "display: flex; flex-direction: column; height: 100vh;",
       
