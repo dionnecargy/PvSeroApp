@@ -37,6 +37,7 @@ platemap <- read.csv(here::here("data/platemap.csv"))
 shinyUI(
   fluentPage(
     useShinyjs(),
+    tags$head(includeHTML("google_analytics.html")),
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
       tags$script(src = "https://unpkg.com/react@17.0.2/umd/react.production.min.js"),
@@ -194,7 +195,7 @@ shinyUI(
         style = "padding: 10px; text-align: center;",
         Stack(
           tokens = list(childrenGap = 5),
-          Text(variant = "medium", "© 2025 PvSeroTaT version 1.0", styles = list(root = list(color = "var(--fluent-primary-text-color)"))),
+          textOutput("footer_version"),
           Text(variant = "small", HTML(r"(Developed by <a href='https://www.example.com' target='_blank'>Dionne Argyropoulos and Lauren Smith</a> and built using 
           <a href='https://shiny.posit.co/' target='_blank'>RShiny</a> by <a href='https://posit.co/download/rstudio-desktop/' target='_blank'>RStudio</a>. 
           <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/dionnecargy/pvserotat">PvSeroTaT Classification App</a> 

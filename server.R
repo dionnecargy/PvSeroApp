@@ -22,6 +22,8 @@ require(openxlsx)
 require(glue)
 require(drc)
 require(gt)
+require(httr)
+require(jsonlite)
 
 source("functions.R")
 source("content.R")
@@ -37,6 +39,18 @@ render_report <- function(input, output, params) {
                     envir = new.env(parent = globalenv())
   )
 }
+get_github_release <- function(repo_owner, repo_name) {
+  url <- paste0("https://api.github.com/repos/", repo_owner, "/", repo_name, "/releases/latest")
+  response <- GET(url)
+  
+  if (status_code(response) == 200) {
+    release_info <- fromJSON(content(response, "text"))
+    return(release_info$tag_name)  # Extracts the tag name (release version)
+  } else {
+    return(NULL)
+  }
+}
+
 
 ###############################################################################
 ###### Server
@@ -48,6 +62,28 @@ shinyServer(function(input, output, session){
   observeEvent(input$toggle_theme, {
     dark_mode(!dark_mode())  # Toggle state
     session$sendCustomMessage("toggle-theme", dark_mode()) # Send a message to update the CSS theme
+  })
+  
+  # Get release version dynamically
+  release_version <- get_github_release("dionnecargy", "pvseroapp")
+  
+  # Define footer content
+  version <- reactive({
+    if (!is.null(release_version)) {
+      paste("PvSeroApp", release_version)  # Display version
+    } else {
+      "Version info not available."
+    }
+  })
+  
+  # Define the footer with version info
+  output$footer_version <- renderText({
+    version_text <- if (!is.null(release_version)) {
+      paste("© 2025 PvSeroApp", release_version)
+    } else {
+      "© 2025 PvSeroApp version info not available"
+    }
+    version_text
   })
   
   ###############################################################################
@@ -814,7 +850,7 @@ shinyServer(function(input, output, session){
   # 1. Downloadable csv of MFI/RAU results file
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_MFI_RAU.csv")
+      paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv")
     },
     content = function(file) {
       write.csv(mfi_to_rau_output()[[1]], file, row.names = FALSE)
@@ -823,7 +859,7 @@ shinyServer(function(input, output, session){
   # 2. Downloadable csv of standards
   output$downloadStds <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_stdcurve.csv")
+      paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv")
     },
     content = function(file) {
       write.csv(antigens_output()$stds, file, row.names = FALSE)
@@ -831,7 +867,7 @@ shinyServer(function(input, output, session){
   )
   
   output$report <- downloadHandler( ##### this code is not working 
-    filename = paste0(experiment_name(), "_", date(), "_QCreport.html"),
+    filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.html"),
     content = function(file) {
       
       tempReport <- file.path(tempdir(), "template.Rmd")
@@ -862,15 +898,15 @@ shinyServer(function(input, output, session){
   # 4. Download zip file
   output$download_zip <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_all_files.zip")
+      paste0(experiment_name(), "_", date(), "_", version(), "_all_files.zip")
     },
     content = function(file) {
       temp_dir <- file.path(tempdir(), "export_files")
       dir.create(temp_dir, showWarnings = FALSE)  # Create a dedicated folder
       
       # Define file paths inside temp_dir
-      data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_MFI_RAU.csv"))
-      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_stdcurve.csv"))
+      data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv"))
+      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(),  "_stdcurve.csv"))
       # report_file <- file.path(temp_dir, paste0(experiment_name(), "_QCreport.html"))
       
       # Generate files
