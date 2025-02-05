@@ -37,7 +37,11 @@ platemap <- read.csv(here::here("data/platemap.csv"))
 shinyUI(
   fluentPage(
     useShinyjs(),
-    tags$head(includeHTML("google_analytics.html")),
+    tags$head(
+      if (file.exists("google_analytics.html")) {
+        includeHTML("google_analytics.html")
+      }
+    ),
     tags$head(
       tags$link(rel = "stylesheet", type = "text/css", href = "styles.css"),
       tags$script(src = "https://unpkg.com/react@17.0.2/umd/react.production.min.js"),
