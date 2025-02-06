@@ -1152,6 +1152,7 @@ input_page <- function() {
 ###############################################################################
 check_page <- function() {
   fluentPage(
+    useShinyjs(),
     Text(variant = "xxLarge", "Quality control"),
     Separator(),
     p(),
@@ -1175,12 +1176,12 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
-      # PrimaryButton.shinyInput(
-      #   "downloadButtonReport",
-      #   text = "Quality Control Report (.HTML)", ##### MAKE INTO PDF !!! 
-      #   iconProps = list(iconName = "Download")
-      # ),
-      # div(style = "visibility: hidden;", downloadButton("report", "")),
+      PrimaryButton.shinyInput(
+        "downloadButtonReport",
+        text = "Quality Control Report (.PDF)", 
+        iconProps = list(iconName = "Download")
+      ),
+      div(style = "visibility: hidden;", downloadButton("report", "")),
       PrimaryButton.shinyInput(
         "downloadButtonZip",
         text = "All Files (.ZIP)",

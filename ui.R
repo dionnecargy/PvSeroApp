@@ -2,27 +2,7 @@
 ###### Load Packages and Functions
 ###############################################################################
 
-require(shiny)
-require(shiny.fluent)
-require(shiny.react)
-require(shinyjs)
-require(htmltools)
-require(workflowsets)
-require(plotly)
-require(tidyverse)
-require(ggpubr)
-require(janitor)
-require(DT)
-require(rmarkdown)
-require(shinyWidgets)
-require(here)
-require(RColorBrewer)
-require(readxl)
-require(openxlsx)
-require(glue)
-require(drc)
-require(gt)
-
+source("packages.R")
 source("functions.R")
 source("content.R")
 
@@ -176,7 +156,7 @@ shinyUI(
                       )
                     ),
                     list(
-                      name = "PvSeroTaT Algorithm",
+                      name = "PvSeroApp Algorithm",
                       links = list(
                         list(name = "Step 1: Input Data", key = "input", url = "#input", iconProps = list(iconName = "BulkUpload", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
                         list(name = "Step 2: Quality Control", key = "check", url = "#check", iconProps = list(iconName = "CheckList", styles = list(root = list(fontSize = 20, color = "#106ebe")))),

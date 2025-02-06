@@ -2,29 +2,7 @@
 ###### Load Packages and Functions
 ###############################################################################
 
-require(shiny)
-require(shiny.fluent)
-require(shiny.react)
-require(shinyjs)
-require(htmltools)
-require(workflowsets)
-require(plotly)
-require(tidyverse)
-require(ggpubr)
-require(janitor)
-require(DT)
-require(rmarkdown)
-require(shinyWidgets)
-require(here)
-require(RColorBrewer)
-require(readxl)
-require(openxlsx)
-require(glue)
-require(drc)
-require(gt)
-require(httr)
-require(jsonlite)
-
+source("packages.R")
 source("functions.R")
 source("content.R")
 
@@ -707,7 +685,7 @@ shinyServer(function(input, output, session){
     plotCounts(counts_output(), experiment_name()) 
   })
   
-  check_repeats_table <- reactive({
+  check_repeats_output <- reactive({
     req(counts_output())
     check_repeats(counts_output())
   })
@@ -755,15 +733,44 @@ shinyServer(function(input, output, session){
     })
   
   output$check_repeats_text <- renderText({
-    if (is.character(check_repeats_table())) {
-      check_repeats_table()
+    if (is.character(check_repeats_output())) {
+      check_repeats_output()
     }
   })
   
+  check_repeats_table_format <- reactive({
+    req(check_repeats_output(), plate_layout_reactive())
+    table <- check_repeats_output()
+    layout <- readPlateLayout(plate_layout_reactive()$datapath)
+    
+    # Extract the row and column information from the 'location' column in table
+    table$row <- substr(table$location, 1, 1)  # Extract row (e.g., 'A')
+    table$col <- substr(table$location, 2, 2)  # Extract column (e.g., '1')
+    
+    # Function to extract SampleID based on plate name and row/col
+    get_sample_id <- function(plate_name, row, col) {
+      # Get the platelayout data frame based on the plate name
+      platelayout_df <- layout[[plate_name]]
+      # Find the correct row and column in platelayout
+      row_index <- which(platelayout_df$Plate == row)
+      col_index <- as.integer(col) + 1  # Adding 1 because platelayout has column names as strings
+      # Extract the corresponding SampleID
+      return(platelayout_df[row_index, col_index])
+    }
+    
+    # Apply the function to extract SampleID for each row in table
+    table$SampleID <- mapply(function(plate, row, col) {
+      get_sample_id(plate, row, col)
+    }, table$plate, table$row, table$col)
+    
+    table <- table %>% dplyr::select(SampleID, Location = location, Plate = plate, Repeat = colour)
+    table
+  })
+  
   output$check_repeats_table <- DT::renderDataTable({
-    if (is.data.frame(check_repeats_table())) {
-      
-      datatable(check_repeats_table(), 
+    req(check_repeats_output(), check_repeats_table_format())
+    if (is.data.frame(check_repeats_output())) {
+      datatable(check_repeats_table_format(), 
                 options = list(dom = 't',                    # 't' means only the table (no pagination, search, etc.)
                                searching = FALSE,            # Disable search box
                                paging  = FALSE,              # Disable pages box
@@ -832,8 +839,8 @@ shinyServer(function(input, output, session){
   
   ## ----- Save Outputs of QC Model -----
   # Trigger hidden download buttons
-  observeEvent(input$downloadButtonData, { #################### visible fluent UI download button id 
-    click("downloadData") #################### hidden download button id 
+  observeEvent(input$downloadButtonData, {
+    click("downloadData")
   })
   observeEvent(input$downloadButtonStds, {
     click("downloadStds") 
@@ -865,40 +872,40 @@ shinyServer(function(input, output, session){
       write.csv(antigens_output()$stds, file, row.names = FALSE)
     }
   )
-  
-  output$report <- downloadHandler( ##### this code is not working 
-    filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.html"),
+
+  output$report <- downloadHandler( ##### this code is not working
+    filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"),
     content = function(file) {
-      
       tempReport <- file.path(tempdir(), "template.Rmd")
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
-      
+
       # Set up parameters to pass to Rmd document
       params <- list(
-        raw_data_filename = raw_data_filename_reactive(),
+        raw_data_filename_reactive = raw_data_filename_reactive(),
         experiment_name = experiment_name(),
         date = date(),
         experiment_notes = experiment_notes(),
-        platform = platform_reactive(),
+        platform_reactive = platform_reactive(),
         stdcurve_plot = stdcurve_plot(),
         plateqc_plot = plateqc_plot(),
         blanks_plot = blanks_plot(),
-        check_repeats_table = check_repeats_table(),
-        model_results = model_results()
+        check_repeats_output = check_repeats_output(),
+        check_repeats_table_format = check_repeats_table_format(),
+        model_plot = model_plot()
       )
-          
+
       callr::r(
-        render_report, 
-        list(input = tempReport, output = file, params = params)
+        render_report,
+        list(input = tempReport, output = file, params = params, envir = new.env())
       )
-      
+
     }
   )
   
   # 4. Download zip file
   output$download_zip <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", version(), "_all_files.zip")
+      paste0(experiment_name(), "_", date(),  "_all_files.zip")
     },
     content = function(file) {
       temp_dir <- file.path(tempdir(), "export_files")
@@ -906,38 +913,34 @@ shinyServer(function(input, output, session){
       
       # Define file paths inside temp_dir
       data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv"))
-      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(),  "_stdcurve.csv"))
-      # report_file <- file.path(temp_dir, paste0(experiment_name(), "_QCreport.html"))
+      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv"))
+      report_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"))
       
       # Generate files
       write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
       write.csv(antigens_output()$stds, stds_file, row.names = FALSE)
       
-      # # Render the report ##### this code is not working 
-      # report_path <- file.path(tempdir(), "template.Rmd")
-      # file.copy("template.Rmd", report_path, overwrite = TRUE)
-      # if (!file.exists(report_path)) {
-      #   stop("Report file not found: ", report_path)
-      # }
-      # 
-      # # Set up parameters to pass to Rmd document
-      # params <- list(
-      #   raw_data_filename = raw_data_filename_reactive(),
-      #   experiment_name = experiment_name(),
-      #   date = date(),
-      #   experiment_notes = experiment_notes(),
-      #   platform = platform_reactive(),
-      #   stdcurve_plot = stdcurve_plot(),
-      #   plateqc_plot = plateqc_plot(),
-      #   blanks_plot = blanks_plot(),
-      #   model_results = model_results()
-      # )
-      # 
+      # Render the report
+      tempReport <- file.path(tempdir(), "template.Rmd")
+      file.copy("template.Rmd", tempReport, overwrite = TRUE)
+      params <- list(
+        raw_data_filename_reactive = raw_data_filename_reactive(),
+        experiment_name = experiment_name(),
+        date = date(),
+        experiment_notes = experiment_notes(),
+        platform_reactive = platform_reactive(),
+        stdcurve_plot = stdcurve_plot(),
+        plateqc_plot = plateqc_plot(),
+        blanks_plot = blanks_plot(),
+        check_repeats_output = check_repeats_output(),
+        check_repeats_table_format = check_repeats_table_format(),
+        model_plot = model_plot()
+      )
       # callr::r(
-      #   render_report,
-      #   list(input = report_path, output = report_file, params = params)
+      #   render_report, 
+      #   list(input = tempReport, output = report_file, params = params, envir = new.env())
       # )
-      # 
+      
       # Create ZIP with a clean structure
       old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
       zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names

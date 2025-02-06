@@ -1,15 +1,17 @@
 ---
 title: "PvSeroApp Serological Assay Quality Control Report"
-date: "`r Sys.Date()`"
+date: "`r format(Sys.Date(), '%d-%m-%y')`"
+header-includes:
+   - \usepackage[default]{sourcesanspro}
+   - \usepackage[T1]{fontenc}
+mainfont: SourceSansPro
 output: 
-  html_document: 
-    theme: cosmo
-    code_folding: hide
+  pdf_document: default
 params:
-  raw_data_filename: NA
+  raw_data_filename_reactive: NA
   experiment_name: NA
   experiment_notes: NA
-  platform: NA
+  platform_reactive: NA
   date: NA
   stdcurve_plot: NA
   plateqc_plot: NA
@@ -18,15 +20,17 @@ params:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, warning = FALSE, message = FALSE, tidy = TRUE)
+knitr::opts_chunk$set(echo = F, warning = FALSE, message = FALSE, tidy = TRUE, fig.width=8, fig.height=6, fig.align="center", df_print = "kable")
 require(tidyverse)
 require(readxl)
 require(drc)
 require(here)
+require(kable)
+require(kableExtra)
 ```
 
 ***
-### QC Report for experiment: `r params$experiment_name` analysed on `r params$date`{.tabset}
+### QC Report for experiment: `r params$experiment_name` analysed on `r params$date`
 ***
 
 #### Plot of Standard Curves
@@ -34,37 +38,63 @@ require(here)
 ```{r standard curves plot}
 params$stdcurve_plot
 ```
-
+\newpage
 #### Plot of Model Results
 
-```{r model results plot}
+```{r model results plot, results='asis'}
+first_plot <- TRUE                          # Flag to track the first plot
 model_plot <- params$model_plot
 
+# Loop through each plot in model_plot and print it
 for (plot_name in names(model_plot)) {
-  print(plot_name)
+  
+  if (!first_plot){                         # Insert a page break before the plot but not for the first one 
+    cat("\\newpage\n")                      # Page break before each plot
+  }
+  
+  cat(paste0("##### ", plot_name, "\n\n"))  # Adds a title for each plot
+  print(model_plot[[plot_name]])            # Render the actual plot
+  
+  first_plot <- FALSE                       # Update flag after first plot is printed 
 }
 ```
-
+\newpage
 #### Plot of Bead Counts
 
 Any wells with < 15 beads/well are indicated in red, and should be double-checked manually.
 
 ```{r bead counts plot}
-params$plateqc_plot
+plateqc_plot <- params$plateqc_plot
+plateqc_plot + theme(legend.position = "bottom")
 ```
 
+```{r, echo=FALSE, results='asis'}
+check_repeats_output <- params$check_repeats_output
+check_repeats_table_format <- params$check_repeats_table_format
+
+if (is.data.frame(check_repeats_output)) {
+  # If it's a table, print it using kable
+  print(knitr::kable(check_repeats_table_format))
+} else {
+  # If it's text, print it normally
+  cat(check_repeats_output, "\n\n")
+}
+```
+\newpage
 #### Plot of Blank Samples
 
 Blank samples should record MFI<50 for each protein. If any proteins are above the dashed line, they should be double-checked manually.
 
 ```{r blank samples plot}
-params$blanks_plot
+blanks_plot <- params$blanks_plot
+blanks_plot + theme(legend.position = "bottom")
 ```
+\newpage
 
-#### Experiment Information
+#### Experiment Information \\
 
 **Experiment Notes:** `r params$experiment_notes`
 
-**Platform Chosen**: `r params$platform``
+**Platform Chosen**: `r params$platform_reactive``
 
-**Raw Data Filename/s:** `r params$raw_data_filename`
+**Raw Data Filename/s:** `r params$raw_data_filename_reactive`
