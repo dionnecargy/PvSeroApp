@@ -1288,8 +1288,8 @@ model_page <- function() {
               "algorithm",
               label = NULL,
               choices = list(
-                "PvSeroTaT Algorithm" = "antibody_model",
-                "PvSeroTaT Algorithm without LF016" = "antibody_model_excLF016"
+                "PvSeroApp Algorithm" = "antibody_model",
+                "PvSeroApp Algorithm without LF016" = "antibody_model_excLF016"
               ),
               selected = "antibody_model"
             ),
