@@ -2,7 +2,28 @@
 ###### Load Packages and Functions
 ###############################################################################
 
-source("packages.R")
+require(shiny)
+require(shiny.fluent)
+require(shiny.react)
+require(shinyjs)
+require(htmltools)
+require(workflowsets)
+require(plotly)
+require(tidyverse)
+require(ggpubr)
+require(janitor)
+require(DT)
+require(rmarkdown)
+require(shinyWidgets)
+require(here)
+require(RColorBrewer)
+require(readxl)
+require(openxlsx)
+require(glue)
+require(drc)
+require(gt)
+require(rsconnect)
+
 source("functions.R")
 source("content.R")
 
