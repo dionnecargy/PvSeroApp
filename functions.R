@@ -801,14 +801,14 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
     rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
 
   # Step 1. Reads in serostatus using the trained random forest
-  antibody_model <- readRDS(here::here("https://github.com/dionnecargy/pvseroapp/blob/main/model/PvSeroTaTmodel.rds")) # Model 1: All top 8
-  antibody_model_excLF016 <- readRDS(here::here("https://github.com/dionnecargy/pvseroapp/blob/main/model/random_forest_excludingLF016.rds")) # Model 2: w/o LF016 
+  antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds")) # Model 1: All top 8
+  antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds")) # Model 2: w/o LF016 
   
   # Step 2: Read in the random forest votes threshold values
   threshold_table <- if(algorithm_type == "antibody_model"){
-    read.csv(here::here("https://github.com/dionnecargy/pvseroapp/blob/main/model/threshold_values.csv"))
+    read.csv(here::here("model/threshold_values.csv"))
   } else if (algorithm_type == "antibody_model_excLF016"){
-    read.csv(here::here("https://github.com/dionnecargy/pvseroapp/blob/main/model/excluding_LF016_threshold_values.csv"))
+    read.csv(here::here("model/excluding_LF016_threshold_values.csv"))
   } else {
     stop("Invalid model provided")
   }
