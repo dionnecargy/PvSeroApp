@@ -23,6 +23,8 @@ require(glue)
 require(drc)
 require(gt)
 require(rsconnect)
+require(httr)
+require(jsonlite)
 
 source("functions.R")
 source("content.R")
@@ -41,7 +43,7 @@ render_report <- function(input, output, params) {
 }
 get_github_release <- function(repo_owner, repo_name) {
   url <- paste0("https://api.github.com/repos/", repo_owner, "/", repo_name, "/releases/latest")
-  response <- GET(url)
+  response <- httr::GET(url)
   
   if (status_code(response) == 200) {
     release_info <- fromJSON(content(response, "text"))

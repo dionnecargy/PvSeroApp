@@ -1,6 +1,7 @@
 ###############################################################################
 ###### Load Packages and Functions
 ###############################################################################
+
 require(shiny)
 require(shiny.fluent)
 require(shiny.react)
@@ -22,6 +23,8 @@ require(glue)
 require(drc)
 require(gt)
 require(rsconnect)
+require(httr)
+require(jsonlite)
 
 source("functions.R")
 source("content.R")
