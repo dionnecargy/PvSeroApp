@@ -5,7 +5,7 @@ account: v1brna-dionnecargy
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13905005
-bundleId: 9778302
+bundleId: 9778365
 url: https://dionnecargy.shinyapps.io/pvserotat/
 version: 1
 asMultiple: FALSE
