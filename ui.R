@@ -25,8 +25,6 @@ require(gt)
 require(rsconnect)
 require(httr)
 require(jsonlite)
-install.packages("ranger", lib="/usr/local/lib/R/site-library")
-install.packages("ranger", repos='http://cran.rstudio.com/')
 require(ranger)
 
 source("functions.R")
