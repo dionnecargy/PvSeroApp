@@ -6,6 +6,7 @@ source("packages.R")
 source("functions.R")
 source("content.R")
 
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap <- read.csv(here::here("data/platemap.csv"))
