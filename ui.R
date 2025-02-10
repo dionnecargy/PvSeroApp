@@ -25,6 +25,7 @@ require(gt)
 require(rsconnect)
 require(httr)
 require(jsonlite)
+require(here)
 
 source("functions.R")
 source("content.R")
