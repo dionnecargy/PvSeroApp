@@ -133,7 +133,7 @@ shinyServer(function(input, output, session){
                              searching = FALSE,            # Disable search box
                              paging  = FALSE,              # Disable pages box
                              lengthChange = FALSE          # Disable number of entries dropdown
-                             ), 
+              ), 
               rownames = FALSE)                            # Remove row numbers
   })
   
@@ -166,7 +166,7 @@ shinyServer(function(input, output, session){
         src = "www/2_tutorial/plate_layout_1.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
         imageFit = "container"
-        ),
+      ),
       list(
         src = "www/2_tutorial/plate_layout_2.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
@@ -220,7 +220,7 @@ shinyServer(function(input, output, session){
       `Source/Country` = c("Brazil", "Thailand", "Solomon Islands", "Volunteer Blood Donor Registry", 
                            "Australian Red Cross", "Thai Red Cross", "Brazil Blood Donor Registry"), 
       Type = c("Year-long cohort study", "Year-long cohort study", "Year-long cohort study", 
-                 "Negative control", "Negative control", "Negative control", "Negative control"),
+               "Negative control", "Negative control", "Negative control", "Negative control"),
       `No. samples` = c("886", "680", "709", "98", "97", "69", "96")
     )
     colnames(table1) <- c("Source/Country", "Type", "No. samples")
@@ -361,7 +361,7 @@ shinyServer(function(input, output, session){
       } else if (current_step() == 7) {
         target_id <- "#save_inputs"
       } else if (current_step() == 8) {
-      target_id <- "#target"
+        target_id <- "#target"
       }
       
       TeachingBubble(
@@ -579,7 +579,7 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Print raw file name
   output$raw_data_filename <- renderText({
-   paste0("Raw data filename: ", paste(raw_data_filename(), collapse = ", "))
+    paste0("Raw data filename: ", paste(raw_data_filename(), collapse = ", "))
   })
   
   # APP RESPONSE: Print plate layout file name
@@ -606,7 +606,7 @@ shinyServer(function(input, output, session){
     columns <- lapply(names(data_raw), function(col) {
       list(fieldName = col, name = col, minWidth = 100, maxWidth = 200)
     })
-  
+    
     # Create the DetailsList component with height and width adjustments
     div(
       style = "height: auto; max-height: 80vh; overflow-y: auto; padding: 10px; width: 100%; max-width: 1000px;",
@@ -634,7 +634,7 @@ shinyServer(function(input, output, session){
         styles = list(root = list(height = "auto", overflowY = "auto", overflowX = "auto"))
       )
     )
-     
+    
   })
   
   # APP RESPONSE: Read imported plate layout file and print template
@@ -726,7 +726,7 @@ shinyServer(function(input, output, session){
     MFItoRAU(antigen_output = antigens_output(), 
              plate_layout = plate_layout_reactive()$datapath)
   })
-
+  
   # APP RESPONSE: Creating QC model plot
   model_plot <- reactive({
     req(mfi_to_rau_output(), antigens_output())
@@ -747,14 +747,14 @@ shinyServer(function(input, output, session){
       )
     plotly_gg
     
-    })
+  })
   
   # APP RESPONSE: Render plate QC plot
   output$plateqc <- renderPlot({
     # gg <- 
-      plateqc_plot()
+    plateqc_plot()
     # ggplotly(gg) %>% layout(showlegend = TRUE) # Convert to plotly
-    })
+  })
   
   output$check_repeats_text <- renderText({
     if (is.character(check_repeats_output())) {
@@ -809,10 +809,10 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Render blanks plot
   output$blanks <- renderPlot({
     # gg <- 
-      blanks_plot()
+    blanks_plot()
     # ggplotly(gg) %>% layout(showlegend = TRUE) # Convert to plotly
-    })
- 
+  })
+  
   # APP RESPONSE: Render QC model data frame
   output$results <- DT::renderDataTable({
     
@@ -823,7 +823,7 @@ shinyServer(function(input, output, session){
     df <- as.data.frame(lapply(df, function(x) {
       if (is.numeric(x)) round(x, 5) else x
     }))
-      
+    
     datatable(
       df,
       options = list(
@@ -833,7 +833,7 @@ shinyServer(function(input, output, session){
       ),
       rownames = FALSE           # Remove row numbers
     )
-    })
+  })
   
   # APP RESPONSE: Render QC model plot 
   # 1. Track the current plot index
@@ -896,13 +896,13 @@ shinyServer(function(input, output, session){
       write.csv(antigens_output()$stds, file, row.names = FALSE)
     }
   )
-
+  
   output$report <- downloadHandler( ##### this code is not working
     filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"),
     content = function(file) {
       tempReport <- file.path(tempdir(), "template.Rmd")
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
-
+      
       # Set up parameters to pass to Rmd document
       params <- list(
         raw_data_filename_reactive = raw_data_filename_reactive(),
@@ -917,12 +917,12 @@ shinyServer(function(input, output, session){
         check_repeats_table_format = check_repeats_table_format(),
         model_plot = model_plot()
       )
-
+      
       callr::r(
         render_report,
         list(input = tempReport, output = file, params = params, envir = new.env())
       )
-
+      
     }
   )
   
@@ -1023,21 +1023,21 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Render the classification summary table and cross-check choices
   observeEvent(input$run_classification, {
     req(sens_spec(), algorithm(), classification_results_summary())
-
+    
     sens_spec_val <- sens_spec()
     algorithm_val <- algorithm()
-
+    
     result <- paste0("Classification run with the ", algorithm_val,
                      " Algorithm and Sensitivity/Specificity: ", sens_spec_val)
-
+    
     # 1. Render the result text
     output$result <- renderText({result})
-
+    
     # 2. Render the classification summary table
     output$classification_summary <- renderTable({
       classification_results_summary()})
   })
-
+  
   # Trigger hidden download buttons
   observeEvent(input$downloadButtonClassify, {
     click("download_classification")
@@ -1070,9 +1070,9 @@ shinyServer(function(input, output, session){
         as.data.frame() %>%  # Ensure it's a data frame
         mutate(Sens_Spec = .x)  # Add the Sens_Spec column
     })
-      
-      # Return the combined data frame
-      all_classifications
+    
+    # Return the combined data frame
+    all_classifications
   })
   
   # Reactive table creation
@@ -1140,8 +1140,42 @@ shinyServer(function(input, output, session){
     # print(paste("Generating plot for:", selected_value))
     
     gg <- plotBoxPlotClassification(classified_data_all(), selected_value)
-    ggplotly(gg) %>% layout(showlegend = TRUE) # Convert to plotly
+    ggplotly(gg) %>% 
+      layout(
+        showlegend = TRUE, 
+        font = list(family = "Helvetica", size = 20, colour = "black")
+      )
     
+  })
+  
+  output$mfi_plotly <- renderPlotly({
+    req(mfi_to_rau_output())
+    
+    mfi_plot <- plotMFI(mfi_to_rau_output())
+    
+    plotly_mfi_plot <- ggplotly(mfi_plot) %>%
+      layout(
+        showlegend = TRUE, 
+        legend = list(tracegroupgap = 0), 
+        font = list(family = "Helvetica", size = 20, colour = "black"),
+        xaxis = list(title_standoff = 40)
+      )
+    plotly_mfi_plot
+  })
+  
+  output$rau_plotly <- renderPlotly({
+    req(mfi_to_rau_output())
+    
+    rau_plot <- plotRAU(mfi_to_rau_output())
+    
+    plotly_rau_plot <- ggplotly(rau_plot) %>%
+      layout(
+        showlegend = TRUE, 
+        legend = list(tracegroupgap = 0), 
+        font = list(family = "Helvetica", size = 20, colour = "black"),
+        xaxis = list(title_standoff = 40)
+      )
+    plotly_rau_plot
   })
   
 })

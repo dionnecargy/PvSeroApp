@@ -310,7 +310,7 @@ tutorial_page <- function() {
                 Text(variant = "medium", HTML("This is where you can: 
                                           <ul>
                                             <li>perform <b>quality control</b> of your run,</li>
-                                            <li>data is processed to convert <b>Median Fluorescent Units (MFU)</b> to <b>Relative Antibody Units (RAU)</b> based on the standard curves present on each plate</li>
+                                            <li>data is processed to convert <b>Median Fluorescent Intensity (MFI)</b> to <b>Relative Antibody Units (RAU)</b> based on the standard curves present on each plate</li>
                                             <li><b>download</b> the processed data,s tandard curve data and a quality control report</li>
                                           </ul><p>For more details, see the section <a href='#tutorial/quality_control' class-`link`>Quality Control</a>.")),
                 Text(variant = "large", "3.3. Classifying your Samples"),
@@ -1352,10 +1352,15 @@ datavis_page <- function() {
     Text(variant = "xxLarge", "Data Visualisation"),
     Separator(),
     MessageBar("Data Visualisation features can be made available upon request. Please note that the figure may take some time to load."),
+    p(),
+    Text(variant = "large", HTML("<b>Classification</b>")),
+    p(),
     Stack(
       tokens = list(childrenGap = 20),
       children = list(
       Label(HTML("Select Sensitivity/Specificity Type: <span style='color:#a4262c;'>*</span>")),
+      MessageBar("Click on the Sensitivity/Specificity Random Forest Threshold of interest to see a boxplot appear! 
+                 You can click on any threshold to see how increasing or decreasing each value changes the interquartile range and median of RAU values."),
       # withSpinner(DTOutput("allclassifytable"), type = 8),  # Spinner added here
       fluentPage(DTOutput("allclassifytable")),
       
@@ -1363,7 +1368,20 @@ datavis_page <- function() {
       # withSpinner(plotOutput("classify_plots"), type = 8),  # Spinner added here
       plotlyOutput("classify_plots")
       )
-    )
+    ),
+    Text(variant = "large", HTML("<b>Quality Control Checks: Supplementary</b>")),
+    p(),
+    MessageBar("Here we present your data in the coloured boxplots and the dataset used in this model is presented in grey behind. By clicking on the antigens in the legend you can see the 
+               boxplot of the data observed for our study. This can be used as a comparison or visual check to see if your values are within a similar range. Please note that these MFI and RAU values
+               will vary by epidemiological setting."),
+    p(),
+    Text(variant = "medium", HTML("<b>Median Fluorescent Intensity (MFI) Per Antigen</b>")),
+    p(),
+    plotlyOutput("mfi_plotly"),
+    p(),
+    Text(variant = "medium", HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
+    p(),
+    plotlyOutput("rau_plotly")
   )
 }
 

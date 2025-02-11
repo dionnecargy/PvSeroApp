@@ -869,7 +869,7 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 #   - selected_threshold: string with the threshold (reactive)
 #
 # OUTPUT:
-#   - Box plots with MFI values for each protein
+#   - Box plots with RAU values for each protein stratified by classification
 ##############################################################################
 
 plotBoxPlotClassification <- function(all_classifications, selected_threshold){
@@ -887,5 +887,84 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
       facet_grid(~protein) +
       theme_bw() +
       theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+}
+
+##############################################################################
+# plotMFI function
+# --------------------------
+#
+#
+# PARAMETERS: 
+#   - xxx
+#   - xxx
+#
+# OUTPUT:
+#   - Box plots with MFI values for each protein
+##############################################################################
+
+plotMFI <- function(mfi_to_rau_output){
+  
+  df_results <- mfi_to_rau_output[[2]]
+  df_results <- df_results %>%
+    dplyr::select(SampleID, Plate, ends_with("_MFI")) %>%
+    rename_with(~str_replace(., "_MFI", ""), ends_with("_MFI")) %>%
+    pivot_longer(-c(SampleID, Plate), names_to = "protein", values_to = "MFI") %>% 
+    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
+           MFI = as.numeric(MFI)) 
+  
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
+  
+  df_results %>% 
+    ggplot(aes(x= protein, y = MFI)) +
+    geom_boxplot(data = df_wehi, aes(x = protein, y = MFI), fill = "grey", colour = "darkgrey") + 
+    geom_boxplot(aes(fill = protein)) +
+    scale_y_log10(breaks = c(10, 100, 1000, 10000), limits = c(10, 10000), labels = c("10", "100", "1,000", "10,000")) +
+    scale_fill_brewer(palette = "Paired", type = "qual") +
+    labs(x = "Antigen", y = "Antibody MFI") +
+    facet_wrap( ~ Plate) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+          legend.position = "none") 
+  
+}
+
+##############################################################################
+# plotRAU function
+# --------------------------
+#
+#
+# PARAMETERS: 
+#   - xxx
+#   - xxx
+#
+# OUTPUT:
+#   - Box plots with RAU values for each protein
+##############################################################################
+
+
+plotRAU <- function(mfi_to_rau_output){
+  
+  df_results <- mfi_to_rau_output[[2]]
+  df_results <- df_results %>%
+    dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
+    rename_with(~str_replace(., "_Dilution", ""), ends_with("_Dilution")) %>%
+    pivot_longer(-c(SampleID, Plate), names_to = "protein", values_to = "RAU") %>% 
+    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
+           RAU = as.numeric(RAU)) 
+  
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
+  
+  df_results %>%
+    ggplot(aes(x= Antigen, y = RAU, fill = Antigen)) +
+    geom_boxplot(data = df_wehi, aes(x = Antigen, y = RAU), fill = "grey", colour = "darkgrey") +
+    geom_boxplot() +
+    scale_y_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
+                  labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
+    scale_fill_brewer(palette = "Paired", type = "qual") +
+    labs(x = "Antigen", y = "Antibody RAU") +
+    facet_wrap( ~ Plate) + 
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
 }
