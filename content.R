@@ -1375,11 +1375,11 @@ datavis_page <- function() {
                boxplot of the data observed for our study. This can be used as a comparison or visual check to see if your values are within a similar range. Please note that these MFI and RAU values
                will vary by epidemiological setting."),
     p(),
-    Text(variant = "medium", HTML("<b>Median Fluorescent Intensity (MFI) Per Antigen</b>")),
+    Label(HTML("<b>Median Fluorescent Intensity (MFI) Per Antigen</b>")),
     p(),
     plotlyOutput("mfi_plotly"),
     p(),
-    Text(variant = "medium", HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
+    Label(HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
     p(),
     plotlyOutput("rau_plotly")
   )

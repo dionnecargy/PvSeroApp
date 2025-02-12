@@ -909,16 +909,16 @@ plotMFI <- function(mfi_to_rau_output){
   df_results <- df_results %>%
     dplyr::select(SampleID, Plate, ends_with("_MFI")) %>%
     rename_with(~str_replace(., "_MFI", ""), ends_with("_MFI")) %>%
-    pivot_longer(-c(SampleID, Plate), names_to = "protein", values_to = "MFI") %>% 
+    pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "MFI") %>% 
     mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
            MFI = as.numeric(MFI)) 
   
   df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
   
   df_results %>% 
-    ggplot(aes(x= protein, y = MFI)) +
-    geom_boxplot(data = df_wehi, aes(x = protein, y = MFI), fill = "grey", colour = "darkgrey") + 
-    geom_boxplot(aes(fill = protein)) +
+    ggplot(aes(x= Antigen, y = MFI)) +
+    geom_boxplot(data = df_wehi, aes(x = Antigen, y = MFI), fill = "grey", colour = "darkgrey") + 
+    geom_boxplot(aes(fill = Antigen)) +
     scale_y_log10(breaks = c(10, 100, 1000, 10000), limits = c(10, 10000), labels = c("10", "100", "1,000", "10,000")) +
     scale_fill_brewer(palette = "Paired", type = "qual") +
     labs(x = "Antigen", y = "Antibody MFI") +
@@ -949,7 +949,7 @@ plotRAU <- function(mfi_to_rau_output){
   df_results <- df_results %>%
     dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
     rename_with(~str_replace(., "_Dilution", ""), ends_with("_Dilution")) %>%
-    pivot_longer(-c(SampleID, Plate), names_to = "protein", values_to = "RAU") %>% 
+    pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "RAU") %>% 
     mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
            RAU = as.numeric(RAU)) 
   
