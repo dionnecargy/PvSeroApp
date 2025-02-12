@@ -13,4 +13,4 @@
 
 
 >[!CAUTION]
->The classification feature for this application is currently out of order. 
+>The .pdf and .zip download features for this QC component of this application is currently out of order. 
