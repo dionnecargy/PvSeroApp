@@ -469,6 +469,26 @@ shinyServer(function(input, output, session){
   # ------------ RAW DATA INPUT ------------
   ###############################################################################
   
+  # Download links for the template/example data
+  
+  output$template_zip <- downloadHandler(
+    filename = function() {
+      "example_data.zip"
+    },
+    content = function(file) {
+      file.copy("data/example_data.zip", file)
+    }
+  )
+  
+  output$template_excel <- downloadHandler(
+    filename = function() {
+      "template_platelayout.xlsx"
+    },
+    content = function(file) {
+      file.copy("data/template_platelayout.xlsx", file)
+    }
+  )
+  
   # Observing the 'uploadButton1' for triggering file input
   observeEvent(input$uploadButton1, {
     click("raw_data")

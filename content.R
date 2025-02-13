@@ -981,8 +981,8 @@ input_page <- function() {
          HTML(r"(You can directly import the .xlsx output file from the Luminex machine to this app for data processing. Check that the file looks as expected using the  
                <b>"Check Raw Data"</b> tab and that the run info is correct using the <b>"Check Run Info"</b>.)")),
     p(),
-    Link(href = "data/example_data.zip", "Click here to download the example data."),
-    Link(href = "data/template_platelayout.xlsx", "Click here for a template for the plate layout."),
+    downloadLink("template_zip", "Click here to download the example data."),
+    downloadLink("template_excel", "Click here for a template for the plate layout."),
     # a(href = "", "", download = NA, target = "_blank"),
     p(),
     Text(variant = "medium", 
