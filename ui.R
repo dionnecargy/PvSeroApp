@@ -154,7 +154,7 @@ shinyUI(
           style = "display: flex; align-items: center;",
           # IconButton.shinyInput(inputId = "toggle_theme", iconProps = list(iconName = "Contrast")),
           tags$a(
-            href = "https://github.com/dionnecargy", 
+            href = "https://github.com/dionnecargy/pvseroapp", 
             target = "_blank",
             tags$i(class = "fab fa-github", style = "font-size: 24px; margin-left: 20px;")
           )
