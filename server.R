@@ -719,9 +719,15 @@ shinyServer(function(input, output, session){
   })
   
   # APP RESPONSE: Creating standard curve plot
+  location <- reactive({
+    value <- ifelse(is.null(input$toggle_png_eth), FALSE, input$toggle_png_eth)
+    print(paste("Reactive location() value:", value))  # Debugging
+    ifelse(value, "ETH", "PNG")  # Map TRUE to "ETH", FALSE to "PNG"
+  })
+  
   stdcurve_plot <- reactive({
-    req(antigens_output(), experiment_name()) 
-    plotStds(antigens_output(), experiment_name())
+    req(antigens_output(), location(), experiment_name()) 
+    plotStds(antigens_output(), location(), experiment_name())
   })
   
   # APP RESPONSE: Creating plate QC plot

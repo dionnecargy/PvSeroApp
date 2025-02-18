@@ -471,33 +471,44 @@ plotBlanks <- function(antigen_output, experiment_name){
 #  
 #
 # PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#   - experiment_name: string with the experimet name (reactive)
+#   - antigen_output: output of readAntigens() (reactive)
+#   - location: "PNG" or "ETH" based on toggle (reactive)
+#   - experiment_name: string with the experiment name (reactive)
 #
 # OUTPUT:
-#   - Data frame with sample-matched qpcr data
+#   - ggplot of standard curves (S1-S10) with PNG or Ethiopia stds underneath
 ##############################################################################
 
-plotStds <- function(antigen_output, experiment_name){
+plotStds <- function(antigen_output, location, experiment_name){
+
   master_file <- antigen_output
   stds <- master_file$stds
-  gg <- stds %>% 
+  
+  stds_1 <- stds %>% 
     dplyr::select(-Location) %>% 
-    pivot_longer(-c(Sample, Plate), names_to = "protein", values_to = "MFI") %>% 
+    pivot_longer(-c(Sample, Plate), names_to = "Antigen", values_to = "MFI") %>% 
     mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
            Sample = factor(Sample, c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10")), 
-           MFI = as.numeric(MFI)) %>% 
-    ggplot(aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
-    geom_point() + 
-    geom_line() +
+           MFI = as.numeric(MFI)) 
+  
+  location_1 <- ifelse(location == "ETH", "ETH", "PNG")
+  
+  wehi_stds <- read.csv("data/wehi_compare_data/all_stds_MFI.csv")
+  wehi_stds <- wehi_stds %>% filter(Location==location_1)
+  
+  gg <- 
+    ggplot() + 
+    geom_point(data = wehi_stds, aes(x = Sample, y = MFI), colour = "grey", alpha = 0.25) + 
+    geom_point(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
+    geom_line(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
     scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
     labs(x = "Standard Curve", 
          y = "log(MFI)",
          title = experiment_name) +
-    facet_wrap(~protein) +
+    facet_wrap(~Antigen) +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
 }
 
 ##############################################################################

@@ -1176,25 +1176,26 @@ check_page <- function() {
         "downloadButtonStds",
         text = "Standard Curve Data (.CSV)",
         iconProps = list(iconName = "Download")
-      ),
-      div(style = "visibility: hidden;", downloadButton("downloadStds","")),
-      PrimaryButton.shinyInput(
-        "downloadButtonReport",
-        text = "Quality Control Report (.PDF)", 
-        iconProps = list(iconName = "Download")
-      ),
-      div(style = "visibility: hidden;", downloadButton("report", "")),
-      PrimaryButton.shinyInput(
-        "downloadButtonZip",
-        text = "All Files (.ZIP)",
-        iconProps = list(iconName = "Download")
-      ),
-      div(style = "visibility: hidden;", downloadButton("download_zip", ""))
+      )#,
+      # div(style = "visibility: hidden;", downloadButton("downloadStds","")),
+      # PrimaryButton.shinyInput(
+      #   "downloadButtonReport",
+      #   text = "Quality Control Report (.PDF)", 
+      #   iconProps = list(iconName = "Download")
+      # ),
+      # div(style = "visibility: hidden;", downloadButton("report", "")),
+      # PrimaryButton.shinyInput(
+      #   "downloadButtonZip",
+      #   text = "All Files (.ZIP)",
+      #   iconProps = list(iconName = "Download")
+      # ),
+      # div(style = "visibility: hidden;", downloadButton("download_zip", ""))
     ), 
     Pivot(
       PivotItem(
         headerText = "Standard Curves",
         MessageBar("Check the standard curves for each protein below."),
+        Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
         # withSpinner(plotlyOutput("stdcurve"), type = 8) # add spinner
         plotlyOutput("stdcurve", height = "1000px")
       ),
