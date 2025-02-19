@@ -993,30 +993,32 @@ input_page <- function() {
     p(),
     useShinyjs(),
     Stack(
-      tokens = list(childrenGap = 20),
-      # Page Header and Description
+      horizontal = TRUE,
+      tokens = list(childrenGap = 10), # Adjust spacing between buttons
       div(
         DefaultButton.shinyInput(
           "toggleTeachingBubble",
           id = "target",
           text = "Step-by-Step Tutorial"
         ),
-        reactOutput("teaching_bubble_ui"),
-        fluentPage(
-          DefaultButton.shinyInput(
-            "previous_button",
-            text = NULL,
-            style = "background-color: #0078d4; color: white; width: 65px; margin-top: 10px; margin-right: 10px;",
-            iconProps = list(iconName = "ChevronLeft")
-          ),
-          DefaultButton.shinyInput(
-            "next_button",
-            text = NULL,
-            style = "background-color: #a4262c; color: white; width: 65px; margin-top: 10px;",
-            iconProps = list(iconName = "ChevronRight")
-          )
-        )
+        reactOutput("teaching_bubble_ui")
       ),
+      DefaultButton.shinyInput(
+        "previous_button",
+        text = NULL,
+        style = "background-color: #9e9b99; color: white; width: 20px;",
+        iconProps = list(iconName = "ChevronLeft")
+      ),
+      DefaultButton.shinyInput(
+        "next_button",
+        text = NULL,
+        style = "background-color: #54b054; color: white; width: 20px;",
+        iconProps = list(iconName = "ChevronRight")
+      )
+    ),
+    Separator(),
+    Stack(
+      tokens = list(childrenGap = 20),
       # Sub-Pages
       Pivot(
         PivotItem(
@@ -1067,35 +1069,11 @@ input_page <- function() {
                 children = list(
                   Label(HTML("5. Upload Files: <span style='color:#a4262c;'>*</span>")),
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
-                  div(
-                    style = "margin-bottom: 10px;",  # Space for the text above the button
-                    PrimaryButton.shinyInput(
-                      "uploadButton1",
-                      text = "Upload",
-                      iconProps = list(iconName = "Upload"),
-                      style = "margin-bottom: 10px; display: block;"  # Ensures the button is on a new line
-                    )
-                  ),
-                  div(
-                    style = "visibility: hidden; width: 0; height: 0; overflow: hidden;",
-                    fileInput("raw_data", label = "", multiple = TRUE, accept = c(".xlsx", ".csv"))
-                  ),
+                  fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
-                  div(
-                    style = "margin-bottom: 10px;", # Space for the text above the second button
-                    PrimaryButton.shinyInput(
-                      "uploadButton2",
-                      text = "Upload",
-                      iconProps = list(iconName = "Upload"),
-                      style = "margin-bottom: 10px; display: block;"  # Ensures the button is on a new line
-                    )
-                  ),
-                  div(
-                    style = "visibility: hidden; width: 0; height: 0; overflow: hidden;",
-                    fileInput("plate_layout", label = "", accept = ".xlsx")
-                  ),
-                  uiOutput("uploadMessage2"),  # Output to display the success message
+                  fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
+                  uiOutput("uploadMessage2"), # Output to display the success message
                   Label(HTML("6. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(
                     style = "margin-bottom: 10px;",  # Space for the text above the button
@@ -1109,6 +1087,17 @@ input_page <- function() {
                   uiOutput("notification")
                 )
               )
+            )
+          ),
+          Separator(),
+          Label("Click here to reset the inputs!"),
+          div(
+            style = "margin-bottom: 10px;",  # Space for the text above the button
+            PrimaryButton.shinyInput(
+              "resetAll",
+              text = "Reset All",
+              iconProps = list(iconName = "Refresh"),
+              style = "margin-bottom: 10px; display: block;"  # Ensures the button is on a new line
             )
           )
         ),
@@ -1191,10 +1180,12 @@ check_page <- function() {
       # ),
       # div(style = "visibility: hidden;", downloadButton("download_zip", ""))
     ), 
+    Separator(),
     Pivot(
       PivotItem(
         headerText = "Standard Curves",
-        MessageBar("Check the standard curves for each protein below."),
+        MessageBar(HTML(r"(Check the standard curves for each protein below. Grey dots in the background indicate the standard curve range observed at WEHI for "PNG" or "Ethiopian" 
+                        samples where there are known differences in the standard curve. Click the toggle to change between options (default = PNG).)")),
         Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
         # withSpinner(plotlyOutput("stdcurve"), type = 8) # add spinner
         plotlyOutput("stdcurve", height = "1000px")
@@ -1254,30 +1245,30 @@ model_page <- function() {
                "Disclaimer: the results obtained from this classification are for research purposes only and should not be considered a diagnosis."),
     p(),
     Stack(
-      tokens = list(childrenGap = 20),
+      horizontal = TRUE,
+      tokens = list(childrenGap = 10), # Adjust spacing between buttons
       div(
         DefaultButton.shinyInput(
           "toggleTeachingBubble_CE",
           id = "target_CE",
           text = "Step-by-Step Tutorial"
-          ),
-        reactOutput("teaching_bubble_CE"),
-        DefaultButton.shinyInput(
-          "previous_button_CE",
-          text = NULL,
-          style = "background-color: #0078d4; color: white; width: 65px; margin-top: 10px; margin-right: 10px;",
-          iconProps = list(iconName = "ChevronLeft")
-          ),
-        DefaultButton.shinyInput(
-          "next_button_CE",
-          text = NULL,
-          style = "background-color: #a4262c; color: white; width: 65px; margin-top: 10px;",
-          iconProps = list(iconName = "ChevronRight")
-          )
-        )
+        ),
+        reactOutput("teaching_bubble_CE")
       ),
-    p(),
-    p(),
+      DefaultButton.shinyInput(
+        "previous_button_CE",
+        text = NULL,
+        style = "background-color: #9e9b99; color: white; width: 20px;",
+        iconProps = list(iconName = "ChevronLeft")
+      ),
+      DefaultButton.shinyInput(
+        "next_button_CE",
+        text = NULL,
+        style = "background-color: #54b054; color: white; width: 20px;",
+        iconProps = list(iconName = "ChevronRight")
+      )
+    ),
+    Separator(),
     Stack(
       tokens = list(childrenGap = 5),
       horizontal = TRUE,
@@ -1357,7 +1348,7 @@ datavis_page <- function() {
     MessageBar("Data Visualisation features can be made available upon request. Please note that the figure may take some time to load."),
     p(),
     Text(variant = "large", HTML("<b>Classification</b>")),
-    p(),
+    Separator(),
     Stack(
       tokens = list(childrenGap = 20),
       children = list(
@@ -1373,7 +1364,7 @@ datavis_page <- function() {
       )
     ),
     Text(variant = "large", HTML("<b>Quality Control Checks: Supplementary</b>")),
-    p(),
+    Separator(),
     MessageBar("Here we present your data in the coloured boxplots and the dataset used in this model is presented in grey behind. By clicking on the antigens in the legend you can see the 
                boxplot of the data observed for our study. This can be used as a comparison or visual check to see if your values are within a similar range. Please note that these MFI and RAU values
                will vary by epidemiological setting."),

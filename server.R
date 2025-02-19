@@ -308,6 +308,10 @@ shinyServer(function(input, output, session){
       content = "Press the button to save all of these data to use throughout the app. If you want to change your inputs, you will have to press this button again!"
     ),
     list(
+      headline = "Reset Inputs",
+      content = "If you need to add in new inputs and want to ensure that you are starting with a clean slate, press this button and go through Steps 1-6 again!"
+    ),
+    list(
       headline = "Congratulations 🎉",
       content = "You have completed this tutorial. Well done! Press the > button to exit the window. You can repeat the tutorial by pressing the Step-By-Step Tutorial button again!"
     ),
@@ -344,31 +348,28 @@ shinyServer(function(input, output, session){
   output$teaching_bubble_ui <- renderReact({
     if (showBubble()) {
       step <- steps[[current_step()]]
-      target_id <- "#toggle_button"
       
-      # Adjust target positions based on current step
-      if (current_step() == 1) {
-        target_id <- "#target"
-      } else if (current_step() == 2) {
-        target_id <- "#experiment_name"
-      } else if (current_step() == 3) {
-        target_id <- "#date"
-      } else if (current_step() == 4) {
-        target_id <- "#experiment_notes"
-      } else if (current_step() == 5) {
-        target_id <- "#platform"
-      } else if (current_step() == 6) {
-        target_id <- "#uploadButton1"
-      } else if (current_step() == 7) {
-        target_id <- "#save_inputs"
-      } else if (current_step() == 8) {
-        target_id <- "#target"
-      }
+      # Map steps to actual Shiny input IDs
+      target_id <- switch(current_step(),
+                          "1" = "#target",  # Reference Shiny input ID directly
+                          "2" = "#experiment_name",
+                          "3" = "#date",
+                          "4" = "#experiment_notes",
+                          "5" = "#platform",
+                          "6" = "#raw_data",
+                          "7" = "#save_inputs",
+                          "8" = "#resetAll",
+                          "9" = "#target"
+      )
+      
+      req(target_id)
       
       TeachingBubble(
-        target = target_id, 
+        key = paste0("step_", current_step()),  # Forces re-render
+        target = target_id,  # Corrected selector reference
         headline = step$headline,
-        children = step$content
+        children = step$content,
+        calloutProps = if (current_step() %in% c(1, 9)) list(directionalHint = 0) else NULL
       )
     }
   })
@@ -438,29 +439,26 @@ shinyServer(function(input, output, session){
   output$teaching_bubble_CE <- renderReact({
     if (showBubble_CE()) {
       steps_CE <- steps_CE[[current_step_CE()]]
-      target_id <- "#toggle_button"
       
-      # Adjust target positions based on current step
-      if (current_step_CE() == 1) {
-        target_id <- "#algorithm"
-      } else if (current_step_CE() == 2) {
-        target_id <- "#sens_spec"
-      } else if (current_step_CE() == 3) {
-        target_id <- "#run_classification"
-      } else if (current_step_CE() == 4) {
-        target_id <- "#classification_summary"
-      } else if (current_step_CE() == 5) {
-        target_id <- "#download_classification"
-      } else if (current_step_CE() == 6) {
-        target_id <- "#target_CE"
-      } else if (current_step_CE() == 7) {
-        target_id <- "#target_CE"
-      }
+      # Map steps to actual Shiny input IDs
+      target_id_CE <- switch(current_step_CE(),
+                             "1" = "#target_CE",
+                             "2" = "#algorithm",  # Reference Shiny input ID directly
+                             "3" = "#sens_spec",
+                             "4" = "#run_classification",
+                             "5" = "#classification_summary",
+                             "6" = "#download_classification",
+                             "7" = "#target_CE"
+      )
+      
+      req(target_id_CE)
       
       TeachingBubble(
-        target = target_id, 
+        key = paste0("step_", current_step_CE()),  # Forces re-render
+        target = target_id_CE,  # Corrected selector reference
         headline = steps_CE$headline,
-        children = steps_CE$content
+        children = steps_CE$content,
+        calloutProps = if (current_step_CE() %in% c(1, 7)) list(directionalHint = 0) else NULL
       )
     }
   })
@@ -488,16 +486,6 @@ shinyServer(function(input, output, session){
       file.copy("data/template_platelayout.xlsx", file)
     }
   )
-  
-  # Observing the 'uploadButton1' for triggering file input
-  observeEvent(input$uploadButton1, {
-    click("raw_data")
-  })
-  
-  # Observing the 'uploadButton2' for triggering file input
-  observeEvent(input$uploadButton2, {
-    click("plate_layout")
-  })
   
   # When files are successfully uploaded, show a success message
   observeEvent(input$raw_data, {
@@ -588,6 +576,10 @@ shinyServer(function(input, output, session){
         "Inputs saved successfully!"
       )
     })
+  })
+  
+  observeEvent(input$resetAll, {
+    runjs("history.go(0)")
   })
   
   # Create reactive expressions to access the data
