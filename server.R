@@ -73,7 +73,7 @@ shinyServer(function(input, output, session){
   # Define footer content
   version <- reactive({
     if (!is.null(release_version)) {
-      paste("PvSeroApp", release_version)  # Display version
+      release_version  # Display version
     } else {
       "Version info not available."
     }
@@ -904,7 +904,7 @@ shinyServer(function(input, output, session){
   # 1. Downloadable csv of MFI/RAU results file
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", release_version(), "_MFI_RAU.csv")
+      paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv")
     },
     content = function(file) {
       write.csv(mfi_to_rau_output()[[1]], file, row.names = FALSE)
@@ -913,7 +913,7 @@ shinyServer(function(input, output, session){
   # 2. Downloadable csv of standards
   output$downloadStds <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", release_version(), "_stdcurve.csv")
+      paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv")
     },
     content = function(file) {
       write.csv(antigens_output()$stds, file, row.names = FALSE)
@@ -921,7 +921,7 @@ shinyServer(function(input, output, session){
   )
   
   output$report <- downloadHandler( ##### this code is not working
-    filename = paste0(experiment_name(), "_", date(), "_", release_version(), "_QCreport.pdf"),
+    filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"),
     content = function(file) {
       tempReport <- file.path(tempdir(), "template.Rmd")
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
@@ -959,9 +959,9 @@ shinyServer(function(input, output, session){
       dir.create(temp_dir, showWarnings = FALSE)  # Create a dedicated folder
       
       # Define file paths inside temp_dir
-      data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", release_version(), "_MFI_RAU.csv"))
-      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", release_version(), "_stdcurve.csv"))
-      report_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", release_version(), "_QCreport.pdf"))
+      data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv"))
+      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv"))
+      report_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"))
       
       # Generate files
       write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
@@ -1069,7 +1069,7 @@ shinyServer(function(input, output, session){
   ## ----- Downloadable csv of classification results file -----
   output$download_classification <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_classification_", algorithm(), ".csv", sep = "")
+      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_classification_", algorithm(), "_", version(), ".csv", sep = "")
     },
     content = function(file) {
       write.csv(classified_data(), file, row.names = FALSE)
