@@ -1,23 +1,27 @@
-######### FUNCTIONS ##########################################################
+################################# FUNCTIONS ##################################
 # This script stores the functions used in the app 
-# Author: Dionne C. Argyropoulos 
 ##############################################################################
 
 ##############################################################################
-# readSeroData function
+# readSeroData function: Read Serological Data
 # --------------------------
 #
-# This function imports the raw data from the Lightcycler 480 machine (eg WEHI)
-# and matches the sample names from the plate layout based on their plate/well
-# location. This function has been amended by Dionne to include MAGPIX input 
-# as well as BIOPLEX input files. 
-#
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .txt filename 
+# Description: 
+# This function imports the raw data from the Magpix or Bioplex machine
+# and matches the sample names from the plate layout based on their plate/well 
+# location.
+# 
+# Usage: readSeroData(raw_data, raw_data_filenames, platform) 
+# 
+# Arguments: 
+#   - raw_data: String with the raw data path (reactive)
+#   - raw_data_filenames: String with the raw data filenames (reactive)
 #   - platform: "magpix" or "bioplex" (reactive)
 #
-# OUTPUT:
+# Output:
 #   - Data frame with sample-matched qpcr data
+# 
+# Authors: Shazia Ruybal-Pesántez, Dionne Argyropoulos
 ##############################################################################
 
 readSeroData <- function(raw_data, raw_data_filenames, platform){
@@ -241,19 +245,26 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
 }
 
 ##############################################################################
-# Read Antigen Names 
+# readAntigens function: Standardise Antigen Names
 # --------------------------
 #
-# User forced to choose antigens from a set list and ensures that raw data 
-# adheres to our format. 
+# Description: 
+# This function ensures that the antigens in the raw data adheres to our
+# nomenclature format in the data processing and model steps.
+# This function calls `readSeroData` first to read the serological raw data and
+# then use our nomenclature for the eight antigens of interest in PvSeroApp. 
 # 
-#
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
+# Useage: readAntigens(raw_data, raw_data_filenames, platform)
+# 
+# Arguments: 
+#   - raw_data: String with the raw data path (reactive)
+#   - raw_data_filenames: String with the raw data filenames (reactive)
 #   - platform: "magpix" or "bioplex" (reactive)
 #
-# OUTPUT:
+# Output:
 #   - Data frame with relabelled column names for our antigen names 
+# 
+# Author: Dionne Argyropoulos
 ##############################################################################
 
 readAntigens <- function(serodata_output){
@@ -266,7 +277,7 @@ readAntigens <- function(serodata_output){
       str_detect(colnames(df), regex("LF010", ignore_case = TRUE)) ~ "LF010",
       str_detect(colnames(df), regex("LF016", ignore_case = TRUE)) ~ "LF016",
       str_detect(colnames(df), regex("(MSP8|L34)", ignore_case = TRUE)) ~ "MSP8",
-      str_detect(colnames(df), regex("(P87|RBP2b-P87|RBP2b)", ignore_case = TRUE)) ~ "RBP2b.P87",
+      str_detect(colnames(df), regex("(P87|RBP2b-P87)", ignore_case = TRUE)) ~ "RBP2b.P87",
       str_detect(colnames(df), regex("(PTEX150|L18)", ignore_case = TRUE)) ~ "PTEX150",
       str_detect(colnames(df), regex("CSS", ignore_case = TRUE)) ~ "PvCSS",
       TRUE ~ colnames(df) # Keep unmatched names as-is
@@ -297,17 +308,26 @@ readAntigens <- function(serodata_output){
 }
 
 ##############################################################################
-# readPlateLayout function
+# readPlateLayout function: Read Plate Layout/s
 # --------------------------
 #
-# This function imports the plate layout 
-#  
+# Description: 
+# This function imports the plate layout. Each sheet of the plate layout 
+# ".xlsx" file must contain 13 columns (labelled
+# Plate, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) (columns A-M) and 9 rows 
+# (Plate, A, B, C, D, E, F, G, H) (rows 1-9). *Note that the first row/column 
+# i.e., the A1 cell in excel is called "Plate".
+# 
+# Usage: readPlateLayout(plate_layout)
 #
-# PARAMETERS: 
-#   - plate_layout_file: string with the plate layout .xlsx or .csv filename 
+# Arguments: 
+#   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
+#     etc. (reactive)
 #
-# OUTPUT:
-#   - Data frame with sample-matched qpcr data
+# Output:
+#   - A list of data frames, with each one representing an individual plate.
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 readPlateLayout <- function(plate_layout) {
@@ -327,18 +347,26 @@ readPlateLayout <- function(plate_layout) {
 }
 
 ##############################################################################
-# getCounts function
+# getCounts function: Get Count Data from Raw Median Fluescent Itensity
 # --------------------------
 #
-# This function gets the count data 
+# Description: 
+# This function obtains the count data from the raw Median Fluescent Itensity
+# (MFI). This is an interim function used for the plotCounts function.
+# This function relies on the `readAntigens` and `readSeroData` data processing
+# functions.
 #  
+# Usage: getCounts(raw_data, raw_data_filenames, platform)
+# 
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#
-# OUTPUT:
-#   - Data frame with sample-matched qpcr data
+# Output:
+#   - Data frame providing bead counts per well per plate 
+#   - Designates whether wells should be repeated if there are ≤ 15 beads 
+#     (repeat) or if they are sufficient with > 15 beads (sufficient beads)
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 getCounts <- function(antigen_output){
@@ -373,19 +401,25 @@ getCounts <- function(antigen_output){
 }
 
 ##############################################################################
-# plotCounts function
+# plotCounts function: Plot Bead Count Data 
 # --------------------------
 #
-# This function gets the count data and plots the plate image - DA added multiple
-# facets for each plot so that different plates can be visualised. 
-#  
+# Description: 
+# This function gets the count data and plots the plate image, creating a new
+# facet (i.e., panel) for each antigen and each line represents the
+# different plates so that they can be visualised.
+# 
+# Usage: plotCounts(antigen_output, experiment_name)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
+# Arguments: 
+#   - counts_output: Output from `getCounts` (reactive)
+#   - experiment_name: User-input experiment name (reactive)
 #
-# OUTPUT:
-#   - Data frame with sample-matched qpcr data
+# Output:
+#   - Tile Plot showing binary result of "sufficient beads" with cut-off >15
+#   beads and "repeat" ≤15 beads (ggplot).
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 plotCounts <- function(counts_output, experiment_name){
@@ -403,19 +437,23 @@ plotCounts <- function(counts_output, experiment_name){
 }
 
 ##############################################################################
-# check_repeats function
+# check_repeats function: Check Beads to Repeat
 # --------------------------
 #
+# Description: 
 # This function gets the count data and outputs a table of the isolates to 
 # repeat or a statement to confirm that none need to be repeated.
-#  
+# 
+# Usage: check_repeats(counts_output)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
+# Arguments: 
+#   - counts_output: Output from `getCounts` (reactive)
 #
-# OUTPUT:
-#   - Data frame with list of isolates to repeat
+# Output:
+#   - Data frame with wells to "repeat", OR 
+#   - If no "repeats" found will return text "No repeats necessary"
+# 
+# Author: Dionne Argyropoulos
 ##############################################################################
 
 check_repeats <- function(counts_output) {
@@ -429,19 +467,24 @@ check_repeats <- function(counts_output) {
 }
 
 ##############################################################################
-# plotBlanks function
+# plotBlanks function: Plot Raw Median Fluorescent Intensity Blanks Data
 # --------------------------
 #
-# This function gets the blank sample data and plots the blank sample MFI values
-#  
+# Description: 
+# This function gets the blank sample data and plots the blank sample Median
+# Fluorescent Intensity (MFI) values.
+# 
+# Usage: plotBlanks(antigen_output, experiment_name)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#   - experiment_name: string with the experimet name (reactive)
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
+#   - experiment_name: User-input experiment name (reactive)
 #
-# OUTPUT:
-#   - Data frame with sample-matched qpcr data
+# Output:
+#   - Bar plot showing whether MFI values for the blanks for each antigen per 
+#   plate is above or below the threshold MFI = 50 (ggplot).
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 plotBlanks <- function(antigen_output, experiment_name){
@@ -450,33 +493,39 @@ plotBlanks <- function(antigen_output, experiment_name){
   blanks %>% 
     dplyr::select(-Location) %>% 
     pivot_longer(-c(Sample, Plate), names_to = "protein", values_to = "MFI") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))]))) %>% # reorder by plate number 
+    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))]))) %>% # Reorder by plate number 
     ggplot(aes(x = factor(protein), y = as.numeric(MFI), fill = Sample)) +
     geom_bar(stat = "identity", position = "dodge") +
     geom_hline(yintercept = 50, linetype = "dashed", color = "grey") +
-    labs(x = "Protein", 
+    labs(x = "Antigen", 
          y = "MFI",
          title = experiment_name) +
-    # theme_linedraw() +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_wrap(~ Plate)  # This will create separate facets for each level of 'plate'
+    facet_wrap(~ Plate)  # Create separate facets for each 'plate'
 }
 
 ############################################################################## 
-# plotStds function
+# plotStds function: Plot Raw Median Fluorescent Intensity of Standard Curve 
+# Data
 # --------------------------
 #
-# This function gets the standards data and plots the standard curves
-#  
+# Description: 
+# This function gets the standards data and plots the standard curves.
+# 
+# Usage: plotStds(antigen_output, experiment_name)
 #
-# PARAMETERS: 
-#   - antigen_output: output of readAntigens() (reactive)
-#   - location: "PNG" or "ETH" based on toggle (reactive)
-#   - experiment_name: string with the experiment name (reactive)
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
+#   - experiment_name: User-input experiment name (reactive)
+#   - location: "PNG" or "ETH" to filter WEHI standard curve data (reactive)
 #
-# OUTPUT:
-#   - ggplot of standard curves (S1-S10) with PNG or Ethiopia stds underneath
+# Output:
+#   - Dot and line plot of standard curves (S1-S10) with PNG or Ethiopia stds 
+#     underneath (ggplot).
+#   - WEHI-acceptable standard curve data on background of plot with user data.
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 plotStds <- function(antigen_output, location, experiment_name){
@@ -512,21 +561,27 @@ plotStds <- function(antigen_output, location, experiment_name){
 }
 
 ##############################################################################
-# MFItoRAU function
+# MFItoRAU function: Median Fluorescent Intensity (MFI) to Relative Antibody 
+# Units (RAU) conversion
 # --------------------------
 #
 # This function fits a 5-parameter logistic standard curve to the dilutions
 # of the positive controls for each protein and converts the MFI values 
-# into relative antibody units (RAU)
-# Written by Connie Li Wai Suen
+# into relative antibody units (RAU) written by Connie Li Wai Suen. 
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#   - plate_layout_file: string with the plate layout .xlsx filename 
+# Usage: MFItoRAU(antigen_output, plate_layout)
+# 
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
+#   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
+#     etc. (reactive)
 #
-# OUTPUT:
-#   - Data frame with converted RAU data
+# Output: A list of three data frames:
+#   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
+#   2. Plot information for `plotModel` function 
+#   3. Data frame of RAU data for random forest classification use. 
+# 
+# Authors: Connie Li Wai Suen, Dionne Argyropoulos
 ##############################################################################
 
 MFItoRAU <- function(antigen_output, plate_layout){
@@ -684,7 +739,7 @@ MFItoRAU <- function(antigen_output, plate_layout){
     results.df.wide[numeric_columns] <- lapply(results.df.wide[numeric_columns], as.numeric)
     
     ##########################################################################################################
-    #### OUTPUT
+    #### Output
     ##########################################################################################################
     
     # Save just MFI and RAU for downstream analyses
@@ -706,19 +761,25 @@ MFItoRAU <- function(antigen_output, plate_layout){
 }
 
 ##############################################################################
-# plotModel function
+# plotModel function: Plot the Median Fluorescent Intensity (MFI) to Relative 
+# Antibody Units (RAU) Results Data
 # --------------------------
 #
-# This function gets the model results data and plots the model fits
-#  
+# Description: 
+# This function gets the Median Fluorescent Intensity (MFI) to Relative Antibody
+# Units (RAU) model results data and plots the model fits
+# 
+# Usage: plotModel(mfi_to_rau_output, antigens_output)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#   - plate_layout_file: string with the plate layout .xlsx filename 
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
+#   - mfi_to_rau_output: Output from `MFItoRAU` (reactive)
 #
-# OUTPUT:
-#   - Data frame with sample-matched qpcr data
+# Output:
+#   - List of dot and line plots of MFI to RAU model standard curve, with each 
+#     one representing an individual plate (ggplots)
+# 
+# Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
 plotModel <- function(mfi_to_rau_output, antigens_output){
@@ -784,21 +845,34 @@ plotModel <- function(mfi_to_rau_output, antigens_output){
 }
 
 ##############################################################################
-# classify_final_results
+# classify_final_results function: Random Forest Classification
 # --------------------------
 #
+# Description: 
 # This function classifies unknown samples as recently exposed or not 
 # (Note: MFItoRAU() needs to be run first to convert to RAU)
 #  
+# Usage: classify_final_results(mfi_to_rau_output, algorithm_type, Sens_Spec)
 #
-# PARAMETERS: 
-#   - raw_data_file: string with the raw data .xlsx or .csv filename 
-#   - platform: "magpix" or "bioplex" (reactive)
-#   - algorithm: user-selected algorithm choice
+# Arguments: 
+#   - mfi_to_rau_output: Output from `MFItoRAU` (reactive)
+#   - algorithm_type: User-selected algorithm choice: 
+#       * "antibody_model" (PvSeroTaT model; default), or 
+#       * "antibody_model_excLF016" (PvSeroTat excluding LF016).
+#   - Sens_Spec: User-selected Sensitivity/Specificity threshold: 
+#       * "maximised" (default), 
+#       * "85\% sensitivity",
+#       * "90\% sensitivity",
+#       * "95\% sensitivity", 
+#       * "85\% specificity",
+#       * "90\% specificity".
+#       * "95\% specificity".
 #
-# OUTPUT:
+# Output:
 #   - Data frame with exposure status for every sample
 #   - Summary table with positive/negative results for each classifier
+# 
+# Authors: Lauren Smith, Dionne Argyropoulos
 ##############################################################################
 
 classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec) {
@@ -867,20 +941,26 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 }
 
 ##############################################################################
-# plotBoxPlotClassification function
+# plotBoxPlotClassification function: Plot Classification
 # --------------------------
 #
-# This function plots the RAU values for each protein based on a selected  
-# threshold based on the row chosen: "maximised", "85% sensitivity", 
-# "90% sensitivity", 
-# "95% sensitivity","85% specificity", "90% specificity", "95% specificity". 
+# Description: 
+# One example of data visualisation to detect the median and interquartile range
+# of the RAU values per antigen for seropositive and seronegative individuals.
+# Please note that the `classify_final_results` function must be run first.
 #
-# PARAMETERS: 
-#   - all_classifications: df of classify_final_results() for all thresholds
-#   - selected_threshold: string with the threshold (reactive)
+# Usage: plotBoxPlotClassification(all_classifications, selected_threshold)
+# 
+# Arguments: 
+#   - all_classifications: Data frame of `classify_final_results()` for all 
+#     Sens_Spec thresholds. 
+#   - selected_threshold: String with the threshold (reactive)
 #
-# OUTPUT:
-#   - Box plots with RAU values for each protein stratified by classification
+# Output:
+#   - Box plots with RAU values for each protein stratified by classification 
+#     (ggplot)
+# 
+# Author: Dionne Argyropoulos
 ##############################################################################
 
 plotBoxPlotClassification <- function(all_classifications, selected_threshold){
@@ -902,16 +982,21 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
 }
 
 ##############################################################################
-# plotMFI function
+# plotMFI function: Median Fluorescent Intensity (MFI) Box Plots
 # --------------------------
 #
+# Description: 
+# Boxplot of the MFI values 
+# 
+# Usage: plotMFI(mfi_to_rau_output)
+# 
+# Arguments: 
+#   - mfi_to_rau_output: Output from `MFItoRAU` (reactive)
 #
-# PARAMETERS: 
-#   - xxx
-#   - xxx
-#
-# OUTPUT:
-#   - Box plots with MFI values for each protein
+# Output:
+#   - Box plots with MFI values for each protein (ggplot).
+# 
+# Author: Dionne Argyropoulos
 ##############################################################################
 
 plotMFI <- function(mfi_to_rau_output){
@@ -921,7 +1006,7 @@ plotMFI <- function(mfi_to_rau_output){
     dplyr::select(SampleID, Plate, ends_with("_MFI")) %>%
     rename_with(~str_replace(., "_MFI", ""), ends_with("_MFI")) %>%
     pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "MFI") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
+    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
            MFI = as.numeric(MFI)) 
   
   df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
@@ -941,18 +1026,22 @@ plotMFI <- function(mfi_to_rau_output){
 }
 
 ##############################################################################
-# plotRAU function
+# plotRAU function: Relative Antibody Unit (RAU) Box Plots
 # --------------------------
 #
+# Description: 
+# 
+# 
+# Usage: plotRAU(mfi_to_rau_output)
+# 
+# Arguments: 
+#   - mfi_to_rau_output: Output from `MFItoRAU` (reactive)
 #
-# PARAMETERS: 
-#   - xxx
-#   - xxx
-#
-# OUTPUT:
-#   - Box plots with RAU values for each protein
+# Output:
+#   - Box plots with RAU values for each protein (ggplot).
+# 
+# Author: Dionne Argyropoulos
 ##############################################################################
-
 
 plotRAU <- function(mfi_to_rau_output){
   
@@ -961,7 +1050,7 @@ plotRAU <- function(mfi_to_rau_output){
     dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
     rename_with(~str_replace(., "_Dilution", ""), ends_with("_Dilution")) %>%
     pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "RAU") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
+    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
            RAU = as.numeric(RAU)) 
   
   df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
@@ -979,3 +1068,28 @@ plotRAU <- function(mfi_to_rau_output){
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
 }
+
+##############################################################################
+# plotBeadCounts function
+# --------------------------
+# 
+# Description: 
+# Enhances the `plotCounts` output by providing greater resolution, displaying 
+# antigens per plate, and enabling SampleID name visibility via hover 
+# (transformed to Plotly in server.R)
+# 
+# Usage: plotBeadCounts(antigen_output, plate_layout)
+#
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive)
+#   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
+#     etc. (reactive)
+#
+# Output:
+#   - Dot plot with values > 15 threshold coloured in blue (sufficient beads) 
+#     and ≤15 beads coloured in red (repeat) faceted by each antigen (ggplot).
+# 
+# Author: Dionne Argyropoulos
+##############################################################################
+
+
