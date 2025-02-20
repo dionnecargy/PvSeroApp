@@ -375,27 +375,26 @@ getCounts <- function(antigen_output){
   counts <- master_file$counts
   
   counts <- counts %>%
-    clean_names() %>% 
-    dplyr::select(-sample) %>% # can maybe "keep" relevant columns + protein names?
-    dplyr::mutate(location=gsub(".*,", "", location)) %>%
-    dplyr::mutate(location=substr(location, 1, nchar(location)-1))  %>% 
-    tidyr::pivot_longer(-c(location, plate), names_to = "protein", values_to = "count") %>% 
-    dplyr::mutate(warning = case_when(
-      as.numeric(count)<15~1,
-      as.numeric(count)>=15~0
+    dplyr::select(-Sample) %>% # can maybe "keep" relevant columns + protein names?
+    dplyr::mutate(Location=gsub(".*,", "", Location)) %>%
+    dplyr::mutate(Location=substr(Location, 1, nchar(Location)-1))  %>% 
+    tidyr::pivot_longer(-c(Location, Plate), names_to = "Antigen", values_to = "Count") %>% 
+    dplyr::mutate(Warning = case_when(
+      as.numeric(Count)<15~1,
+      as.numeric(Count)>=15~0
     )) %>%
-    dplyr::select(location, warning, plate) %>%
-    dplyr::group_by(location, plate) %>%
-    dplyr::summarise(sum = sum(warning)) %>%
-    dplyr::mutate(colour = case_when(
-      sum>=1 ~ "repeat",
-      sum<1 ~ "sufficient beads"
+    dplyr::select(Location, Warning, Plate) %>%
+    dplyr::group_by(Location, Plate) %>%
+    dplyr::summarise(Sum = sum(Warning)) %>%
+    dplyr::mutate(Colour = case_when(
+      Sum>=1 ~ "repeat",
+      Sum<1 ~ "sufficient beads"
     )) %>%
-    dplyr::mutate(row = substr(location, 1, nchar(location)-1)) %>%
-    dplyr::mutate(col = substr(location, 2, nchar(location))) %>%
-    dplyr::mutate(row = gsub("1", "", row)) %>%
-    dplyr::mutate(row = as.factor(row)) %>%
-    dplyr::mutate(col = as.numeric(col))
+    dplyr::mutate(Row = substr(Location, 1, nchar(Location)-1)) %>%
+    dplyr::mutate(Col = substr(Location, 2, nchar(Location))) %>%
+    dplyr::mutate(Row = gsub("1", "", Row)) %>%
+    dplyr::mutate(Row = as.factor(Row)) %>%
+    dplyr::mutate(Col = as.numeric(Col))
   
   return(counts)
 }
@@ -424,16 +423,16 @@ getCounts <- function(antigen_output){
 
 plotCounts <- function(counts_output, experiment_name){
   bead_counts <- counts_output
-  bead_counts$plate <- factor(bead_counts$plate, levels = unique(bead_counts$plate[order(as.numeric(str_extract(bead_counts$plate, "\\d+")))])) # reorder by plate number 
+  bead_counts$Plate <- factor(bead_counts$Plate, levels = unique(bead_counts$Plate[order(as.numeric(str_extract(bead_counts$Plate, "\\d+")))])) # reorder by plate number 
   bead_counts %>% 
-    ggplot(mapping = aes(x = col, y = fct_rev(row), fill = colour), fill = summary) +
+    ggplot(mapping = aes(x = Col, y = fct_rev(Row), fill = Colour), fill = summary) +
     geom_tile(aes(height = 0.90, width = 0.90)) +
     scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
                        position = "top") +
     scale_fill_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
     theme_bw() +
     labs(x = "", y = "", title = experiment_name , fill = "") +
-    facet_wrap(~ plate, scales = "free_y")  # This will create separate facets for each level of 'plate'
+    facet_wrap(~ Plate, scales = "free_y")  # This will create separate facets for each level of 'Plate'
 }
 
 ##############################################################################
@@ -458,7 +457,7 @@ plotCounts <- function(counts_output, experiment_name){
 
 check_repeats <- function(counts_output) {
   bead_counts <- counts_output
-  repeat_rows <- bead_counts %>% filter(colour == "repeat")
+  repeat_rows <- bead_counts %>% filter(Colour == "repeat")
   if (nrow(repeat_rows) == 0) {
     return("No repeats necessary.")
   } else {

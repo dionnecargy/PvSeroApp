@@ -713,7 +713,6 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Creating standard curve plot
   location <- reactive({
     value <- ifelse(is.null(input$toggle_png_eth), FALSE, input$toggle_png_eth)
-    print(paste("Reactive location() value:", value))  # Debugging
     ifelse(value, "ETH", "PNG")  # Map TRUE to "ETH", FALSE to "PNG"
   })
   
@@ -786,31 +785,31 @@ shinyServer(function(input, output, session){
     req(check_repeats_output(), plate_layout_reactive())
     
     if (is.data.frame(check_repeats_output())) {
-    table <- check_repeats_output()
-    layout <- readPlateLayout(plate_layout_reactive()$datapath)
-    
-    # Extract the row and column information from the 'location' column in table
-    table$row <- substr(table$location, 1, 1)  # Extract row (e.g., 'A')
-    table$col <- substr(table$location, 2, 2)  # Extract column (e.g., '1')
-    
-    # Function to extract SampleID based on plate name and row/col
-    get_sample_id <- function(plate_name, row, col) {
-      # Get the platelayout data frame based on the plate name
-      platelayout_df <- layout[[plate_name]]
-      # Find the correct row and column in platelayout
-      row_index <- which(platelayout_df$Plate == row)
-      col_index <- as.integer(col) + 1  # Adding 1 because platelayout has column names as strings
-      # Extract the corresponding SampleID
-      return(platelayout_df[row_index, col_index])
-    }
-    
-    # Apply the function to extract SampleID for each row in table
-    table$SampleID <- mapply(function(plate, row, col) {
-      get_sample_id(plate, row, col)
-    }, table$plate, table$row, table$col)
-    
-    table <- table %>% dplyr::select(SampleID, Location = location, Plate = plate, Repeat = colour)
-    table
+      table <- check_repeats_output()
+      layout <- readPlateLayout(plate_layout_reactive()$datapath)
+      
+      # Extract the row and column information from the 'location' column in table
+      table$Row <- substr(table$Location, 1, 1)  # Extract row (e.g., 'A')
+      table$Col <- substr(table$Location, 2, 2)  # Extract column (e.g., '1')
+      
+      # Function to extract SampleID based on plate name and Row/Col
+      get_sample_id <- function(plate_name, Row, Col) {
+        # Get the platelayout data frame based on the plate name
+        platelayout_df <- layout[[plate_name]]
+        # Find the correct Row and column in platelayout
+        row_index <- which(platelayout_df$Plate == Row)
+        col_index <- as.integer(Col) + 1  # Adding 1 because platelayout has column names as strings
+        # Extract the corresponding SampleID
+        return(platelayout_df[row_index, col_index])
+      }
+      
+      # Apply the function to extract SampleID for each row in table
+      table$SampleID <- mapply(function(Plate, Row, Col) {
+        get_sample_id(Plate, Row, Col)
+      }, table$Plate, table$Row, table$Col)
+      
+      table <- table %>% dplyr::select(SampleID, Location, Plate, Repeat = Colour)
+      table
     }
   })
   
@@ -1069,7 +1068,7 @@ shinyServer(function(input, output, session){
   ## ----- Downloadable csv of classification results file -----
   output$download_classification <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_classification_", algorithm(), "_", version(), ".csv", sep = "")
+      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_", algorithm(), "_", version(), "_classification.csv", sep = "")
     },
     content = function(file) {
       write.csv(classified_data(), file, row.names = FALSE)
