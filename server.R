@@ -96,10 +96,10 @@ shinyServer(function(input, output, session){
   output$page_content <- renderUI({
     hash <- session$clientData$url_hash # Check the value of the URL hash (based on user navigation)
     
-    if (is.null(hash) || hash == "") {hash <- "#activity"}  # Default to the "activity" page if no hash
+    if (is.null(hash) || hash == "") {hash <- "#home"}  # Default to the "home" page if no hash
     
     # Render content from content.R 
-    if (hash == "#activity") {
+    if (hash == "#home") {
       home_page() 
     } else if (startsWith(hash, "#tutorial")) {
       tutorial_page()
@@ -524,9 +524,18 @@ shinyServer(function(input, output, session){
   })
   
   # USER INPUT 3: Reactive expression to get experiment notes 
+  
+  # USER INPUT 3: Reactive expression to get experiment notes 
   experiment_notes <- reactive({
-    req(input$experiment_notes)
-    input$experiment_notes
+    
+    text <- if (is.null(input$experiment_notes) || input$experiment_notes == "") {
+      "no notes"
+    } else {
+      input$experiment_notes
+    }
+    text
+    
+    print(text)
   })
   
   # USER INPUT 4: Reactive expression to get uploaded files (raw_data)
@@ -563,18 +572,19 @@ shinyServer(function(input, output, session){
   app_data <- reactiveValues()
   
   observeEvent(input$save_inputs, {
-    req(raw_data(), platform(), plate_layout())
+    req(experiment_name(), date(), raw_data(), raw_data_filename(), platform(), plate_layout())
     
+    # Store App Data 
+    app_data$experiment_name <- experiment_name()
+    app_data$date <- date()
     app_data$raw_data <- raw_data()
     app_data$raw_data_filename <- raw_data_filename()
     app_data$platform <- platform()
     app_data$plate_layout <- plate_layout()
-    # showNotification("Inputs saved!")
+    
+    # Relay message that App Data is "Saved"
     output$notification <- renderUI({
-      MessageBar(
-        messageBarType = 4,  # 4 = success
-        "Inputs saved successfully!"
-      )
+      MessageBar(messageBarType = 4, "Inputs saved successfully!")
     })
   })
   
@@ -583,6 +593,8 @@ shinyServer(function(input, output, session){
   })
   
   # Create reactive expressions to access the data
+  experiment_name_reactive <- reactive({ app_data$experiment_name })
+  date_reactive <- reactive({ app_data$date })
   raw_data_reactive <- reactive({ app_data$raw_data })
   raw_data_filename_reactive <- reactive({ app_data$raw_data_filename })
   platform_reactive <- reactive({ app_data$platform })
@@ -903,7 +915,7 @@ shinyServer(function(input, output, session){
   # 1. Downloadable csv of MFI/RAU results file
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv")
+      paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_MFI_RAU.csv")
     },
     content = function(file) {
       write.csv(mfi_to_rau_output()[[1]], file, row.names = FALSE)
@@ -912,15 +924,15 @@ shinyServer(function(input, output, session){
   # 2. Downloadable csv of standards
   output$downloadStds <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv")
+      paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_stdcurve.csv")
     },
     content = function(file) {
       write.csv(antigens_output()$stds, file, row.names = FALSE)
     }
   )
   
-  output$report <- downloadHandler( ##### this code is not working
-    filename = paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"),
+  output$report <- downloadHandler(
+    filename = paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_QCreport.pdf"),
     content = function(file) {
       tempReport <- file.path(tempdir(), "template.Rmd")
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
@@ -928,8 +940,8 @@ shinyServer(function(input, output, session){
       # Set up parameters to pass to Rmd document
       params <- list(
         raw_data_filename_reactive = raw_data_filename_reactive(),
-        experiment_name = experiment_name(),
-        date = date(),
+        experiment_name_reactive = experiment_name_reactive(),
+        date_reactive = date_reactive(),
         experiment_notes = experiment_notes(),
         platform_reactive = platform_reactive(),
         stdcurve_plot = stdcurve_plot(),
@@ -942,7 +954,7 @@ shinyServer(function(input, output, session){
       
       callr::r(
         render_report,
-        list(input = tempReport, output = file, params = params, envir = new.env())
+        list(input = tempReport, output = file, params = params)
       )
       
     }
@@ -951,16 +963,17 @@ shinyServer(function(input, output, session){
   # 4. Download zip file
   output$download_zip <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(),  "_all_files.zip")
+      paste0(experiment_name_reactive(), "_", date_reactive(),  "_all_files.zip")
     },
     content = function(file) {
       temp_dir <- file.path(tempdir(), "export_files")
-      dir.create(temp_dir, showWarnings = FALSE)  # Create a dedicated folder
+      if (dir.exists(temp_dir)) unlink(temp_dir, recursive = TRUE)
+      dir.create(temp_dir, showWarnings = FALSE)
       
       # Define file paths inside temp_dir
-      data_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_MFI_RAU.csv"))
-      stds_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_stdcurve.csv"))
-      report_file <- file.path(temp_dir, paste0(experiment_name(), "_", date(), "_", version(), "_QCreport.pdf"))
+      data_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_MFI_RAU.csv"))
+      stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_stdcurve.csv"))
+      report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_QCreport.pdf"))
       
       # Generate files
       write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
@@ -971,8 +984,8 @@ shinyServer(function(input, output, session){
       file.copy("template.Rmd", tempReport, overwrite = TRUE)
       params <- list(
         raw_data_filename_reactive = raw_data_filename_reactive(),
-        experiment_name = experiment_name(),
-        date = date(),
+        experiment_name_reactive = experiment_name_reactive(),
+        date_reactive = date_reactive(),
         experiment_notes = experiment_notes(),
         platform_reactive = platform_reactive(),
         stdcurve_plot = stdcurve_plot(),
@@ -982,10 +995,10 @@ shinyServer(function(input, output, session){
         check_repeats_table_format = check_repeats_table_format(),
         model_plot = model_plot()
       )
-      # callr::r(
-      #   render_report, 
-      #   list(input = tempReport, output = report_file, params = params, envir = new.env())
-      # )
+      callr::r(
+        render_report,
+        list(input = tempReport, output = report_file, params = params)
+      )
       
       # Create ZIP with a clean structure
       old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
@@ -993,7 +1006,6 @@ shinyServer(function(input, output, session){
       setwd(old_wd)  # Restore original working directory
     }
   )
-  
   
   ###############################################################################
   # ------------ CLASSIFY EXPOSURE   ------------

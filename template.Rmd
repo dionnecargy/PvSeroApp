@@ -9,13 +9,15 @@ output:
   pdf_document: default
 params:
   raw_data_filename_reactive: NA
-  experiment_name: NA
+  experiment_name_reactive: NA
   experiment_notes: NA
   platform_reactive: NA
-  date: NA
+  date_reactive: NA
   stdcurve_plot: NA
   plateqc_plot: NA
   blanks_plot: NA
+  check_repeats_output: NA
+  check_repeats_table_format: NA
   model_plot: NA
 ---
 
@@ -30,7 +32,7 @@ require(kableExtra)
 ```
 
 ***
-### QC Report for experiment: `r params$experiment_name` analysed on `r params$date`
+### QC Report for experiment: `r params$experiment_name_reactive` analysed on `r params$date_reactive`
 ***
 
 #### Plot of Standard Curves
@@ -55,7 +57,7 @@ for (plot_name in names(model_plot)) {
   cat(paste0("##### ", plot_name, "\n\n"))  # Adds a title for each plot
   print(model_plot[[plot_name]])            # Render the actual plot
   
-  first_plot <- FALSE                       # Update flag after first plot is printed 
+  first_plot <- FALSE                       # Update_reactive flag after first plot is printed 
 }
 ```
 \newpage
@@ -91,7 +93,7 @@ blanks_plot + theme(legend.position = "bottom")
 ```
 \newpage
 
-#### Experiment Information \\
+#### Experiment Information 
 
 **Experiment Notes:** `r params$experiment_notes`
 
