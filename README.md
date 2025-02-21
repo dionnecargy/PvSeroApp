@@ -29,3 +29,5 @@ You can label it however you like - however you only **need ONE plate layout .xl
 >How can I access the "Step-by-Step tutorial"?
 
 On the [Input](https://dionnecargy.shinyapps.io/pvserotat/#input) page and [Classify Exposure](https://dionnecargy.shinyapps.io/pvserotat/#model) page there is a quick step-by-step tutorial with left and right buttons. Just simply click the "Step-By-Step Tutorial" button and it will lead you through the rest!
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"> CC BY-NC-SA 4.0 International Licence</a>.
