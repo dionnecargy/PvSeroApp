@@ -1212,4 +1212,21 @@ shinyServer(function(input, output, session){
     plotly_rau_plot
   })
   
+  
+  output$bead_count_plotly <- renderPlotly({
+    req(antigens_output(), plate_layout_reactive())
+    
+    plotly_bead_count <- plotBeadCounts(antigen_output = antigens_output(),
+                                        plate_layout = plate_layout_reactive()$datapath)
+    plotly_bead_count_1 <- ggplotly(plotly_bead_count) %>%
+      layout(
+        showlegend = TRUE, 
+        legend = list(tracegroupgap = 0), 
+        font = list(family = "Helvetica", size = 20, colour = "black")
+      )
+    plotly_bead_count_1
+    
+  })
+  
+  
 })

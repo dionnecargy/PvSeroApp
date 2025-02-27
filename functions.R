@@ -1092,3 +1092,82 @@ plotRAU <- function(mfi_to_rau_output){
 ##############################################################################
 
 
+plotBeadCounts <- function(antigen_output, plate_layout){
+  
+  master_file <- antigen_output
+  counts <- master_file$counts
+  counts <- 
+    counts %>%
+    dplyr::select(-Sample) %>% # can maybe "keep" relevant columns + protein names?
+    dplyr::mutate(Location=gsub(".*,", "", Location)) %>%
+    dplyr::mutate(Location=substr(Location, 1, nchar(Location)-1))  %>% 
+    tidyr::pivot_longer(-c(Location, Plate), names_to = "Antigen", values_to = "Count") %>% 
+    dplyr::mutate(Warning = case_when(
+      as.numeric(Count)<15~1,
+      as.numeric(Count)>=15~0
+    )) %>%
+    dplyr::select(Location, Antigen, Warning, Count, Plate) %>%
+    dplyr::group_by(Location, Antigen, Count, Plate) %>%
+    dplyr::summarise(Sum = sum(Warning)) %>%
+    dplyr::mutate(Colour = case_when(
+      Sum>=1 ~ "repeat",
+      Sum<1 ~ "sufficient beads"
+    )) %>%
+    dplyr::mutate(Row = substr(Location, 1, nchar(Location)-1)) %>%
+    dplyr::mutate(Col = substr(Location, 2, nchar(Location))) %>%
+    dplyr::mutate(Row = gsub("1", "", Row)) %>%
+    dplyr::mutate(Row = as.factor(Row)) %>%
+    dplyr::mutate(Col = as.numeric(Col))
+  
+  bead_counts <- counts %>% 
+    mutate(Count = as.numeric(Count), 
+           Repeat = factor(Colour, levels = c("sufficient beads", "repeat"))) 
+  bead_counts$Plate <- factor(bead_counts$Plate, levels = unique(bead_counts$Plate[order(as.numeric(str_extract(bead_counts$Plate, "\\d+")))])) # reorder by plate number 
+  
+  check_repeats_output <- check_repeats(bead_counts)
+  
+  if (is.data.frame(check_repeats_output)) {
+    table <- bead_counts
+    layout <- readPlateLayout(plate_layout)
+    
+    # Extract the row and column information from the 'location' column in table
+    table$Row <- substr(table$Location, 1, 1)  # Extract row (e.g., 'A')
+    table$Col <- substr(table$Location, 2, 2)  # Extract column (e.g., '1')
+    
+    # Function to extract Sample based on plate name and row/col
+    get_sample_id <- function(plate_name, Row, Col) {
+      # Get the platelayout data frame based on the plate name
+      platelayout_df <- layout[[plate_name]]
+      # Find the correct row and column in platelayout
+      row_index <- which(platelayout_df$Plate == Row)
+      col_index <- as.integer(Col) + 1  # Adding 1 because platelayout has column names as strings
+      # Extract the corresponding Sample
+      return(platelayout_df[row_index, col_index])
+    }
+    
+    # Apply the function to extract Sample for each row in table
+    table$Sample <- mapply(function(Plate, Row, Col) {
+      get_sample_id(Plate, Row, Col)
+    }, table$Plate, table$Row, table$Col)
+    
+    table <- table %>% dplyr::select(Sample, Location, Plate, Repeat = Colour)
+    table
+  }
+  
+  bead_counts %>% 
+    ggplot(aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat)) + 
+    geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
+    geom_point() +
+    scale_y_continuous(breaks = c(0, 15, 50, 100, 150, 200)) +
+    scale_colour_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
+    scale_alpha_manual(values = c("sufficient beads" = 0.5, "repeat" = 1)) +
+    scale_size_manual(values = c("sufficient beads" = 1, "repeat" = 3)) + 
+    labs(x = "Plate", y = "Bead Counts", alpha = "", colour = "", size = "") +  # Add legend title
+    facet_grid(~ Antigen) +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") + # Show legend
+    guides(alpha = "none") + 
+    guides(size = "none") 
+}
+
+

@@ -1375,7 +1375,11 @@ datavis_page <- function() {
     p(),
     Label(HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
     p(),
-    plotlyOutput("rau_plotly")
+    plotlyOutput("rau_plotly"),
+    p(),
+    Label(HTML("<b>Bead Counts per Antigen</b>")), 
+    p(),
+    plotlyOutput("bead_count_plotly")
   )
 }
 
