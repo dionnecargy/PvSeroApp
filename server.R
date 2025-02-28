@@ -25,6 +25,7 @@ require(gt)
 require(rsconnect)
 require(httr)
 require(jsonlite)
+require(ranger)
 
 source("functions.R")
 source("content.R")
@@ -770,7 +771,7 @@ shinyServer(function(input, output, session){
     gg <- stdcurve_plot()
     
     # Convert to plotly
-    plotly_gg <- ggplotly(gg) %>% 
+    plotly_gg <- ggplotly(gg, tooltip = "text") %>%
       layout(
         showlegend = TRUE,  # Ensure legend is visible
         font = list(family = "Helvetica", size = 20, colour = "black"),
@@ -782,9 +783,7 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Render plate QC plot
   output$plateqc <- renderPlot({
-    # gg <- 
     plateqc_plot()
-    # ggplotly(gg) %>% layout(showlegend = TRUE) # Convert to plotly
   })
   
   output$check_repeats_text <- renderText({
@@ -842,9 +841,7 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Render blanks plot
   output$blanks <- renderPlot({
-    # gg <- 
     blanks_plot()
-    # ggplotly(gg) %>% layout(showlegend = TRUE) # Convert to plotly
   })
   
   # APP RESPONSE: Render QC model data frame
@@ -1190,6 +1187,7 @@ shinyServer(function(input, output, session){
     plotly_mfi_plot <- ggplotly(mfi_plot) %>%
       layout(
         showlegend = TRUE, 
+        hovermode = FALSE,
         legend = list(tracegroupgap = 0), 
         font = list(family = "Helvetica", size = 20, colour = "black"),
         xaxis = list(title_standoff = 40)
@@ -1205,6 +1203,7 @@ shinyServer(function(input, output, session){
     plotly_rau_plot <- ggplotly(rau_plot) %>%
       layout(
         showlegend = TRUE, 
+        hovermode = FALSE,
         legend = list(tracegroupgap = 0), 
         font = list(family = "Helvetica", size = 20, colour = "black"),
         xaxis = list(title_standoff = 40)
@@ -1218,7 +1217,8 @@ shinyServer(function(input, output, session){
     
     plotly_bead_count <- plotBeadCounts(antigen_output = antigens_output(),
                                         plate_layout = plate_layout_reactive()$datapath)
-    plotly_bead_count_1 <- ggplotly(plotly_bead_count) %>%
+    
+    plotly_bead_count_1 <- ggplotly(plotly_bead_count, tooltip = "text") %>%
       layout(
         showlegend = TRUE, 
         legend = list(tracegroupgap = 0), 

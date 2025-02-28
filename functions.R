@@ -547,7 +547,8 @@ plotStds <- function(antigen_output, location, experiment_name){
   gg <- 
     ggplot() + 
     geom_point(data = wehi_stds, aes(x = Sample, y = MFI), colour = "grey", alpha = 0.25) + 
-    geom_point(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
+    geom_point(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate, 
+                                  text = paste("Sample:", Sample, "<br>MFI:", MFI, "<br>Plate:", Plate))) + 
     geom_line(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
     scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
     labs(x = "Standard Curve", 
@@ -1150,12 +1151,15 @@ plotBeadCounts <- function(antigen_output, plate_layout){
       get_sample_id(Plate, Row, Col)
     }, table$Plate, table$Row, table$Col)
     
-    table <- table %>% dplyr::select(Sample, Location, Plate, Repeat = Colour)
+    table <- table %>% ungroup() %>% dplyr::select(Sample, Location, Antigen, Plate, Colour, Count)
     table
   }
   
-  bead_counts %>% 
-    ggplot(aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat)) + 
+  bead_counts_1 <- bead_counts %>% left_join(table, by = c("Plate", "Count", "Antigen", "Location"))
+  
+  bead_counts_1 %>% 
+    ggplot(aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat, 
+               text = paste("Sample:", Sample, "<br>Bead Count:", Count, "<br>Location:", Location,"<br>Plate:", Plate))) + 
     geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
     geom_point() +
     scale_y_continuous(breaks = c(0, 15, 50, 100, 150, 200)) +
