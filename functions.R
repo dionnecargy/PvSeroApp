@@ -432,7 +432,7 @@ plotCounts <- function(counts_output, experiment_name){
     scale_fill_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
     theme_bw() +
     labs(x = "", y = "", title = experiment_name , fill = "") +
-    facet_wrap(~ Plate, scales = "free_y")  # This will create separate facets for each level of 'Plate'
+    facet_wrap( ~ Plate, ncol = 3, scales = "free_y")  # This will create separate facets for each level of 'Plate'
 }
 
 ##############################################################################
@@ -589,7 +589,10 @@ MFItoRAU <- function(antigen_output, plate_layout){
   master_file <- antigen_output
   L <- master_file$results
   layout <- readPlateLayout(plate_layout)
-  proteins <- c("EBP", "LF005", "LF010", "LF016", "MSP8", "RBP2b.P87", "PTEX150", "PvCSS")
+  
+  excluded_cols <- c("Location", "Sample", "Plate")
+  remaining_cols <- setdiff(colnames(L), excluded_cols)
+  proteins <- remaining_cols[remaining_cols != ""]
   
   L$type.letter <- substr(L$Sample, start=1, stop=1)
   dilution <- c(1/50, 1/100, 1/200, 1/400, 1/800, 1/1600, 1/3200, 1/6400, 1/12800, 1/25600)

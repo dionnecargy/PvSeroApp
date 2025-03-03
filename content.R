@@ -177,11 +177,6 @@ tutorial_page <- function() {
     Separator(),
     Stack(
       horizontal = TRUE, tokens = list(childrenGap = 20), horizontalAlign = "start",
-      
-      # Main content (left side)
-      # Stack(
-      #   horizontal = FALSE,
-      #   tokens = list(childrenGap = 20),
       div(
         class = "main-content",
         style = "flex-grow: 1; padding: 20px;",# Main content takes 80% width
@@ -197,7 +192,7 @@ tutorial_page <- function() {
             <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a> machines.
             For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/pvserotat' class-'link'>download the example data</a>. 
             The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTaT Luminex 
-           Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."))
+            Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."))
           )
         ),
         ######### ------------ Raw Data Requirements  ------------
@@ -206,11 +201,8 @@ tutorial_page <- function() {
           Stack(
             tokens = list(childrenGap = 10),
             Separator(Text(variant = "xxLarge", "2. Raw Data Requirements"), alignContent = "start"),
-            Text(variant = "medium", HTML(r"(The following files are required for this app. You might like to organise your folder as follows:
-            <br>PvSeroApp/
-            <br>  ├── rawdata/            # All output data from the Luminex platforms with suffix "plate1", "plate2", "plate3"...
-            <br>  └── platelayout.xlsx    # Plate layout xlsx file where each tab is labelled "plate1", "plate2", "plate3"....
-            )")),
+            Text(variant = "medium", HTML(r"(The following files are required for this app. You might like to organise your folder as follows:)")),
+            verbatimTextOutput("code_display"),
             makeCard(
               id = "tutorial/rawdata/antigens",
               title = "2.1. Antigen Label Requirements", 
@@ -220,7 +212,8 @@ tutorial_page <- function() {
                   first_col = Text(variant = "medium", HTML(r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSeroTaT Luminex Assay</b>.
                          For the purposes of data processing, it is important that the antigens are named with the convention listed here.<br><br>
                          The data processing in this app will be able to decipher any of these options, differing capitalisations, and any "Pv" prefixes.<br><br>
-                         If you have run other antigens in your assay that are not included in the current PvSeroTaT model, then the data processing with automatically remove these columns.)")), 
+                         If you have run other antigens in your assay that are not included in the current PvSeroApp model, then the data processing with automatically remove these columns when you reach 
+                         the <a href='#tutorial/classify' class-`link`>Classification</a> step.)")), 
                   second_col = fluentPage(DTOutput("antigens"))
                 )
               )
@@ -1194,7 +1187,7 @@ check_page <- function() {
         headerText = "Plate QC", 
         MessageBar("For quality control of each plate, we check that each well should have ≥15 beads/well. Any wells with <15 beads/well are indicated in red below and should be double-checked manually."), 
         # withSpinner(plotlyOutput("plateqc"), type = 8), # add spinner 
-        plotOutput("plateqc"),
+        uiOutput("plateqc"),
         conditionalPanel(
           condition = "output.check_repeats_text !== null",
           textOutput("check_repeats_text")
@@ -1209,7 +1202,7 @@ check_page <- function() {
         MessageBar("Blank samples should record MFI<50 for each protein. If any proteins are above the dashed line, they should be double-checked manually. 
                    If you have more than one blank sample in your plate, make sure to label them as 'Blank1', 'Blank2' and so forth, otherwise the data shown here will be a cumulative result of all your blanks."), 
         # withSpinner(plotlyOutput("blanks"), type = 8), # add spinner 
-        plotOutput("blanks")
+        uiOutput("blanks")
       ), 
       PivotItem(
         headerText = "Model Results",

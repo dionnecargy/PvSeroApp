@@ -123,13 +123,36 @@ shinyServer(function(input, output, session){
   # ------------ TUTORIAL ------------
   ###############################################################################
   
+  # code output showing file display
+  output$code_display <- renderText({
+    "PvSeroApp/
+     ├── rawdata/            # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
+     └── platelayout.xlsx    # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`...."
+  })
+  
   # table example for how antigens should be included.
   output$antigens <- renderDT({
     example_data <- data.frame(
-      `Antigen Names` = c("EBP", "LF005", "LF010", "LF016", "MSP8", "RBP2b.P87", "PTEX150", "PvCSS"), 
-      `Other Accepted Options` = c("EBP-II, PvEBP-II", "", "", "", "PvMSP8, L34", "RBP2b-P87, RBP2b, P87", "PTEx150, L18", "CSS, css")
+      `Accepted Antigen Names` = c(
+        "EBP",
+        "LF005", 
+        "LF010", 
+        "LF016", 
+        "MSP8", 
+        "RBP2b.P87", 
+        "PTEX150", 
+        "PvCSS"), 
+      `Alternative Names` = c(
+        "EBP-II, EBPII, PvEBP, PvEBP-II, W58", 
+        "Pv-fam-a, W02, L02", 
+        "MSP5, W12, L19", 
+        "MSP1-19, W01, L01", 
+        "PvMSP8, W30, L34", 
+        "RBP2b-P87, P87", 
+        "PTEx150, W11, L18", 
+        "CSS, css")
     )
-    colnames(example_data) <- c("Antigen Names", "Other Accepted Options")
+    colnames(example_data) <- c("Accepted Antigen Names", "Alternative Names")
     datatable(example_data, 
               options = list(dom = 't',                    # 't' means only the table (no pagination, search, etc.)
                              searching = FALSE,            # Disable search box
@@ -734,7 +757,13 @@ shinyServer(function(input, output, session){
     plotStds(antigens_output(), location(), experiment_name())
   })
   
+  
   # APP RESPONSE: Creating plate QC plot
+  num_facets_qc <- reactive({
+    req(counts_output())
+    length(levels(factor(counts_output()$Plate)))
+  })
+  
   plateqc_plot <- reactive({
     req(counts_output(), experiment_name())
     plotCounts(counts_output(), experiment_name()) 
@@ -782,7 +811,14 @@ shinyServer(function(input, output, session){
   })
   
   # APP RESPONSE: Render plate QC plot
-  output$plateqc <- renderPlot({
+  output$plateqc <- renderUI({
+    num_facets <- num_facets_qc()
+    num_rows <- ceiling(num_facets / 3)  # Assuming 3 columns per row
+    plot_height <- num_rows * 400  # Adjust height per row (e.g., 400px per row)
+    
+    plotOutput("facet_plot", height = paste0(plot_height, "px"))
+  })
+  output$facet_plot <- renderPlot({
     plateqc_plot()
   })
   
@@ -840,10 +876,18 @@ shinyServer(function(input, output, session){
   })
   
   # APP RESPONSE: Render blanks plot
-  output$blanks <- renderPlot({
+  output$blanks <- renderUI({
+    num_facets <- num_facets_qc()
+    num_rows <- ceiling(num_facets / 3)  # Assuming 3 columns per row
+    plot_height <- num_rows * 250  # Adjust height per row (e.g., 250 per row)
+    
+    plotOutput("facet_plot_blanks", height = paste0(plot_height, "px"))
+  })
+  output$facet_plot_blanks <- renderPlot({
     blanks_plot()
   })
   
+
   # APP RESPONSE: Render QC model data frame
   output$results <- DT::renderDataTable({
     
