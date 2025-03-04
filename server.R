@@ -1169,8 +1169,8 @@ shinyServer(function(input, output, session){
     df <- allclassify_df() %>% 
       mutate(`Sensitivity/Specificity` = factor(`Sensitivity/Specificity`, 
                                                 levels = c("maximised",
-                                                           "85% specificity", "90% specificity", "95% specificity",
-                                                           "85% sensitivity", "90% sensitivity", "95% sensitivity"), 
+                                                           "85% sensitivity", "90% sensitivity", "95% sensitivity",
+                                                           "85% specificity", "90% specificity", "95% specificity"), 
                                                 labels = c("Maximised: 81% Sensitivity / 81% Specificity",
                                                            "85% Sensitivity / 75% Specificity",
                                                            "90% Sensitivity / 61.6% Specificity",
