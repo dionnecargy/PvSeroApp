@@ -116,16 +116,19 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       results <- results %>%
         dplyr::select(-`Total Events`) %>%
         mutate(across(everything(), ~ gsub("NaN", 0, .))) %>% # Change "NaN" to 0s
-        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), Sample)) # Sequentially relabel Blank rows and keep other Sample values unchanged
+        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
+                               ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
+        mutate(Sample = ifelse(Sample == "S", paste0("S", cumsum(Sample == "S")), Sample)) # Sequentially relabel Sample rows and keep other Sample values 
       
       # 3. Load counts for QC 
       counts <- counts %>%
-        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), Sample)) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
+        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
+                               ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
         dplyr::select(-`Total Events`)
       counts <- as_tibble(counts)
       
       # 4. Save blanks
-      blanks <- results %>% dplyr::filter(grepl("Blank", Sample, ignore.case = TRUE))
+      blanks <- results %>% dplyr::filter(grepl("Blank|^B$", Sample, ignore.case = TRUE))
       
       # 5. Save standards
       stds <- results %>% dplyr::filter(grepl("^S", Sample, ignore.case = TRUE))
@@ -651,7 +654,7 @@ MFItoRAU <- function(antigen_output, plate_layout){
       # Process unknowns
       for (r in 1:nrow(subset_data)) {
         results <- NULL
-        if (subset_data$type.letter[r] == "U" | subset_data$type.letter[r] == "X") { ##### Unknown works for MAGPIX and X works for BioPlex
+        if (toupper(subset_data$type.letter[r]) %in% c("U", "X")) { ##### Unknown works for MAGPIX and X works for BioPlex
           mfi.X <- as.numeric(subset_data[r, i])
           y <- log(mfi.X)
           
@@ -717,6 +720,7 @@ MFItoRAU <- function(antigen_output, plate_layout){
     location.2 <- data.frame(Location.2=location.1, alpha=gsub("[[:digit:]]", "", location.1), numeric=gsub("[^[:digit:]]", "", location.1), SampleID=NA, stringsAsFactors = FALSE)
     for (i in location.2[, "Location.2"]){
       plate_layout_current <- layout[[plate_level]]
+      names(plate_layout_current)[1] <- "Plate" # Relabel first column to be "Plate"
       location.2[location.2$Location.2==i, "SampleID"] <- plate_layout_current[
         plate_layout_current$Plate == unique(location.2[location.2$Location.2 == i, "alpha"]), 
         colnames(plate_layout_current) == unique(location.2[location.2$Location.2 == i, "numeric"])
