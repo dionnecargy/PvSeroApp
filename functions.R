@@ -137,7 +137,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info <- as.data.frame(run) %>% dplyr::select(Program:xPONENT)
       
       # Save the plate number for this file 
-      plate_numbers <- file_name %>% str_extract("plate\\d+")
+      plate_numbers <- file_name %>% str_extract("(?i)plate\\d+(?=[._-]|$)")
       
       # Add 'plate' column to each dataframe
       data_raw$Plate <- plate_numbers
@@ -219,7 +219,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info <- data_raw[1:(well_row-2), 1, drop = FALSE] # Save run info
       
       # Save the plate number for this file 
-      plate_numbers <- file_name %>% str_extract("plate\\d+")
+      plate_numbers <- file_name %>% str_extract("(?i)plate\\d+(?=[._-]|$)")
       
       # Add 'plate' column to each dataframe
       data_raw$Plate <- plate_numbers
@@ -886,9 +886,6 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
   
   rau_data <- mfi_to_rau_output[[2]]
   rau_data <- rau_data %>%
-    mutate(rowname = base::paste(SampleID, Plate, sep = "_")) %>% # Combine SampleID and plate into a single rowname
-    column_to_rownames(var = "rowname") %>%  # Convert to rownames
-    dplyr::select(contains("_Dilution")) %>% # Select relevant columns
     mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
     rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
 
@@ -939,9 +936,7 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
   # Final processing and renaming
   final_results <- results %>%
     dplyr::select(-c(.pred_class, .pred_new, .pred_old)) %>%
-    mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) %>%
-    rownames_to_column(var = "rowname") %>%
-    separate(rowname, into = c("SampleID", "plate"), sep = "_") # Split back into two columns
+    mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) 
   
   # Step 5: Return the table of prediction classes
   return(final_results)

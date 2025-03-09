@@ -951,6 +951,17 @@ shinyServer(function(input, output, session){
     click("download_zip")
   })
   
+  stdcurve_blanks_output <- reactive({
+    std_output_1 <- antigens_output()$stds
+    std_output_2 <- antigens_output()$blanks
+    std_output_all <- 
+      bind_rows(std_output_1 %>% mutate(Std = "StandardCurve"), 
+                std_output_2 %>% mutate(Std = "Blanks")) %>% 
+      mutate(Sample = factor(Sample, levels = unique(Sample[order(as.numeric(str_extract(Sample, "\\d+")))]))) %>% # reorder by number
+      arrange(Plate, Std, Sample) %>% 
+      dplyr::select(-Std)
+  })
+  
   ## ----- Download Handlers -----
   
   # 1. Downloadable csv of MFI/RAU results file
@@ -968,7 +979,7 @@ shinyServer(function(input, output, session){
       paste0(experiment_name_reactive(), "_", date_reactive(), "_", version(), "_stdcurve.csv")
     },
     content = function(file) {
-      write.csv(antigens_output()$stds, file, row.names = FALSE)
+      write.csv(stdcurve_blanks_output(), file, row.names = FALSE)
     }
   )
   
@@ -1018,7 +1029,7 @@ shinyServer(function(input, output, session){
       
       # Generate files
       write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
-      write.csv(antigens_output()$stds, stds_file, row.names = FALSE)
+      write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
       
       # Render the report
       tempReport <- file.path(tempdir(), "template.Rmd")
