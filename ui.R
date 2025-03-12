@@ -187,6 +187,14 @@ shinyUI(
                         list(name = "Step 3: Classify Exposure", key = "model", url = "#model", iconProps = list(iconName = "Diagnostic", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
                         list(name = "Step 4: Data Visualisation", key = "datavis", url = "#datavis", iconProps = list(iconName = "BIDashboard", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
                       )
+                    ),
+                    list(
+                      name = "Feedback",
+                      links = list(
+                        list(name = "App Version History", key = "history", url = "#history", iconProps = list(iconName = "GitGraph", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                        list(name = "Request a Feature", key = "feature", url = "#feature", iconProps = list(iconName = "Processing", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                        list(name = "Report a Bug", key = "bug", url = "#bug", iconProps = list(iconName = "InboxCheck", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
+                      )
                     )
                   )
                 )

@@ -1377,3 +1377,126 @@ datavis_page <- function() {
 }
 
 
+###############################################################################
+# --------------------------- App Version History Page ---------------------------
+###############################################################################
+
+apphistory_page <- function() {
+  fluentPage(
+    Text(variant = "xxLarge", "PvSeroApp Version History"),
+    Separator(),
+    Image(src = "4_feedback/app_history.png", width = "800px", height = "auto"),
+    p(),
+    Text(variant = "large", HTML("<b>v0</b>")),
+    Text(variant = "medium", "All version numbers starting with 0 indicate working releases where the developer was making updates regularly and troubleshooting features. The classification algorithm remains the same as version 1.0.0 onwards and each future release will be defined by the algorithm updates."),
+    p(),
+    Text(variant = "large", HTML("<b>Test v0.1.0</b>")),
+    Text(variant = "medium", "This is the first testing release of the PvSeroApp Web Application!"),
+    p(),
+    Text(variant = "large", HTML("<b>v0.2.0</b>")),
+    Text(variant = "medium", "This is the version that contains a classification model that works as anticipated. There are some minor errors that need to be fixed (e.g., pdf not exporting, dark mode not active, tutorial descriptions and images need updating)."),
+    p(),
+    Text(variant = "large", HTML("<b>v1.0.0</b>")),
+    Text(variant = "medium", "Key updates made to the tutorial, inputs more flexible, data visualisation options and export data. The standard curve conversion factor for Ethiopian pools to the Papua New Guinea pool has been added. Same classification model as v0.1.0 and v0.2.0."),
+  )
+}
+
+###############################################################################
+# --------------------------- Request a Feature Page ---------------------------
+###############################################################################
+
+requestfeature_page <- function() {
+  fluentPage(
+    Text(variant = "xxLarge", "Request A Feature"),
+    Separator(),
+    Text(variant = "medium", HTML(r"(You can <a href='https://github.com/dionnecargy/pvseroapp/issues' class-'link’>Request A Feature</a> on <b>GitHub</b>. 
+                                  On this page, you can suggest new functionalities, improvements, or enhancements for a project. 
+                                  A well-written feature request should include: <ul>
+                        <li>A clear description of the feature.</li>
+                        <li>Use cases explaining why it's needed.</li>
+                        <li>Potential benefits for users or the project.</li>
+                        <li>Examples (if applicable).</li>
+                    </ul>)")),
+    p(),
+    MessageBar(messageBarType = 3, 
+               HTML("Please note that this is a <b>Public Forum</b> where <b>anyone</b> can view any issues and bugs, as well as solutions. Do <b>not</b> upload any 
+                    confidential data that can be saved by anyone.")),
+    p(),
+    Text(variant = "medium", 
+         HTML("Alternatively, if you wish to contact the developers by email, please email us <a href='mailto:argyropoulos.d@wehi.edu.au' class-'link’>here</a>. 
+              If you choose this option, please still follow the steps below in your email.")),
+    p(),
+    Text(variant = "large", "Step 1: Create an Issue"), 
+    p(),
+    Text(variant = "medium", HTML(r"(This page displays all open and closed issues and requests. Users can search for specific issues and filter them by labels, status etc. To create your own feature request,
+                                  click on the "New Issue" button shown in the RED box in the image below.)")),
+    p(),
+    Image(src = "4_feedback/report_a_bug_1.png", width = "1000px", height = "auto"),
+    p(),
+    Text(variant = "medium", HTML("This will take you to a menu where you can create a <b>Feature Request</b>. Click this button.")),
+    p(),
+    Image(src = "4_feedback/request_a_feature_1.png", width = "1000px", height = "auto"),
+    p(),
+    Text(variant = "large", "Step 3: Describe your Feature Request"), 
+    p(),
+    Text(variant = "medium", "Each issue has a title, description, comments section and metadata such as tags, assignments and milestones. "),
+    Text(variant = "medium", "1. Please write a concise title using keywords, and we would greatly appreciate a clear description. Follow the prompts in the template if you are unsure what to write."),
+    Text(variant = "medium", "2. If you have an image or file/s that can support your vision, please attach the image or file/s where the BLUE box is shown in the image below. "),
+    Text(variant = "medium", HTML(r"(3. To upload the issue to GitHub, click on the "Create" button shown in the RED box in the image below.)")),
+    p(),
+    Image(src = "4_feedback/request_a_feature_2.png", width = "1000px", height = "auto"),  
+    p(),
+    Text(variant = "medium", HTML(r"(Optional: Before you upload your issue, you can click the "Label" Button as indicated in the YELLOW box in the image below to add
+                                  relevant tags for better categorisation.)")),
+    p(),
+    Image(src = "4_feedback/request_a_feature_3.png", width = "1000px", height = "auto")
+  )
+}
+
+###############################################################################
+# --------------------------- Report A Bug Page ---------------------------
+###############################################################################
+reportbug_page <- function() {
+  fluentPage(
+    Text(variant = "xxLarge", "Report A Bug"),
+    Separator(),
+    Text(variant = "medium", HTML("You can <a href='https://github.com/dionnecargy/pvseroapp/issues' class-'link’>Report A Bug</a> on <b>GitHub</b>. 
+                                  Here you will be prompted to write out the problem you are facing and are encouraged to add any images or files that may be used for
+                                  troubleshooting purposes.If your issue has been resolved or turned out to be a user error with a known fix, consider posting it on GitHub. 
+                                  This helps others who may encounter the same problem find a solution more easily.")),
+    p(),
+    MessageBar(messageBarType = 3, 
+               HTML("Please note that this is a <b>Public Forum</b> where <b>anyone</b> can view any issues and bugs, as well as solutions. Do <b>not</b> upload any 
+                    confidential data that can be saved by anyone.")),
+    p(),
+    Text(variant = "medium", 
+         HTML("Alternatively, if you wish to contact the developers by email, please email us <a href='mailto:argyropoulos.d@wehi.edu.au' class-'link’>here</a>. 
+              If you choose this option, please still follow the steps below in your email.")),
+    p(),
+    Text(variant = "large", "Step 1: Create an Issue"), 
+    p(),
+    Text(variant = "medium", HTML(r"(This page displays all open and closed issues. Users can search for specific issues and filter them by labels, status etc. To create your own issue,
+                                  click on the "New Issue" button shown in the RED box in the image below.)")),
+    p(),
+    Image(src = "4_feedback/report_a_bug_1.png", width = "1000px", height = "auto"),
+    p(),
+    Text(variant = "medium", HTML("This will take you to a menu where you can create a <b>Bug Report</b>. Click this button.")),
+    p(),
+    Image(src = "4_feedback/report_a_bug_2.png", width = "1000px", height = "auto"),
+    p(),
+    Text(variant = "large", "Step 3: Describe your Issue"), 
+    p(),
+    Text(variant = "medium", "Each issue has a title, description, comments section and metadata such as tags, assignments and milestones. "),
+    Text(variant = "medium", "1. Please write a concise title using keywords, and we would greatly appreciate a clear description of your issue with images to support. Follow the prompts in the template if you are unsure what to write."),
+    Text(variant = "medium", "2. Images can be attached where the BLUE box is shown in the image below. "),
+    Text(variant = "medium", HTML(r"(3. To upload the issue to GitHub, click on the "Create" button shown in the RED box in the image below.)")),
+    p(),
+    Image(src = "4_feedback/report_a_bug_3.png", width = "1000px", height = "auto"),  
+    p(),
+    Text(variant = "medium", HTML(r"(Optional: Before you upload your issue, you can click the "Label" Button as indicated in the YELLOW box in the image below to add
+                                  relevant tags for better categorisation.)")),
+    p(),
+    Image(src = "4_feedback/report_a_bug_4.png", width = "1000px", height = "auto")
+  )
+}
+

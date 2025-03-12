@@ -114,6 +114,12 @@ shinyServer(function(input, output, session){
       model_page()
     } else if (hash == "#datavis") {
       datavis_page()
+    } else if (hash == "#history") {
+      apphistory_page()
+    } else if (hash == "#feature") {
+      requestfeature_page()
+    } else if (hash == "#bug") {
+      reportbug_page()
     } else {
       return(home_page())  # Default page if no page is specified
     }
