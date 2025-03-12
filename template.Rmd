@@ -27,7 +27,7 @@ require(tidyverse)
 require(readxl)
 require(drc)
 require(here)
-require(kable)
+require(knitr)
 require(kableExtra)
 ```
 
