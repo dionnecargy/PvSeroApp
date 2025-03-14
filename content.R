@@ -246,8 +246,8 @@ tutorial_page <- function() {
                   actionButton("inc_plate_image", "→", class = "btn-primary-plate")
                 ),
                 Text(variant = "medium", HTML("If you have multiple plates that you are running through this application, all of the plate layouts can be added in one <b>excel (.xlsx)</b> file.")),
-                MessageBar(HTML(r"(<p>Please label each <b>tab or sheet</b> in the excel (.xlsx) file as "plate1", "plate2", "plate3" etc. corresponding to your <b>raw data</b> input file names 
-                            discussed in the section below.</p>)"))
+                MessageBar(HTML(r"(Please label each <b>tab or sheet</b> in the excel (.xlsx) file as "plate1", "plate2", "plate3" etc. corresponding to your <b>raw data</b> input file names 
+                            discussed in the section below.)"))
               )
             ), 
             makeCard(
@@ -260,6 +260,9 @@ tutorial_page <- function() {
                     Text(variant = "medium", "You can pre-program the MAGPIX machine so that you can export all the raw data directly from the machine once the plate reading is completed. 
                          There is no need to edit the raw data file that comes from the MAGPIX."),
                     p(),
+                    Text(variant = "medium", HTML(r"(Within your plate layout in the MAGPIX, you can use the "U" button for all unknown samples, "B" button for Background or Blank samples, and "S" for Standard Curve samples. 
+                                                  For the control wells, please feel free to edit these labels so that the ID is just "B", "S1", "S2", "S3"...."S10".)")),
+                    p(),
                     MessageBar("Ensure that the antigens are labelled the same way in all plate runs! You can do this by setting up the protocol directly on the MAGPIX and using it for all your plate runs."),
                     p(),
                     MessageBar(messageBarType = 3, HTML(r"(Please add the plate number or experiment number as a suffix to the end of your file, for example: "<b>MyExperimentName_plate1.csv</b>", and ensure
@@ -269,10 +272,10 @@ tutorial_page <- function() {
                     Image(src = "2_tutorial/magpix_example.png", width = 800, height = 800, imageFit = "container")
                   ),
                   PivotItem(
-                    headerText = "2.3.2. BioPlex",
-                    Text(variant = "large", "Raw Data from Bioplex Machines"),
+                    headerText = "2.3.2. Bio-Plex",
+                    Text(variant = "large", "Raw Data from Bio-Plex Machines"),
                     p(),
-                    Text(variant = "medium", "Isolate names will tend to be written as 'X1', 'X2', 'X3'... and saved as an .xlsx file. Specifics on the machines will be added shortly."),
+                    Text(variant = "medium", "Isolate names will tend to be written as 'X1', 'X2', 'X3'... and saved as an .xlsx file. Specifics on Bio-Plex machines will be added shortly."),
                     p(),
                     Image(src = "2_tutorial/bioplex_example.png", width = 800, height = 200, imageFit = "container")
                   )
@@ -703,8 +706,41 @@ tutorial_page <- function() {
             MessageBar(HTML("For each of these plots, there are buttons on the top right of the plot that can be used to download the plot as a png (<i class='fas fa-camera'></i>), as well as other capabilties: <i class='fas fa-search'></i> zoom,  
               <i class='fas fa-arrows-alt'></i> move, <i class='fas fa-plus-square'></i> zoom in, <i class='fas fa-minus-square'></i> zoom out, <i class='fas fa-expand-arrows-alt'></i> autoscale, <i class='fas fa-home'></i> reset axes).")),
             makeCard(
+              id = "tutorial/data_vis/class_boxplot",
+              title = "7.1. Relative Antibody Units (RAU) per Antigen stratified by Classification", 
+              content = list(
+                Text(variant = "medium", 
+                "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
+                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                p(),
+                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+              )
+            ),
+            makeCard(
+              id = "tutorial/data_vis/mfi_boxplot",
+              title = "7.2. Median Fluorescent Intensity (MFI) Boxplot Per Antigen", 
+              content = list(
+                Text(variant = "medium", 
+                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
+                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                p(),
+                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+              )
+            ),
+            makeCard(
               id = "tutorial/data_vis/rau_boxplot",
-              title = "7.1. RAU Boxplot", 
+              title = "7.3. Relative Antibody Units (RAU) Boxplot Per Antigen", 
+              content = list(
+                Text(variant = "medium", 
+                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
+                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                p(),
+                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+              )
+            ),
+            makeCard(
+              id = "tutorial/data_vis/beads_perantigen",
+              title = "7.4. Beads Counts per Antigen", 
               content = list(
                 Text(variant = "medium", 
                      "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
@@ -1139,12 +1175,27 @@ check_page <- function() {
     useShinyjs(),
     Text(variant = "xxLarge", "Quality control"),
     Separator(),
-    p(),
     Text(variant = "medium", HTML("The automated data processing in this app allows you to convert your <b>Median Fluorescence Units (MFI)</b> data into <b>Relative Antibody Units (RAU)</b> by fitting 
          a 5-parameter logistic function to the standard curve on a per-antigen level. 
          <br><br>Use the different tabs to visualise the quality control of your run!")),
     p(),
-    MessageBar("Click the buttons below to download the data and quality control report."), ########## 
+    MessageBar(messageBarType = 3, "You must first pick a standard pool from the dropdown menu below. Please check your laboratory records if you are uncertain which pool was used."),
+    p(),
+    div(
+      Dropdown.shinyInput(
+        "dropdown_stds", 
+        label = "Choose Your Standard Curve Pool",
+        required = TRUE,
+        placeholder = "Select a Pool Option", 
+        options = list(
+          list(key = "PNG", text = "PNG Pool"),
+          list(key = "ETH", text = "Ethiopian Pool")
+        ),
+      styles = list(root = list(width = 300))),
+      textOutput("dropdownValue")
+    ),
+    p(),
+    MessageBar("Click the buttons below to download the data and quality control report."),
     p(),
     div(
       style = "display: flex; gap: 10px;",
@@ -1178,8 +1229,8 @@ check_page <- function() {
       PivotItem(
         headerText = "Standard Curves",
         MessageBar(HTML(r"(Check the standard curves for each protein below. Grey dots in the background indicate the standard curve range observed at WEHI for "PNG" or "Ethiopian" 
-                        samples where there are known differences in the standard curve. Click the toggle to change between options (default = PNG). This feature will be updated shortly.)")),
-        Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
+                        samples where there are known differences in the standard curve.)")),
+        # Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
         # withSpinner(plotlyOutput("stdcurve"), type = 8) # add spinner
         plotlyOutput("stdcurve", height = "1000px")
       ),

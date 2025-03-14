@@ -131,9 +131,15 @@ shinyServer(function(input, output, session){
   
   # code output showing file display
   output$code_display <- renderText({
-    "PvSeroApp/
-     ├── rawdata/            # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
-     └── platelayout.xlsx    # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`...."
+    "└── PvSeroApp/
+    ├── rawdata                      # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
+    │   ├── rawdata_plate1.csv
+    │   ├── rawdata_plate2.csv
+    │   ├── #### OR
+    │   ├── rawdata_plate1.xlsx
+    │   └── rawdata_plate2.xlsx
+    ├── platelayout.xlsx             # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`....
+    └── outputs/                     # Where all outputs from the App can be stored!"
   })
   
   # table example for how antigens should be included.
@@ -754,15 +760,13 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Creating standard curve plot
   location <- reactive({
-    value <- ifelse(is.null(input$toggle_png_eth), FALSE, input$toggle_png_eth)
-    ifelse(value, "ETH", "PNG")  # Map TRUE to "ETH", FALSE to "PNG"
+    value <- ifelse(is.null(input$dropdown_stds), FALSE, input$dropdown_stds)
   })
   
   stdcurve_plot <- reactive({
     req(antigens_output(), location(), experiment_name()) 
     plotStds(antigens_output(), location(), experiment_name())
   })
-  
   
   # APP RESPONSE: Creating plate QC plot
   num_facets_qc <- reactive({

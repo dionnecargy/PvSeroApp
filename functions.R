@@ -117,7 +117,8 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         dplyr::select(-`Total Events`) %>%
         mutate(across(everything(), ~ gsub("NaN", 0, .))) %>% # Change "NaN" to 0s
         mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
-                               ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
+                               ifelse(Sample == "B", paste0("Blank", row_number()), 
+                                      ifelse(Sample == "Background", paste0("Blank", row_number()), Sample)))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
         mutate(Sample = ifelse(Sample == "S", paste0("S", cumsum(Sample == "S")), Sample)) # Sequentially relabel Sample rows and keep other Sample values 
       
       # 3. Load counts for QC 
@@ -959,7 +960,7 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 #   - selected_threshold: String with the threshold (reactive)
 #
 # Output:
-#   - Box plots with RAU values for each protein stratified by classification 
+#   - Box plots with RAU values for each antigen stratified by classification 
 #     (ggplot)
 # 
 # Author: Dionne Argyropoulos
@@ -969,7 +970,7 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
   
   all_classifications %>% 
       filter(Sens_Spec == selected_threshold) %>% 
-      pivot_longer(-c(SampleID, plate, pred_class_max, Sens_Spec), names_to = "protein", values_to = "RAU") %>%
+      pivot_longer(-c(SampleID, plate, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
       mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
       ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
       geom_boxplot() +
@@ -977,10 +978,9 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
       scale_fill_manual(values = c(seronegative = "#878787", seropositive = "#d6604d")) +
       labs(title = paste0("Threshold Chosen: "), selected_threshold, 
            x = "Classification", y = "RAU", fill = "Classification") +
-      facet_grid(~protein) +
+      facet_grid(~Antigen) +
       theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
+      theme(axis.text.x = element_blank())
 }
 
 ##############################################################################

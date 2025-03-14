@@ -152,7 +152,33 @@ shinyUI(
         # Right Section (Dark Mode Toggle + GitHub Icon)
         div(
           style = "display: flex; align-items: center;",
-          # IconButton.shinyInput(inputId = "toggle_theme", iconProps = list(iconName = "Contrast")),
+          # IconButton.shinyInput(
+          #   inputId = "toggle_theme", 
+          #   iconProps = list(iconName = "Contrast")),
+          IconButton.shinyInput(
+            inputId = "githubtest",
+            iconProps = list(iconName = "GitGraph"),
+            title = "GitHubLogo",
+            ariaLabel = "GitHubLogo",
+            menuProps = list(
+              items = list(
+                list(
+                  key = "sourceCode",
+                  text = "View Source Code",
+                  iconProps = list(iconName = "Code"),
+                  href = "https://github.com/dionnecargy/pvseroapp", # Open email client
+                  target = "_blank"
+                ),
+                list(
+                  key = "reportIssue",
+                  text = "Report Issue",
+                  iconProps = list(iconName = "Warning"),
+                  href = "https://github.com/dionnecargy/pvseroapp/issues", # Open calendar website
+                  target = "_blank"
+                )
+              )
+            )
+          ),
           tags$a(
             href = "https://github.com/dionnecargy/pvseroapp", 
             target = "_blank",
