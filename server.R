@@ -1142,14 +1142,15 @@ shinyServer(function(input, output, session){
   ## ----- Downloadable csv of classification results file -----
   output$download_classification <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_", algorithm(), "_", version(), "_classification.csv", sep = "")
+      paste0(experiment_name_reactive(), "_", date_reactive(), "_", sens_spec(), "_", algorithm(), "_", version(), "_classification.csv", sep = "")
     },
     content = function(file) {
       write.csv(classified_data(), file, row.names = FALSE)
     })
   
-  # ---------- DATA VISUALISATION ------------
-  
+  ###############################################################################
+  # ------------ DATA VISUALISATION   ------------
+  ###############################################################################
   
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
