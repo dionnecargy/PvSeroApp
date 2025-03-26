@@ -14,12 +14,14 @@
 # Usage: readSeroData(raw_data, raw_data_filenames, platform) 
 # 
 # Arguments: 
-#   - raw_data: String with the raw data path (reactive)
-#   - raw_data_filenames: String with the raw data filenames (reactive)
-#   - platform: "magpix" or "bioplex" (reactive)
+#   - raw_data: String with the raw data path (reactive).
+#   - raw_data_filenames: String with the raw data filenames (reactive).
+#   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
-#   - Data frame with sample-matched qpcr data
+#   - List of data frames: (i) raw data output, (ii) cleaned all results 
+#   (iii) count data, (iv) blanks only, (v) standards only, (vi) run 
+#   information. 
 # 
 # Authors: Shazia Ruybal-Pesántez, Dionne Argyropoulos
 ##############################################################################
@@ -326,12 +328,12 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
 # Useage: readAntigens(raw_data, raw_data_filenames, platform)
 # 
 # Arguments: 
-#   - raw_data: String with the raw data path (reactive)
-#   - raw_data_filenames: String with the raw data filenames (reactive)
-#   - platform: "magpix" or "bioplex" (reactive)
+#   - raw_data: String with the raw data path (reactive).
+#   - raw_data_filenames: String with the raw data filenames (reactive).
+#   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
-#   - Data frame with relabelled column names for our antigen names 
+#   - List of data frames with relabelled column names for our antigen names.
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
@@ -385,14 +387,16 @@ readAntigens <- function(serodata_output){
 # ".xlsx" file must contain 13 columns (labelled
 # Plate, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) (columns A-M) and 9 rows 
 # (Plate, A, B, C, D, E, F, G, H) (rows 1-9). *Note that the first row/column 
-# i.e., the A1 cell in excel is called "Plate".
+# i.e., the A1 cell in excel is called "Plate". This function also checks that
+# the plate sheet labels are consistent with the MAGPIX file input names, as a
+# check prior to merging downstream. 
 # 
 # Usage: readPlateLayout(plate_layout)
 #
 # Arguments: 
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
-#   - antigen_output: Output from `readAntigens` (reactive)
+#     etc. (reactive).
+#   - antigen_output: Output from `readAntigens` (reactive).
 #
 # Output:
 #   - A list of data frames, with each one representing an individual plate.
@@ -446,12 +450,12 @@ readPlateLayout <- function(plate_layout, antigen_output) {
 # Usage: getCounts(raw_data, raw_data_filenames, platform)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #
 # Output:
-#   - Data frame providing bead counts per well per plate 
+#   - Data frame providing bead counts per well per plate.
 #   - Designates whether wells should be repeated if there are ≤ 15 beads 
-#     (repeat) or if they are sufficient with > 15 beads (sufficient beads)
+#     (repeat) or if they are sufficient with > 15 beads (sufficient beads).
 # 
 # Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
@@ -498,8 +502,8 @@ getCounts <- function(antigen_output){
 # Usage: plotCounts(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - counts_output: Output from `getCounts` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
+#   - counts_output: Output from `getCounts` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
 #
 # Output:
 #   - Tile Plot showing binary result of "sufficient beads" with cut-off >15
@@ -533,11 +537,11 @@ plotCounts <- function(counts_output, experiment_name){
 # Usage: check_repeats(counts_output)
 #
 # Arguments: 
-#   - counts_output: Output from `getCounts` (reactive)
+#   - counts_output: Output from `getCounts` (reactive).
 #
 # Output:
-#   - Data frame with wells to "repeat", OR 
-#   - If no "repeats" found will return text "No repeats necessary"
+#   - Data frame with wells to "repeat", OR
+#   - If no "repeats" found will return text "No repeats necessary".
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
@@ -563,8 +567,8 @@ check_repeats <- function(counts_output) {
 # Usage: plotBlanks(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
 #
 # Output:
 #   - Bar plot showing whether MFI values for the blanks for each antigen per 
@@ -602,9 +606,9 @@ plotBlanks <- function(antigen_output, experiment_name){
 # Usage: plotStds(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
-#   - location: "PNG" or "ETH" to filter WEHI standard curve data (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
+#   - location: "PNG" or "ETH" to filter WEHI standard curve data (reactive).
 #
 # Output:
 #   - Dot and line plot of standard curves (S1-S10) with PNG or Ethiopia stds 
@@ -659,9 +663,9 @@ plotStds <- function(antigen_output, location, experiment_name){
 # Usage: MFItoRAU(antigen_output, plate_layout)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#     etc. (reactive).
 #
 # Output: A list of three data frames:
 #   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
@@ -861,13 +865,13 @@ MFItoRAU_PNG <- function(antigen_output, plate_layout){
 # Usage: MFItoRAU(antigen_output, plate_layout)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#     etc. (reactive).
 #
 # Output: A list of three data frames:
 #   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
-#   2. Plot information for `plotModel` function 
+#   2. Plot information for `plotModel` function.
 #   3. Data frame of RAU data for random forest classification use. 
 # 
 # Authors: Eamon Conway, Dionne Argyropoulos
@@ -1085,12 +1089,12 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
 # Usage: plotModel(mfi_to_rau_output, antigens_output)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - mfi_to_rau_output: Output from `MFItoRAU_PNG` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - mfi_to_rau_output: Output from `MFItoRAU_PNG` (reactive).
 #
 # Output:
 #   - List of dot and line plots of MFI to RAU model standard curve, with each 
-#     one representing an individual plate (ggplots)
+#     one representing an individual plate (ggplots).
 # 
 # Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
@@ -1165,17 +1169,17 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
 #
 # Description: 
 # This function gets the Median Fluorescent Intensity (MFI) to Relative Antibody
-# Units (RAU) model results data and plots the model fits
+# Units (RAU) model results data and plots the model fits.
 # 
 # Usage: plotModel(mfi_to_rau_output, antigens_output)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - mfi_to_rau_output: Output from `MFItoRAU_ETH` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - mfi_to_rau_output: Output from `MFItoRAU_ETH` (reactive).
 #
 # Output:
 #   - List of dot and line plots of MFI to RAU model standard curve, with each 
-#     one representing an individual plate (ggplots)
+#     one representing an individual plate (ggplots).
 # 
 # Authors: Dionne Argyropoulos
 ##############################################################################
@@ -1217,7 +1221,7 @@ plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
 #
 # Description: 
 # This function classifies unknown samples as recently exposed or not 
-# (Note: MFItoRAU() needs to be run first to convert to RAU)
+# (Note: MFItoRAU() needs to be run first to convert to RAU).
 #  
 # Usage: classify_final_results(mfi_to_rau_output, algorithm_type, Sens_Spec)
 #
@@ -1236,8 +1240,8 @@ plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
 #       * "95\% specificity".
 #
 # Output:
-#   - Data frame with exposure status for every sample
-#   - Summary table with positive/negative results for each classifier
+#   - Data frame with exposure status for every sample.
+#   - Summary table with positive/negative results for each threshold.
 # 
 # Authors: Lauren Smith, Dionne Argyropoulos
 ##############################################################################
@@ -1318,11 +1322,11 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 # Arguments: 
 #   - all_classifications: Data frame of `classify_final_results()` for all 
 #     Sens_Spec thresholds. 
-#   - selected_threshold: String with the threshold (reactive)
+#   - selected_threshold: String with the threshold (reactive).
 #
 # Output:
 #   - Box plots with RAU values for each protein stratified by classification 
-#     (ggplot)
+#     (ggplot).
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
@@ -1350,7 +1354,7 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
 # --------------------------
 #
 # Description: 
-# Boxplot of the MFI values 
+# Boxplot of the MFI values.
 # 
 # Usage: plotMFI(mfi_to_rau_output)
 # 
@@ -1414,7 +1418,7 @@ plotMFI <- function(mfi_to_rau_output, location){
 # --------------------------
 #
 # Description: 
-# Boxplot of the RAU values 
+# Boxplot of the RAU values. 
 # 
 # Usage: plotRAU(mfi_to_rau_output)
 # 
@@ -1484,9 +1488,9 @@ plotRAU <- function(mfi_to_rau_output, location){
 # Usage: plotBeadCounts(antigen_output, plate_layout)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#     etc. (reactive).
 #
 # Output:
 #   - Dot plot with values > 15 threshold coloured in blue (sufficient beads) 

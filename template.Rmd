@@ -19,6 +19,8 @@ params:
   check_repeats_output: NA
   check_repeats_table_format: NA
   model_plot: NA
+  antigens_output: NA
+  plate_list: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -97,8 +99,15 @@ blanks_plot + theme(legend.position = "bottom")
 
 #### Experiment Information 
 
-**Experiment Notes:** `r params$experiment_notes`
+**Experiment Notes**: `r params$experiment_notes`
 
-**Platform Chosen**: `r params$platform_reactive``
+**Platform Chosen**: `r params$platform_reactive`
 
-**Raw Data Filename/s:** `r params$raw_data_filename_reactive`
+**Raw Data Filename/s**: `r params$raw_data_filename_reactive`
+
+```{r echo = FALSE}
+antigens_output
+
+plate_list 
+```
+

@@ -30,9 +30,9 @@ require(ranger)
 require(rlang) # used in the classify_final_results
 require(spsComps) # shinyCatch function
 
-source("functions.R")
-source("stdcurves_functions.R")
-source("content.R")
+source(here::here("code/functions.R"))
+source(here::here("code/stdcurves_functions.R"))
+source(here::here("code/content.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
@@ -1034,7 +1034,9 @@ shinyServer(function(input, output, session){
         blanks_plot = blanks_plot(),
         check_repeats_output = check_repeats_output(),
         check_repeats_table_format = check_repeats_table_format(),
-        model_plot = model_plot()
+        model_plot = model_plot(),
+        antigens_output = antigens_output(), 
+        plate_list = plate_list()
       )
       
       callr::r(

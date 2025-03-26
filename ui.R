@@ -27,9 +27,9 @@ require(httr)
 require(jsonlite)
 require(ranger)
 
-source("functions.R")
-source("stdcurves_functions.R")
-source("content.R")
+source(here::here("code/functions.R"))
+source(here::here("code/stdcurves_functions.R"))
+source(here::here("code/content.R"))
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
