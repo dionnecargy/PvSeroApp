@@ -31,6 +31,7 @@ require(rlang) # used in the classify_final_results
 require(spsComps) # shinyCatch function
 
 source("functions.R")
+source("stdcurves_functions.R")
 source("content.R")
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
