@@ -6,7 +6,7 @@ The source code for the PvSeroApp Shiny web application, which streamlines the d
 >[!NOTE]
 >How do I name my raw luminex files?
 
-Please name them with the folowing convention with `plate1` with no capitals or spaces, and no other numbers in the file name. 
+Please name them with the folowing convention with `plate1` (other characters and capitalisations are OPTIONAL). The important part is that the labels correspond to the plate layout files as indicated in the next Question!
 - If you're using .xlsx files:
 ```
 luminexfile_plate1.xlsx
