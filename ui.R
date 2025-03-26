@@ -43,8 +43,8 @@ shinyUI(
   fluentPage(
     useShinyjs(),
     tags$head(
-      if (file.exists("google_analytics.html")) {
-        includeHTML("google_analytics.html")
+      if (file.exists("www/google_analytics.html")) {
+        includeHTML("www/google_analytics.html")
       }
     ),
     tags$head(
@@ -168,13 +168,13 @@ shinyUI(
                 list(
                   key = "sourceCode",
                   text = "View Source Code",
-                  href = "https://github.com/dionnecargy/pvseroapp",
+                  href = "https://github.com/dionnecargy/PvSeroApp",
                   target = "_blank"
                 ),
                 list(
                   key = "reportIssue",
                   text = "Report Issue",
-                  href = "https://github.com/dionnecargy/pvseroapp/issues",
+                  href = "https://github.com/dionnecargy/PvSeroApp/issues",
                   target = "_blank"
                 )
               ),
@@ -241,7 +241,7 @@ shinyUI(
           textOutput("footer_version"),
           Text(variant = "small", HTML(r"(Developed by <a href='https://github.com/dionnecargy' target='_blank'>Dionne Argyropoulos</a> and <a href='https://github.com/lauren-smith-r' target='_blank'>Lauren Smith</a> and built using 
           <a href='https://shiny.posit.co/' target='_blank'>RShiny</a> by <a href='https://posit.co/download/rstudio-desktop/' target='_blank'>RStudio</a>. 
-          <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/dionnecargy/pvserotat">PvSeroApp Classification App</a> 
+          <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/dionnecargy/PvSeroApp">PvSeroApp Classification App</a> 
           is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0
           <img style="height:12px;width:auto;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt="">
           <img style="height:12px;width:auto;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt="">

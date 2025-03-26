@@ -151,7 +151,7 @@ home_page <- function() {
       )
     ),
     Text(variant = "large", "Acknowledgements"),
-    Text(variant = "medium", HTML("The code and scripts used to develop this R Shiny web application are available on <a href='https://github.com/dionnecargy/pvserotat' class-'link'>GitHub</a>. 
+    Text(variant = "medium", HTML("The code and scripts used to develop this R Shiny web application are available on <a href='https://github.com/dionnecargy/PvSeroApp' class-'link'>GitHub</a>. 
     The scripts and functions used in this application were developed by Lauren Smith and Dionne Argyropoulos, with contributions from the following researchers:
       <ul>
         <li>Lauren Smith, WEHI (classification algorithm development)</li>
@@ -173,7 +173,7 @@ home_page <- function() {
 
 tutorial_page <- function() {
   fluentPage(
-    Text(variant = "xxLarge", "Tutorial: How to Use The PvSeroTaT App"),
+    Text(variant = "xxLarge", "Tutorial: How to Use The PvSeroApp"),
     Separator(),
     Stack(
       horizontal = TRUE, tokens = list(childrenGap = 20), horizontalAlign = "start",
@@ -190,7 +190,7 @@ tutorial_page <- function() {
             Text(variant = "medium", HTML("This web application was designed fit-for-purpose to process raw serology data exported from 
             <a href='https://int.diasorin.com/en/luminex-ltg/tools/magpix-system' class-'link'>MAGPIX</a> and 
             <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a> machines.
-            For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/pvserotat' class-'link'>download the example data</a>. 
+            For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/PvSeroApp' class-'link'>download the example data</a>. 
             The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTaT Luminex 
             Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."))
           )
@@ -422,7 +422,7 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", HTML(r"(2. We are using a <b>Magpix</b> raw data file so we click the "Magpix" button.)")),
                         p(),
-                        Text(variant = "medium", HTML(r"(3. We can then upload our <a href='github.com/dionnecargy/pvserotat' class='_blank'>raw data files</a> and <a href='github.com/dionnecargy/pvserotat' class='_blank'>plate layout</a>.)")),
+                        Text(variant = "medium", HTML(r"(3. We can then upload our <a href='github.com/dionnecargy/PvSeroApp' class='_blank'>raw data files</a> and <a href='github.com/dionnecargy/PvSeroApp' class='_blank'>plate layout</a>.)")),
                         p(),
                         Text(variant = "medium", "Your screen should now look like the image on the right hand side here."),
                         p(),
@@ -1460,7 +1460,7 @@ requestfeature_page <- function() {
   fluentPage(
     Text(variant = "xxLarge", "Request A Feature"),
     Separator(),
-    Text(variant = "medium", HTML(r"(You can <a href='https://github.com/dionnecargy/pvseroapp/issues' class-'link’>Request A Feature</a> on <b>GitHub</b>. 
+    Text(variant = "medium", HTML(r"(You can <a href='https://github.com/dionnecargy/PvSeroApp/issues' class-'link’>Request A Feature</a> on <b>GitHub</b>. 
                                   On this page, you can suggest new functionalities, improvements, or enhancements for a project. 
                                   A well-written feature request should include: <ul>
                         <li>A clear description of the feature.</li>
@@ -1511,7 +1511,7 @@ reportbug_page <- function() {
   fluentPage(
     Text(variant = "xxLarge", "Report A Bug"),
     Separator(),
-    Text(variant = "medium", HTML("You can <a href='https://github.com/dionnecargy/pvseroapp/issues' class-'link’>Report A Bug</a> on <b>GitHub</b>. 
+    Text(variant = "medium", HTML("You can <a href='https://github.com/dionnecargy/PvSeroApp/issues' class-'link’>Report A Bug</a> on <b>GitHub</b>. 
                                   Here you will be prompted to write out the problem you are facing and are encouraged to add any images or files that may be used for
                                   troubleshooting purposes.If your issue has been resolved or turned out to be a user error with a known fix, consider posting it on GitHub. 
                                   This helps others who may encounter the same problem find a solution more easily.")),
