@@ -424,7 +424,7 @@ readPlateLayout <- function(plate_layout, antigen_output) {
   antigen_output_levels <- unique(as.character(antigen_output$results$Plate))  # Convert factor to character
   
   # Step 6: Compare plate names
-  if (setequal(sheet_names, antigen_output_levels)) {
+  if (all(antigen_output_levels %in% sheet_names)) {
     message("Plate layouts correctly identified!")
   } else {
     stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
