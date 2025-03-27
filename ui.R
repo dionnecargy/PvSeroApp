@@ -27,8 +27,9 @@ require(httr)
 require(jsonlite)
 require(ranger)
 
-source("functions.R")
-source("content.R")
+source(here::here("code/functions.R"))
+source(here::here("code/stdcurves_functions.R"))
+source(here::here("code/content.R"))
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
@@ -42,8 +43,8 @@ shinyUI(
   fluentPage(
     useShinyjs(),
     tags$head(
-      if (file.exists("google_analytics.html")) {
-        includeHTML("google_analytics.html")
+      if (file.exists("www/google_analytics.html")) {
+        includeHTML("www/google_analytics.html")
       }
     ),
     tags$head(
@@ -146,17 +147,42 @@ shinyUI(
           img(src = "logo.png", style = "height: 35px"),
           Separator(vertical = TRUE),
           Text(variant = "xLarge", "PvSeroApp: Sero-surveillance Tool", style = list(root = list(color = "var(--fluent-primary-text-color)"),
-                                                                                      marginLeft = "15px"))
+                                                                                     marginLeft = "15px"))
         ),
         
         # Right Section (Dark Mode Toggle + GitHub Icon)
         div(
           style = "display: flex; align-items: center;",
-          # IconButton.shinyInput(inputId = "toggle_theme", iconProps = list(iconName = "Contrast")),
-          tags$a(
-            href = "https://github.com/dionnecargy/pvseroapp", 
-            target = "_blank",
-            tags$i(class = "fab fa-github", style = "font-size: 24px; margin-left: 20px;")
+          # IconButton.shinyInput(
+          #   inputId = "toggle_theme", 
+          #   iconProps = list(iconName = "Contrast")),
+          CommandButton.shinyInput(
+            inputId = "github_dropdown",
+            iconProps = list(
+              iconName = "", # No default Fluent UI icon
+              styles = list(root = list(width = "auto", padding = 0)) # Removes box padding
+            ),
+            text = tags$i(class = "fab fa-github", style = "font-size: 24px; color: #0078D4;"), # Uses FontAwesome GitHub icon
+            menuProps = list(
+              items = list(
+                list(
+                  key = "sourceCode",
+                  text = "View Source Code",
+                  href = "https://github.com/dionnecargy/PvSeroApp",
+                  target = "_blank"
+                ),
+                list(
+                  key = "reportIssue",
+                  text = "Report Issue",
+                  href = "https://github.com/dionnecargy/PvSeroApp/issues",
+                  target = "_blank"
+                )
+              ),
+              styles = list(
+                root = list(minWidth = "auto"), # Makes menu width match text
+                subComponentStyles = list(callout = list(minWidth = "auto"))
+              )
+            )
           )
         )
       ),
@@ -164,39 +190,47 @@ shinyUI(
       # ----------------- STACK LAYOUT FOR SIDEBAR AND MAIN CONTENT -----------------
       Stack(
         horizontal = TRUE, tokens = list(childrenGap = 20), horizontalAlign = "start",
-            # Left navigation panel with Nav component
-            div(
-              class = "nav-panel",
-              div(img(src = "PvSeroApp.png", style = "align-items: center; height: 200px; margin-left: 25px")),
-                Nav(
-                  ariaLabel = "Introduction",
-                  groups = list(
-                    list(
-                      name = "Introduction", 
-                      links = list(
-                        list(name = "About", key = "home", url = "#home", iconProps = list(iconName = "Home", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
-                        list(name = "Tutorial", key = "tutorial", url = "#tutorial", iconProps = list(iconName = "Info", styles = list(root = list(fontSize = 20, color = "#106ebe")))), 
-                        list(name = "Algorithm", key = "algorithm", url = "#algorithm", iconProps = list(iconName = "ConnectVirtualMachine", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
-                      )
-                    ),
-                    list(
-                      name = "PvSeroApp Algorithm",
-                      links = list(
-                        list(name = "Step 1: Input Data", key = "input", url = "#input", iconProps = list(iconName = "BulkUpload", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
-                        list(name = "Step 2: Quality Control", key = "check", url = "#check", iconProps = list(iconName = "CheckList", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
-                        list(name = "Step 3: Classify Exposure", key = "model", url = "#model", iconProps = list(iconName = "Diagnostic", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
-                        list(name = "Step 4: Data Visualisation", key = "datavis", url = "#datavis", iconProps = list(iconName = "BIDashboard", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
-                      )
-                    )
-                  )
+        # Left navigation panel with Nav component
+        div(
+          class = "nav-panel",
+          div(img(src = "PvSeroApp.png", style = "align-items: center; height: 200px; margin-left: 25px")),
+          Nav(
+            ariaLabel = "Introduction",
+            groups = list(
+              list(
+                name = "Introduction", 
+                links = list(
+                  list(name = "About", key = "home", url = "#home", iconProps = list(iconName = "Home", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Tutorial", key = "tutorial", url = "#tutorial", iconProps = list(iconName = "Info", styles = list(root = list(fontSize = 20, color = "#106ebe")))), 
+                  list(name = "Algorithm", key = "algorithm", url = "#algorithm", iconProps = list(iconName = "ConnectVirtualMachine", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
                 )
-            ),
-            # Main content area where dynamic content will be rendered
-            div(
-              class = "main-content",
-              style = "flex-grow: 1; padding: 20px;",
-              uiOutput("page_content")  # Dynamic content area for rendering the page content
+              ),
+              list(
+                name = "PvSeroApp Algorithm",
+                links = list(
+                  list(name = "Step 1: Input Data", key = "input", url = "#input", iconProps = list(iconName = "BulkUpload", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Step 2: Quality Control", key = "check", url = "#check", iconProps = list(iconName = "CheckList", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Step 3: Classify Exposure", key = "model", url = "#model", iconProps = list(iconName = "Diagnostic", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Step 4: Data Visualisation", key = "datavis", url = "#datavis", iconProps = list(iconName = "BIDashboard", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
+                )
+              ),
+              list(
+                name = "Feedback",
+                links = list(
+                  list(name = "App Version History", key = "history", url = "#history", iconProps = list(iconName = "GitGraph", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Request a Feature", key = "feature", url = "#feature", iconProps = list(iconName = "Processing", styles = list(root = list(fontSize = 20, color = "#106ebe")))),
+                  list(name = "Report a Bug", key = "bug", url = "#bug", iconProps = list(iconName = "InboxCheck", styles = list(root = list(fontSize = 20, color = "#106ebe"))))
+                )
+              )
             )
+          )
+        ),
+        # Main content area where dynamic content will be rendered
+        div(
+          class = "main-content",
+          style = "flex-grow: 1; padding: 20px;",
+          uiOutput("page_content")  # Dynamic content area for rendering the page content
+        )
       ),
       # ----------------- FOOTER -----------------
       div(
@@ -207,7 +241,7 @@ shinyUI(
           textOutput("footer_version"),
           Text(variant = "small", HTML(r"(Developed by <a href='https://github.com/dionnecargy' target='_blank'>Dionne Argyropoulos</a> and <a href='https://github.com/lauren-smith-r' target='_blank'>Lauren Smith</a> and built using 
           <a href='https://shiny.posit.co/' target='_blank'>RShiny</a> by <a href='https://posit.co/download/rstudio-desktop/' target='_blank'>RStudio</a>. 
-          <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/dionnecargy/pvserotat">PvSeroApp Classification App</a> 
+          <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/dionnecargy/PvSeroApp">PvSeroApp Classification App</a> 
           is licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-SA 4.0
           <img style="height:12px;width:auto;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt="">
           <img style="height:12px;width:auto;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt="">

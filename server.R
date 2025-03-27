@@ -5,6 +5,7 @@
 require(shiny)
 require(shiny.fluent)
 require(shiny.react)
+require(shinyWidgets)
 require(shinyjs)
 require(htmltools)
 require(workflowsets)
@@ -14,7 +15,7 @@ require(ggpubr)
 require(janitor)
 require(DT)
 require(rmarkdown)
-require(shinyWidgets)
+require(ggrepel)
 require(here)
 require(RColorBrewer)
 require(readxl)
@@ -26,9 +27,12 @@ require(rsconnect)
 require(httr)
 require(jsonlite)
 require(ranger)
+require(rlang) # used in the classify_final_results
+require(spsComps) # shinyCatch function
 
-source("functions.R")
-source("content.R")
+source(here::here("code/functions.R"))
+source(here::here("code/stdcurves_functions.R"))
+source(here::here("code/content.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
@@ -54,7 +58,6 @@ get_github_release <- function(repo_owner, repo_name) {
     return(NULL)
   }
 }
-
 
 ###############################################################################
 ###### Server
@@ -114,10 +117,17 @@ shinyServer(function(input, output, session){
       model_page()
     } else if (hash == "#datavis") {
       datavis_page()
+    } else if (hash == "#history") {
+      apphistory_page()
+    } else if (hash == "#feature") {
+      requestfeature_page()
+    } else if (hash == "#bug") {
+      reportbug_page()
     } else {
       return(home_page())  # Default page if no page is specified
     }
   })
+  
   
   ###############################################################################
   # ------------ TUTORIAL ------------
@@ -125,9 +135,15 @@ shinyServer(function(input, output, session){
   
   # code output showing file display
   output$code_display <- renderText({
-    "PvSeroApp/
-     ├── rawdata/            # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
-     └── platelayout.xlsx    # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`...."
+    "└── PvSeroApp/
+    ├── rawdata                      # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
+    │   ├── rawdata_plate1.csv
+    │   ├── rawdata_plate2.csv
+    │   ├── #### OR
+    │   ├── rawdata_plate1.xlsx
+    │   └── rawdata_plate2.xlsx
+    ├── platelayout.xlsx             # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`....
+    └── outputs/                     # Where all outputs from the App can be stored!"
   })
   
   # table example for how antigens should be included.
@@ -183,6 +199,7 @@ shinyServer(function(input, output, session){
               ), 
               rownames = FALSE)                            # Remove row numbers
   })
+  
   
   # APP RESPONSE: Read imported plate layout file and print template
   plate_image_list <- reactive({
@@ -492,7 +509,6 @@ shinyServer(function(input, output, session){
   ###############################################################################
   
   # Download links for the template/example data
-  
   output$template_zip <- downloadHandler(
     filename = function() {
       "example_data.zip"
@@ -546,8 +562,6 @@ shinyServer(function(input, output, session){
     req(input$date)
     format(as.Date(input$date), "%d%m%y")  # Convert to ddmmyy format
   })
-  
-  # USER INPUT 3: Reactive expression to get experiment notes 
   
   # USER INPUT 3: Reactive expression to get experiment notes 
   experiment_notes <- reactive({
@@ -642,6 +656,16 @@ shinyServer(function(input, output, session){
     file_paths <- raw_data_reactive()$datapath
     master_list <- readSeroData(file_paths, raw_data_filename_reactive(), platform_reactive())
   })
+  # RUN readSeroData only once! 
+  antigens_output <- reactive({
+    req(serodata_output()) 
+    readAntigens(serodata_output())
+  })
+  # RUN readPlateLayout only once! 
+  plate_list <- reactive({
+    plate_file_path <- plate_layout_reactive()$datapath
+    readPlateLayout(plate_layout = plate_file_path, antigen_output = antigens_output())
+  })
   
   # APP RESPONSE: Render the raw data table based on the imported file
   output$alldata <- renderUI({
@@ -687,10 +711,6 @@ shinyServer(function(input, output, session){
   })
   
   # APP RESPONSE: Read imported plate layout file and print template
-  plate_list <- reactive({
-    plate_file_path <- plate_layout_reactive()$datapath
-    readPlateLayout(plate_file_path)
-  })
   # Track the current plate index
   current_plate <- reactiveVal(1)
   # Get the total number of plates
@@ -735,11 +755,6 @@ shinyServer(function(input, output, session){
   ###############################################################################
   
   ## ----- Create All Outputs (Plots/Data Frames) -----
-  # RUN readSeroData only once! 
-  antigens_output <- reactive({
-    req(serodata_output()) 
-    readAntigens(serodata_output())
-  })
   
   counts_output <- reactive({
     req(antigens_output())
@@ -748,15 +763,13 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Creating standard curve plot
   location <- reactive({
-    value <- ifelse(is.null(input$toggle_png_eth), FALSE, input$toggle_png_eth)
-    ifelse(value, "ETH", "PNG")  # Map TRUE to "ETH", FALSE to "PNG"
+    value <- ifelse(is.null(input$dropdown_stds), FALSE, input$dropdown_stds)
   })
   
   stdcurve_plot <- reactive({
     req(antigens_output(), location(), experiment_name()) 
     plotStds(antigens_output(), location(), experiment_name())
   })
-  
   
   # APP RESPONSE: Creating plate QC plot
   num_facets_qc <- reactive({
@@ -780,17 +793,36 @@ shinyServer(function(input, output, session){
     plotBlanks(antigens_output(), experiment_name())
   })
   
-  # RUN MFItoRAU only once! 
+  # RUN MFItoRAU_PNG only once! 
   mfi_to_rau_output <- reactive({
-    req(antigens_output(), plate_layout_reactive())
-    MFItoRAU(antigen_output = antigens_output(), 
-             plate_layout = plate_layout_reactive()$datapath)
+    req(antigens_output(), plate_layout_reactive(), location())
+    
+    if(location() == "PNG"){
+      
+      MFItoRAU_PNG(antigen_output = antigens_output(), 
+                   plate_layout = plate_layout_reactive()$datapath)
+      
+    } else if (location() == "ETH"){
+      
+      MFItoRAU_ETH(antigen_output = antigens_output(), 
+                   plate_layout = plate_layout_reactive()$datapath)
+    }
+    
   })
   
   # APP RESPONSE: Creating QC model plot
   model_plot <- reactive({
-    req(mfi_to_rau_output(), antigens_output())
-    plotModel(mfi_to_rau_output(), antigens_output())
+    req(mfi_to_rau_output(), antigens_output(), location())
+    
+    if(location() == "PNG"){
+      
+      plotModel_PNG(mfi_to_rau_output(), antigens_output())
+      
+    } else if (location() == "ETH"){
+      
+      plotModel_ETH(mfi_to_rau_output(), antigens_output())
+    }
+    
   })
   
   ## ----- Display All Outputs (Plots/Data Frames) in APP -----
@@ -833,7 +865,7 @@ shinyServer(function(input, output, session){
     
     if (is.data.frame(check_repeats_output())) {
       table <- check_repeats_output()
-      layout <- readPlateLayout(plate_layout_reactive()$datapath)
+      layout <- readPlateLayout(plate_layout_reactive()$datapath, antigens_output())
       
       # Extract the row and column information from the 'location' column in table
       table$Row <- substr(table$Location, 1, 1)  # Extract row (e.g., 'A')
@@ -879,7 +911,7 @@ shinyServer(function(input, output, session){
   output$blanks <- renderUI({
     num_facets <- num_facets_qc()
     num_rows <- ceiling(num_facets / 3)  # Assuming 3 columns per row
-    plot_height <- num_rows * 250  # Adjust height per row (e.g., 250 per row)
+    plot_height <- num_rows * 350  # Adjust height per row (e.g., 250 per row)
     
     plotOutput("facet_plot_blanks", height = paste0(plot_height, "px"))
   })
@@ -887,7 +919,7 @@ shinyServer(function(input, output, session){
     blanks_plot()
   })
   
-
+  
   # APP RESPONSE: Render QC model data frame
   output$results <- DT::renderDataTable({
     
@@ -935,6 +967,7 @@ shinyServer(function(input, output, session){
   output$individual_plot <- renderPlot({
     model_plot()[[current_plot()]]
   })
+  
   
   ## ----- Save Outputs of QC Model -----
   # Trigger hidden download buttons
@@ -1001,7 +1034,9 @@ shinyServer(function(input, output, session){
         blanks_plot = blanks_plot(),
         check_repeats_output = check_repeats_output(),
         check_repeats_table_format = check_repeats_table_format(),
-        model_plot = model_plot()
+        model_plot = model_plot(),
+        antigens_output = antigens_output(), 
+        plate_list = plate_list()
       )
       
       callr::r(
@@ -1058,6 +1093,7 @@ shinyServer(function(input, output, session){
       setwd(old_wd)  # Restore original working directory
     }
   )
+  
   
   ###############################################################################
   # ------------ CLASSIFY EXPOSURE   ------------
@@ -1132,14 +1168,15 @@ shinyServer(function(input, output, session){
   ## ----- Downloadable csv of classification results file -----
   output$download_classification <- downloadHandler(
     filename = function() {
-      paste0(experiment_name(), "_", date(), "_", sens_spec(), "_", algorithm(), "_", version(), "_classification.csv", sep = "")
+      paste0(experiment_name_reactive(), "_", date_reactive(), "_", sens_spec(), "_", algorithm(), "_", version(), "_classification.csv", sep = "")
     },
     content = function(file) {
       write.csv(classified_data(), file, row.names = FALSE)
     })
   
-  # ---------- DATA VISUALISATION ------------
-  
+  ###############################################################################
+  # ------------ DATA VISUALISATION   ------------
+  ###############################################################################
   
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
@@ -1237,7 +1274,7 @@ shinyServer(function(input, output, session){
   output$mfi_plotly <- renderPlotly({
     req(mfi_to_rau_output())
     
-    mfi_plot <- plotMFI(mfi_to_rau_output())
+    mfi_plot <- plotMFI(mfi_to_rau_output(), location())
     
     plotly_mfi_plot <- ggplotly(mfi_plot) %>%
       layout(
@@ -1253,7 +1290,7 @@ shinyServer(function(input, output, session){
   output$rau_plotly <- renderPlotly({
     req(mfi_to_rau_output())
     
-    rau_plot <- plotRAU(mfi_to_rau_output())
+    rau_plot <- plotRAU(mfi_to_rau_output(), location())
     
     plotly_rau_plot <- ggplotly(rau_plot) %>%
       layout(
@@ -1265,7 +1302,6 @@ shinyServer(function(input, output, session){
       )
     plotly_rau_plot
   })
-  
   
   output$bead_count_plotly <- renderPlotly({
     req(antigens_output(), plate_layout_reactive())
@@ -1282,6 +1318,5 @@ shinyServer(function(input, output, session){
     plotly_bead_count_1
     
   })
-  
   
 })
