@@ -97,8 +97,13 @@ blanks_plot + theme(legend.position = "bottom")
 
 #### Experiment Information 
 
-**Experiment Notes:** `r params$experiment_notes`
+**Experiment Notes**: `r params$experiment_notes`
 
-**Platform Chosen**: `r params$platform_reactive``
+**Platform Chosen**: `r params$platform_reactive`
 
-**Raw Data Filename/s:** `r params$raw_data_filename_reactive`
+**Raw Data Filename/s**: `r params$raw_data_filename_reactive`
+
+```{r}
+
+```
+
