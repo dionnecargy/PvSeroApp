@@ -1080,7 +1080,9 @@ shinyServer(function(input, output, session){
         blanks_plot = blanks_plot(),
         check_repeats_output = check_repeats_output(),
         check_repeats_table_format = check_repeats_table_format(),
-        model_plot = model_plot()
+        model_plot = model_plot(),
+        antigens_output = antigens_output(), 
+        plate_list = plate_list()
       )
       callr::r(
         render_report,

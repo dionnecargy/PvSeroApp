@@ -105,14 +105,9 @@ blanks_plot + theme(legend.position = "bottom")
 
 **Raw Data Filename/s**: `r params$raw_data_filename_reactive`
 
-<<<<<<< HEAD
 ```{r}
-
-=======
-```{r echo = FALSE}
 antigens_output
 
 plate_list 
->>>>>>> a3a48b2f87b336351ee0d3ee60499e619645162d
 ```
 
