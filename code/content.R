@@ -554,11 +554,11 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
                         p(),
-                        Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "150px", height = "auto"),
+                        Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "225px", height = "auto"),
                         p(),
-                        Text(variant = "medium", "And you can click on which plates you would like to see in the legend [right image]."),
+                        Text(variant = "medium", "And you can click on which plates you would like to see in the legend [image below]."),
                         p(),
-                        Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "175px", height = "auto"),
+                        Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "275px", height = "auto"),
                         p(),
                         Text(variant = "medium", "You will also notice that there are grey dots behind your data points. These indicate the WEHI standard curves that we have performed in house. These can be used as a guide to see if your standard curves fall within a similar line.")
                       ),
@@ -649,7 +649,7 @@ tutorial_page <- function() {
                  plate runs, so you can also download the standard curve data separately by clicking the button "Download Standard Curve Data". You can also download your quality control report, which includes 
                  all of the plots in the <a href='#tutorial/quality_control' class-`link`>Quality Control</a> tab as well as the information you entered in the <a href='#tutorial/import_data' class-`link`>Import Data</a>
                  tab (i.e., experiment name, notes, date and uploaded files).)")),
-                Image(src = "2_tutorial/5.2_qc_tute_11.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/5.3_qc_tute_11.png", width = "auto", height = "auto")
               )
             )
           )
@@ -685,7 +685,7 @@ tutorial_page <- function() {
               id = "tutorial/classify/perform", 
               title = "6.2. Perform Classification", 
               content = list(
-                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see below). The example data was generated using the PvSeroTaT assay with all eight antigens 
+                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see above). The example data was generated using the PvSeroTaT assay with all eight antigens 
                  and therefore you should select the "PvSeroTaT Algorithm" for this tutorial.)"))
               )
             ), 
@@ -806,7 +806,7 @@ tutorial_page <- function() {
             fluent_two_cols(
               first_width = "80%", second_width = "20%", 
               first_col = Text(variant = "medium", HTML("If you have any <a href='#feature' class='link'>Requests for Features</a> or would like to <a href='#bug' class='link'>Report A Bug</a> please see the sections in the left-hand menu bar. 
-                                          Alternatively there is a shortcut to these links on GitHub where you can publish your issues directly with the developer.")),
+                                          Alternatively there is a shortcut to these links at the top menu bar of the PvSeroApp with the GitHub Logo where you can publish your issues directly with the developer [see image to the right].")),
               second_col = Image(src = "2_tutorial/8_github_toggle.png", width = "200px", height = "auto")
             )
           )
