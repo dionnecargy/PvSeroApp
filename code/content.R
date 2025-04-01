@@ -342,7 +342,7 @@ tutorial_page <- function() {
                 MessageBar(HTML(r"(Try to keep your experiment name/filename free of spaces and instead use '_' or '-'. All of your downloadable files (processed data, quality control report, etc) will be labeled
                        as "<b>ExperimentName_Date_VersionNumber</b>")")),
                 Text(variant = "medium", HTML("A step-by-step guide is available in the <b>Input Data</b> Page which will walk you through how to input your files successfully.")),
-                Image( src = "2_tutorial/4.1_input_data_1.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/4.1_input_data_1.png", width = "auto", height = "auto") 
               )
             ),
             makeCard(
@@ -529,9 +529,10 @@ tutorial_page <- function() {
               id = "tutorial/quality_control/location", 
               title = "5.1. Initialising the Quality Control Report", 
               content = list(
-                Text(variant = "medium", ""),
+                Text(variant = "medium", "As there are epidemiological differences in antibody levels for various antigens, we have based our calculations (so far) on either a PNG or Ethiopian pool of standards. The first step of quality control analysis is 
+                     to tell the app which control you are using, so that the appropriate standard curve calculations are performed."),
                 p(),
-                Image(src = "2_tutorial/5.1_qc_tute_2.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/5.1_qc_tute_1.png", width = "auto", height = "auto")
               )
             ), 
             makeCard(
@@ -551,12 +552,13 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
                         p(),
-                        Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [left image] and you can click on which plates you would like to see in the legend [right image]."),
+                        Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
                         p(),
-                        fluent_two_cols(
-                          first_col = Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "200px", height = "auto"),
-                          second_col = Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "225px", height = "auto")
-                        ),
+                        Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "150px", height = "auto"),
+                        p(),
+                        Text(variant = "medium", "And you can click on which plates you would like to see in the legend [right image]."),
+                        p(),
+                        Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "175px", height = "auto"),
                         p(),
                         Text(variant = "medium", "You will also notice that there are grey dots behind your data points. These indicate the WEHI standard curves that we have performed in house. These can be used as a guide to see if your standard curves fall within a similar line.")
                       ),
@@ -799,10 +801,8 @@ tutorial_page <- function() {
           Stack(
             tokens = list(childrenGap = 10),
             Separator(Text(variant = "xxLarge", "8. Output From This Tutorial"), alignContent = "start"),
-            Text(variant = "medium", "If you followed along in this tutorial and downloaded your processed data, QC report and classification data, you can compare your files to the expected output from this tutorial."),   
-            p(),
+            Text(variant = "medium", "If you followed along in this tutorial and downloaded your processed data, QC report and classification data, you can compare your files to the expected output from this tutorial."),
             Text(variant = "medium", HTML("Click here to download an example of the output from this tutorial <a href='https://github.com/dionnecargy/PvSeroApp/blob/main/data/example_output.zip' class='link'>here</a>.")),
-            p(),
             fluent_two_cols(
               first_width = "80%", second_width = "20%", 
               first_col = Text(variant = "medium", HTML("If you have any <a href='#feature' class='link'>Requests for Features</a> or would like to <a href='#bug' class='link'>Report A Bug</a> please see the sections in the left-hand menu bar. 
