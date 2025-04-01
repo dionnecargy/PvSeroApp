@@ -19,8 +19,11 @@ params:
   check_repeats_output: NA
   check_repeats_table_format: NA
   model_plot: NA
-  antigens_output: NA
-  plate_list: NA
+  operator_output: NA
+  volume_output: NA
+  calibration_output: NA
+  machine_output: NA
+  plate_list_output: NA
 ---
 
 ```{r setup, include=FALSE}
@@ -73,13 +76,26 @@ plateqc_plot <- params$plateqc_plot
 plateqc_plot + theme(legend.position = "bottom")
 ```
 
-```{r, echo=FALSE, results='asis'}
+```{r check repeats table, echo=FALSE, results='asis'}
 check_repeats_output <- params$check_repeats_output
 check_repeats_table_format <- params$check_repeats_table_format
 
 if (is.data.frame(check_repeats_output)) {
   # If it's a table, print it using kable
-  print(knitr::kable(check_repeats_table_format))
+  tablel <- check_repeats_table_format %>% 
+    knitr::kable(
+      format = "latex",
+      align = "l",
+      booktabs = TRUE,
+      longtable = TRUE,
+      linesep = "",
+      ) %>%
+    kableExtra::kable_styling(
+        position = "center",
+        latex_options = c("striped", "repeat_header"),
+        stripe_color = "gray!15"
+      )
+  print(tablel)
 } else {
   # If it's text, print it normally
   cat(check_repeats_output, "\n\n")
@@ -97,7 +113,8 @@ blanks_plot + theme(legend.position = "bottom")
 ```
 \newpage
 
-#### Experiment Information 
+#### Experiment Information
+
 
 **Experiment Notes**: `r params$experiment_notes`
 
@@ -105,9 +122,22 @@ blanks_plot + theme(legend.position = "bottom")
 
 **Raw Data Filename/s**: `r params$raw_data_filename_reactive`
 
-```{r}
-antigens_output
+**Operator**: `r params$operator_output`
 
-plate_list 
+**Acquisition volume**: `r params$volume_output`
+
+**Recent Calibration and Verification results**: 
+`r params$calibration_output`
+
+**Machine Serial Number**: `r params$machine_output`
+
+\newpage
+
+#### Plate Layouts
+
+\tiny 
+
+```{r plate layouts, echo = FALSE, warning = FALSE, message = FALSE}
+params$plate_list_output
 ```
 

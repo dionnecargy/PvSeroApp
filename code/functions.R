@@ -27,6 +27,7 @@
 ##############################################################################
 
 readSeroData <- function(raw_data, raw_data_filenames, platform){
+  
   # Load platemap
   platemap <- read.csv(here::here("data/platemap.csv"))
   
@@ -46,6 +47,10 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     file_name <- raw_data_filenames[i]
     
     check_platform <- function(raw_data, raw_data_filenames, platform) {
+      
+      if (length(raw_data) == 0) {
+        stop("No raw data files were provided.")
+      }
       
       file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
       
@@ -161,7 +166,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       
       # 2. Create results
       results <- results %>%
-        dplyr::select(-`Total Events`) %>%
+        dplyr::select(-any_of("Total Events")) %>%
         mutate(across(everything(), ~ gsub("NaN", 0, .))) %>% # Change "NaN" to 0s
         mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
                                ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
@@ -171,7 +176,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       counts <- counts %>%
         mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
                                ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
-        dplyr::select(-`Total Events`)
+        dplyr::select(-any_of("Total Events"))
       counts <- as_tibble(counts)
       
       # 4. Save blanks
@@ -405,6 +410,16 @@ readAntigens <- function(serodata_output){
 ##############################################################################
 
 readPlateLayout <- function(plate_layout, antigen_output) {
+  
+  if (is.null(plate_layout) || !file.exists(plate_layout)) {
+    stop("ERROR: Invalid plate layout file provided.")
+  }
+  
+  sheet_names <- tryCatch({
+    getSheetNames(plate_layout)
+  }, error = function(e) {
+    stop("ERROR: Failed to read sheet names. Ensure the file is a valid Excel file.")
+  })
   
   # Step 1: Get the sheet names to confirm
   sheet_names <- getSheetNames(plate_layout)
@@ -808,6 +823,7 @@ MFItoRAU_PNG <- function(antigen_output, plate_layout){
     location.2 <- data.frame(Location.2=location.1, alpha=gsub("[[:digit:]]", "", location.1), numeric=gsub("[^[:digit:]]", "", location.1), SampleID=NA, stringsAsFactors = FALSE)
     for (i in location.2[, "Location.2"]){
       plate_layout_current <- layout[[plate_level]]
+      names(plate_layout_current)[1] <- "Plate" # Relabel first column to be "Plate"
       location.2[location.2$Location.2==i, "SampleID"] <- plate_layout_current[
         plate_layout_current$Plate == unique(location.2[location.2$Location.2 == i, "alpha"]), 
         colnames(plate_layout_current) == unique(location.2[location.2$Location.2 == i, "numeric"])
@@ -883,8 +899,37 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
   L <- master_file %>% mutate(across(-c(Location, Sample, Plate), as.numeric))
   layout <- readPlateLayout(plate_layout, antigen_output)
   
+  ##########################################################################################################
+  #### Reference Fit 
+  ##########################################################################################################
+  
   refs <- read.csv(here::here("data/png_eth_stds.csv"))
+  # MAGIC PARAMETERS FOR THIS SECTION
   s1_concentration <- 1/50
+  s10_relative_dilution <- 2^-9
+  current_min_relative_dilution <- s10_relative_dilution
+  # END MAGIC PARAMETER DEFINITIONS
+  
+  control = list(maxit = 10000,
+                 abstol = 1e-10,
+                 reltol = 1e-8)
+  
+  initial_solution = c(-1.0, 0.0, 10, 0.0, 0.0)
+  
+  ref_fit <- refs %>% 
+    dplyr::group_by(.data$std_plate, .data$antigen) %>% 
+    tidyr::nest()  %>% 
+    dplyr::mutate(
+      .keep = "none",
+      eth_fit = purrr::map(data, ~ {
+        fit_standard_curve(.x$eth_mfi, .x$dilution, control)
+      }),
+      png_fit = purrr::map(data, ~ {
+        fit_standard_curve(.x$png_mfi, .x$dilution, control)
+      })
+    )
+  
+  reference_antigens = unique(ref_fit$antigen)
   
   excluded_cols <- c("Location", "Sample", "Plate")
   remaining_cols <- setdiff(colnames(L), excluded_cols)
@@ -905,30 +950,6 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
     plate_level <- unique(L$Plate)[plate_idx]
     subset_data <- L[L$Plate == plate_level, ]
     
-    ##########################################################################################################
-    #### Reference Fit 
-    ##########################################################################################################
-    
-    control = list(maxit = 10000,
-                   abstol = 1e-10,
-                   reltol = 1e-8)
-    
-    initial_solution = c(-1.0, 0.0, 10, 0.0, 0.0)
-    
-    ref_fit <- refs %>% 
-      dplyr::group_by(.data$std_plate, .data$antigen) %>% 
-      tidyr::nest()  %>% 
-      dplyr::mutate(
-        .keep = "none",
-        eth_fit = purrr::map(data, ~ {
-          fit_standard_curve(.x$eth_mfi, .x$dilution, control)
-        }),
-        png_fit = purrr::map(data, ~ {
-          fit_standard_curve(.x$png_mfi, .x$dilution, control)
-        })
-      )
-    
-    reference_antigens = unique(ref_fit$antigen)
     
     ##########################################################################################################
     #### Apply conversion  
@@ -963,7 +984,10 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
           .keep = "none",
           mfi = .data$mfi,
           Sample = .data$Sample,
-          dilution = convert_between_curves(.data$mfi, new_fit, eth_fit, png_fit)
+          # dilution = convert_between_curves(.data$mfi, new_fit, eth_fit, png_fit)
+          dilution = convert_mfi_to_dilution(mfi,new_fit, current_min_relative_dilution),
+          ref_mfi = convert_dilution_to_mfi(dilution,eth_fit),
+          dilution = convert_mfi_to_dilution(ref_mfi,png_fit, s10_relative_dilution)
         )
       )) %>%
       tidyr::unnest(cols = data)
@@ -1044,8 +1068,8 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
     
     # Make long data frame wide 
     eth_converted_locations_mfi <-eth_converted_locations %>%
-      dplyr::select(-mfi) %>%
-      pivot_wider(names_from = "antigen", values_from = "dilution") %>% 
+      dplyr::select(-dilution) %>%
+      pivot_wider(names_from = "antigen", values_from = "mfi") %>% 
       rename_with(~paste0(.x, "_MFI"), -c(SampleID, Location.2, Location, Sample, Plate))
     eth_converted_locations_dilutions <- eth_converted_locations %>%
       dplyr::select(-mfi) %>%
@@ -1124,7 +1148,7 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
   stds_log <- 
     stds_file %>%
     mutate(across(-c(Location, Sample, Plate), ~ as.numeric(.))) %>% 
-    pivot_longer(-c(Location, Sample, Plate), names_to = "Antigen", values_to = "StdCurve") %>%
+    pivot_longer(-c(Location, Sample, Plate), names_to = "Antigen", values_to = "stdcurve") %>%
     mutate(dilution = ifelse(
       Sample == "S1", 1/50, 
       ifelse(Sample == "S2", 1/100, 
@@ -1137,20 +1161,19 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
                                                        ifelse(Sample == "S9", 1/12800, 
                                                               ifelse(Sample == "S10", 1/25600, NA)))))))))))
   
-  # Generate plots for each plate, grouping antigens together
+  # Generate plots for each plate, grouping proteins together
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
-    ggplot(data = subset(combined_data, Plate == plate_name), 
-           aes(x = dilution, y = `1`, color = Antigen)) +  # Use 'Antigen' to differentiate lines
-      geom_line() +
+    ggplot() +  # Use 'protein' to differentiate lines
+      geom_line(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = exp(`1`), color = Antigen)) +
+      geom_point(data = subset(stds_log, Plate == plate_name), aes(x = dilution, y = stdcurve, color = Antigen)) +
       scale_x_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
                     labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
-      scale_y_log10() +
-      geom_point(data = subset(stds_log, Plate == plate_name), aes(x = dilution, y = StdCurve, color = Antigen)) +
+      scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
       labs(x = "Antibody Dilution",
            y = "Standard Curve (log(MFI))",
            title = paste("Standard Curves for Plate:", plate_name)) +
       theme_bw() +
-      facet_wrap(~ Antigen, scales = "free")  # Create a separate plot for each Antigen
+      facet_wrap(~ Antigen, scales = "free")  # Create a separate plot for each antigen
   })
   
   # Assign names to the list of plots for clarity
@@ -1196,11 +1219,11 @@ plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
   # Generate plots for each plate, grouping antigens together
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
     ggplot(data = subset(combined_data, Plate == plate_name), 
-           aes(x = dilution, y = mfi, color = antigen)) +  # Use 'Antigen' to differentiate lines
+           aes(x = dilution, y = mfi_pred, color = antigen)) +  # Use 'Antigen' to differentiate lines
       geom_line() +
-      scale_x_log10() +
-      scale_y_log10() +
-      geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi_pred, color = antigen)) +
+      scale_x_log10() +    
+      scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+      geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi, color = antigen)) +
       labs(x = "Antibody Dilution",
            y = "Standard Curve (log(MFI))",
            fill = "Antigen",

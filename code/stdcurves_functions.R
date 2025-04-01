@@ -35,9 +35,10 @@ convert_dilution_to_mfi <- function(dilution, params) {
 #'
 #' @param mfi Known mfi of samples
 #' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1. 
 #' @return Returns the dilution of each sample in mfi.
 #' @export
-convert_mfi_to_dilution <- function(mfi, params) {
+convert_mfi_to_dilution <- function(mfi, params, min_relative_dilution) {
   if (is.null(mfi) | is.null(params)) {
     error("Require both mfi and params to run.")
   }
@@ -51,7 +52,10 @@ convert_mfi_to_dilution <- function(mfi, params) {
     exp(params[5])
   )
   result[y > (params[2] + params[3])] <- 1.0
-  result[y < params[2]] <- 0.0
+  result[y < params[2]] <- min_relative_dilution
+  result[y < params[6]] <- min_relative_dilution
+  result[y > params[7]] <- 1.0
+  # I dont think this will happen - Eamon (ask if needed)
   result[result > 1.0] <- 1.0
   return(result)
 }
@@ -83,7 +87,7 @@ fit_standard_curve <- function(mfi, dilution, control = NULL) {
   if (solution$convergence != 0) {
     stop("Standard curve failed to converge. Look at data and possibly change control parameters from default.")
   }
-  solution$par
+  c(solution$par, min(y1), max(y1))
 }
 
 inverse_log_logistic_5p <- function(y,b,c,d,e,f){
