@@ -131,7 +131,6 @@ shinyServer(function(input, output, session){
     }
   })
   
-  
   ###############################################################################
   # ------------ TUTORIAL ------------
   ###############################################################################
@@ -208,22 +207,22 @@ shinyServer(function(input, output, session){
   plate_image_list <- reactive({
     list(
       list(
-        src = "www/2_tutorial/plate_layout_1.png",
+        src = "www/2_tutorial/2.2_plate_layout_1.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
         imageFit = "container"
       ),
       list(
-        src = "www/2_tutorial/plate_layout_2.png",
+        src = "www/2_tutorial/2.2_plate_layout_2.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
         imageFit = "container"
       ),
       list(
-        src = "www/2_tutorial/plate_layout_3.png",
+        src = "www/2_tutorial/2.2_plate_layout_3.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
         imageFit = "container"
       ),
       list(
-        src = "www/2_tutorial/plate_layout_4.png",
+        src = "www/2_tutorial/2.2_plate_layout_4.png",
         style = "max-width: 100%; height: auto; display: block; margin: 0 auto;",
         imageFit = "container"
       )
