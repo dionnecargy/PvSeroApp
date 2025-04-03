@@ -41,52 +41,52 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     run       = NULL   # Placeholder for any run data combined
   )
   
+  check_platform <- function(raw_data, raw_data_filenames, platform) {
+    
+    if (length(raw_data) == 0) {
+      stop("No raw data files were provided.")
+    }
+    
+    file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
+    
+    if (file_extension == "xlsx") {
+      df <- suppressMessages(readxl::read_excel(file, n_max = 5))
+    } else if (file_extension == "csv") {
+      df <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
+    }
+    
+    # Extract the first two column names
+    col_names <- colnames(df)
+    if (all(grepl("^X\\d+$", col_names))) {
+      df <- suppressWarnings(df %>% row_to_names(row_number = 1))
+    }
+    first_two_cols <- colnames(df)[1:2]
+    
+    # Detect if the file is Magpix based on column names
+    is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
+      any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
+    
+    # Initialize result variable
+    result_msg <- "PASS"  # Default to "PASS"
+    
+    # User selected "magpix" but the file does not have "Program" or "xPonent"
+    if (platform == "magpix" && !is_magpix) {
+      stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
+    }
+    
+    # User selected "bioplex" but the file contains "Program" or "xPonent"
+    if (platform == "bioplex" && is_magpix) {          
+      stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
+    }
+    
+    return(result_msg)
+    
+  }
+  
   # Loop through each file and process accordingly
   for (i in seq_along(raw_data)) {
     file <- raw_data[i]
     file_name <- raw_data_filenames[i]
-    
-    check_platform <- function(raw_data, raw_data_filenames, platform) {
-      
-      if (length(raw_data) == 0) {
-        stop("No raw data files were provided.")
-      }
-      
-      file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
-      
-      if (file_extension == "xlsx") {
-        df <- suppressMessages(readxl::read_excel(file, n_max = 5))
-      } else if (file_extension == "csv") {
-        df <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
-      }
-      
-      # Extract the first two column names
-      col_names <- colnames(df)
-      if (all(grepl("^X\\d+$", col_names))) {
-        df <- suppressWarnings(df %>% row_to_names(row_number = 1))
-      }
-      first_two_cols <- colnames(df)[1:2]
-      
-      # Detect if the file is Magpix based on column names
-      is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
-        any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
-      
-      # Initialize result variable
-      result_msg <- "PASS"  # Default to "PASS"
-      
-      # User selected "magpix" but the file does not have "Program" or "xPonent"
-      if (platform == "magpix" && !is_magpix) {
-        stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
-      }
-      
-      # User selected "bioplex" but the file contains "Program" or "xPonent"
-      if (platform == "bioplex" && is_magpix) {          
-        stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
-      }
-      
-      return(result_msg)
-      
-    }
     
     # Store the check result
     check_result <- check_platform(raw_data, raw_data_filenames, platform)
@@ -210,7 +210,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info$Plate <- plate_numbers
       
       # Add processed file's tables to the master list
-      master_list$data_raw <- bind_rows(master_list$data_raw, data_raw)   # Combine raw data
+      master_list$data_raw <- suppressMessages(bind_rows(master_list$data_raw, data_raw))   # Combine raw data
       master_list$results  <- bind_rows(master_list$results, results)     # Combine processed results
       master_list$counts   <- bind_rows(master_list$counts, counts)       # Combine counts
       master_list$blanks   <- bind_rows(master_list$blanks, blanks)       # Combine blanks
@@ -304,7 +304,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info$Plate <- plate_numbers
       
       # Stitch together for master file
-      master_list$data_raw <- bind_rows(master_list$data_raw, data_raw)   # Combine raw data
+      master_list$data_raw <- suppressMessages(bind_rows(master_list$data_raw, data_raw))   # Combine raw data
       master_list$results  <- bind_rows(master_list$results, results)     # Combine processed results
       master_list$counts   <- bind_rows(master_list$counts, counts)       # Combine counts
       master_list$blanks   <- bind_rows(master_list$blanks, blanks)       # Combine blanks
