@@ -31,6 +31,10 @@ require(waiter)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
+# require(devtools)
+# devtools::install_github("dionnecargy/PvSeroAppFns")
+# require(PvSeroAppFns)
+
 source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 source(here::here("code/stdcurves_functions.R"))

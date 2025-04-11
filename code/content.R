@@ -256,8 +256,11 @@ tutorial_page <- function() {
                     Text(variant = "medium", "You can pre-program the MAGPIX machine so that you can export all the raw data directly from the machine once the plate reading is completed. 
                          There is no need to edit the raw data file that comes from the MAGPIX."),
                     p(),
-                    Text(variant = "medium", HTML(r"(Within your plate layout in the MAGPIX, you can use the "U" button for all unknown samples, "B" button for Background or Blank samples, and "S" for Standard Curve samples. 
-                                                  For the control wells, please feel free to edit these labels so that the ID is just "B", "S1", "S2", "S3"...."S10".)")),
+                    Text(variant = "medium", 
+                         HTML(r"(Within your plate layout in the MAGPIX, you can use the "U" button for all unknown samples, "B" button for Background or Blank samples, and "S" for Standard Curve samples. 
+                              For the control wells, please feel free to edit these labels so that the ID is just "B", "S1", "S2", "S3"...."S10".)")),
+                    p(),
+                    Text(variant = "medium", "On the MAGPIX machine, you can also write in the Operator i.e., who ran the assay! This is useful to track variation in plates between experiments."),
                     p(),
                     MessageBar("Ensure that the antigens are labelled the same way in all plate runs! You can do this by setting up the protocol directly on the MAGPIX and using it for all your plate runs."),
                     p(),
@@ -541,104 +544,104 @@ tutorial_page <- function() {
               content = list(
                 MessageBar(HTML("For each of these plots, there are buttons on the top right of the plot that can be used to download the plot as a png (<i class='fas fa-camera'></i>), as well as other capabilties: <i class='fas fa-search'></i> zoom,  
               <i class='fas fa-arrows-alt'></i> move, <i class='fas fa-plus-square'></i> zoom in, <i class='fas fa-minus-square'></i> zoom out, <i class='fas fa-expand-arrows-alt'></i> autoscale, <i class='fas fa-home'></i> reset axes).")),
-                Pivot(
-                  PivotItem(
-                    headerText = "Step 1: Standard Curves",
-                    p(),
-                    fluent_two_cols(
-                      first_width = "30%", second_width = "70%",
-                      first_col = list(
-                        Text(variant = "medium", "The standard curve plots are generated from the antibody data from the standards you indicated in your plate layout (e.g. S1-S10) and Median Fluorescent Intensity (MFI) units are displayed in log10-scale."),
-                        p(),
-                        Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
-                        p(),
-                        Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
-                        p(),
-                        Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "225px", height = "auto"),
-                        p(),
-                        Text(variant = "medium", "And you can click on which plates you would like to see in the legend [image below]."),
-                        p(),
-                        Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "275px", height = "auto"),
-                        p(),
-                        Text(variant = "medium", "You will also notice that there are grey dots behind your data points. These indicate the WEHI standard curves that we have performed in house. These can be used as a guide to see if your standard curves fall within a similar line.")
-                      ),
-                      second_col = Image(src = "2_tutorial/5.2_qc_tute_2.png", width = "auto", height = "auto")
-                    )
-                  ), 
-                  PivotItem(
-                    headerText = "Step 2: Plate Quality Control",
-                    p(),
-                    fluent_two_cols(
-                      first_width = "30%", second_width = "70%",
-                      first_col = list(
-                        Text(variant = "medium","A summary of the bead counts for each plate well are displayed, with blue indicating there are sufficient beads (≥15) or red when there are not enough."), 
-                        p(), 
-                        Text(variant = "medium", " If any of the wells are red, they should be double-checked manually and re-run on a new plate if required."),
-                        p(),
-                        Text(variant = "medium", HTML(r"(The app will inform you whether there are "No repeats necessary" or provide a list of samples to be re-run. In the example data, the beads in plate 2 wells <b>A1</b> and <b>A2</b> will need to be repeated)"))
-                      ), 
-                      second_col = Image(src = "2_tutorial/5.2_qc_tute_5.png", width = "auto", height = "auto")
-                    )
-                  ), 
-                  PivotItem(
-                    headerText = "Step 3: Blank Samples",
-                    p(),
-                    fluent_two_cols(
-                      first_width = "30%", second_width = "70%",
-                      first_col = list(
-                        Text(variant = "medium", HTML( r"(The Median Fluorescent Intensity (MFI) units for each antigen is displayed for your blank samples.
-                                                     In general, each blank sample should have ≤50 MFI for each antigen, if they are higher they should be cross-checked manually.)")),
-                        p(),
-                        Text(variant = "medium", HTML("In the example data, blank samples recorded higher MFI values for <b>LF005</b> on plate 1 and should be checked to confirm this is expected from the assay."))
-                      ), 
-                      second_col = Image(src = "2_tutorial/5.2_qc_tute_6.png", width = "auto", height = "auto")
-                    )
-                  ), 
-                  PivotItem(
-                    headerText = "Step 4: Model Results",
-                    p(),
-                    fluent_two_cols(
-                      first_width = "30%", second_width = "70%",
-                      first_col = list(
-                        Text(variant = "medium", HTML(r"(The automated data processing in this app allows you to convert your Median Fluorescent Intensity (MFI) data into Relative Antibody Units (RAU) by fitting a 5-parameter
-                          logistic function to the standard curve on a per-antigen level.)")),
-                        p(),
-                        Text(variant = "medium", "The results from this log-log conversion should look relatively linear for each antigen."),
-                        p(),
-                        MessageBar(HTML(r"(You can view each plate by pressing the "Next →" or "Previous ←" buttons provided.)"))
-                      ), 
-                      second_col = Image(src = "2_tutorial/5.2_qc_tute_7.png", width = "auto", height = "auto")
-                    )
-                  ), 
-                  PivotItem(
-                    headerText = "Step 5: Sample Results",
-                    p(),
-                    fluent_two_cols(
-                      first_width = "30%", second_width = "70%",
-                      first_col = list(
-                        Text(variant = "medium", HTML(r"(The results from the data processing are displayed in an interactive table that can be explored directly within the app and/or the data can also be downloaded in .csv format
-                                                    in the <a href='#tutorial/download_processed' class=`link`>Download</a> tab.)")),
-                        p(),
-                        Text(variant = "medium", "The converted Relative Antibody Units (RAU) are displayed for each antigen and for each sample. Scroll to explore the data.")
-                      ),
-                      second_col = Image(src = "2_tutorial/5.2_qc_tute_8.png", width = "auto", height = "auto")
-                    )
-                  ), 
-                  PivotItem(
-                    headerText = "Step 6: Example",
-                    Text(variant = "medium", HTML(r"(You can explore the processed data directly within the app, for example you can use the search bar to search for a particular sample name. 
-                                                In the example below we filter for sample <b>ABC036</b> as shown in the red box at the top right hand side of the tab.)")),
-                    Image(src = "2_tutorial/5.2_qc_tute_9.png", width = "auto", height = "auto"), 
-                    Text(variant = "medium", HTML(r"(You can also re-order specific columns and sort them from highest to lowest, or vice versa by clicking on the triangles next to the column name. 
-                                                In the example below we sorted from lowest to highest RAU value for <b>EBP</b>, as indicated in the red box.)")),
-                    Image(src = "2_tutorial/5.2_qc_tute_10.png", width = "auto", height = "auto"),
-                    p(),
-                    Text(variant = "medium", HTML(r"(When you are finished you can download the data and quality control report by clicking on the <a href='#tutorial/download_processed' class-`link`>Download</a> tab.)")),
-                    p(),
-                    MessageBar("You can quickly check that your data processing has gone as expected by counting the number of entries in this table is the same as the number of samples (excluding standards and blanks)
-                             in your plate layout, and to check that RAU values have been calculated for all of your antigens!")
+              Pivot(
+                PivotItem(
+                  headerText = "Step 1: Standard Curves",
+                  p(),
+                  fluent_two_cols(
+                    first_width = "30%", second_width = "70%",
+                    first_col = list(
+                      Text(variant = "medium", "The standard curve plots are generated from the antibody data from the standards you indicated in your plate layout (e.g. S1-S10) and Median Fluorescent Intensity (MFI) units are displayed in log10-scale."),
+                      p(),
+                      Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
+                      p(),
+                      Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
+                      p(),
+                      Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "225px", height = "auto"),
+                      p(),
+                      Text(variant = "medium", "And you can click on which plates you would like to see in the legend [image below]."),
+                      p(),
+                      Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "275px", height = "auto"),
+                      p(),
+                      Text(variant = "medium", "You will also notice that there are grey dots behind your data points. These indicate the WEHI standard curves that we have performed in house. These can be used as a guide to see if your standard curves fall within a similar line.")
+                    ),
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_2.png", width = "auto", height = "auto")
                   )
+                ), 
+                PivotItem(
+                  headerText = "Step 2: Plate Quality Control",
+                  p(),
+                  fluent_two_cols(
+                    first_width = "30%", second_width = "70%",
+                    first_col = list(
+                      Text(variant = "medium","A summary of the bead counts for each plate well are displayed, with blue indicating there are sufficient beads (≥15) or red when there are not enough."), 
+                      p(), 
+                      Text(variant = "medium", " If any of the wells are red, they should be double-checked manually and re-run on a new plate if required."),
+                      p(),
+                      Text(variant = "medium", HTML(r"(The app will inform you whether there are "No repeats necessary" or provide a list of samples to be re-run. In the example data, the beads in plate 2 wells <b>A1</b> and <b>A2</b> will need to be repeated)"))
+                    ), 
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_5.png", width = "auto", height = "auto")
+                  )
+                ), 
+                PivotItem(
+                  headerText = "Step 3: Blank Samples",
+                  p(),
+                  fluent_two_cols(
+                    first_width = "30%", second_width = "70%",
+                    first_col = list(
+                      Text(variant = "medium", HTML( r"(The Median Fluorescent Intensity (MFI) units for each antigen is displayed for your blank samples.
+                                                     In general, each blank sample should have ≤50 MFI for each antigen, if they are higher they should be cross-checked manually.)")),
+                      p(),
+                      Text(variant = "medium", HTML("In the example data, blank samples recorded higher MFI values for <b>LF005</b> on plate 1 and should be checked to confirm this is expected from the assay."))
+                    ), 
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_6.png", width = "auto", height = "auto")
+                  )
+                ), 
+                PivotItem(
+                  headerText = "Step 4: Model Results",
+                  p(),
+                  fluent_two_cols(
+                    first_width = "30%", second_width = "70%",
+                    first_col = list(
+                      Text(variant = "medium", HTML(r"(The automated data processing in this app allows you to convert your Median Fluorescent Intensity (MFI) data into Relative Antibody Units (RAU) by fitting a 5-parameter
+                          logistic function to the standard curve on a per-antigen level.)")),
+                      p(),
+                      Text(variant = "medium", "The results from this log-log conversion should look relatively linear for each antigen."),
+                      p(),
+                      MessageBar(HTML(r"(You can view each plate by pressing the "Next →" or "Previous ←" buttons provided.)"))
+                    ), 
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_7.png", width = "auto", height = "auto")
+                  )
+                ), 
+                PivotItem(
+                  headerText = "Step 5: Sample Results",
+                  p(),
+                  fluent_two_cols(
+                    first_width = "30%", second_width = "70%",
+                    first_col = list(
+                      Text(variant = "medium", HTML(r"(The results from the data processing are displayed in an interactive table that can be explored directly within the app and/or the data can also be downloaded in .csv format
+                                                    in the <a href='#tutorial/download_processed' class=`link`>Download</a> tab.)")),
+                      p(),
+                      Text(variant = "medium", "The converted Relative Antibody Units (RAU) are displayed for each antigen and for each sample. Scroll to explore the data.")
+                    ),
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_8.png", width = "auto", height = "auto")
+                  )
+                ), 
+                PivotItem(
+                  headerText = "Step 6: Example",
+                  Text(variant = "medium", HTML(r"(You can explore the processed data directly within the app, for example you can use the search bar to search for a particular sample name. 
+                                                In the example below we filter for sample <b>ABC036</b> as shown in the red box at the top right hand side of the tab.)")),
+                  Image(src = "2_tutorial/5.2_qc_tute_9.png", width = "auto", height = "auto"), 
+                  Text(variant = "medium", HTML(r"(You can also re-order specific columns and sort them from highest to lowest, or vice versa by clicking on the triangles next to the column name. 
+                                                In the example below we sorted from lowest to highest RAU value for <b>EBP</b>, as indicated in the red box.)")),
+                  Image(src = "2_tutorial/5.2_qc_tute_10.png", width = "auto", height = "auto"),
+                  p(),
+                  Text(variant = "medium", HTML(r"(When you are finished you can download the data and quality control report by clicking on the <a href='#tutorial/download_processed' class-`link`>Download</a> tab.)")),
+                  p(),
+                  MessageBar("You can quickly check that your data processing has gone as expected by counting the number of entries in this table is the same as the number of samples (excluding standards and blanks)
+                             in your plate layout, and to check that RAU values have been calculated for all of your antigens!")
                 )
+              )
               )
             ),
             makeCard(
@@ -914,7 +917,7 @@ algorithm_page <- function() {
                                   measured for antigen-specific IgG antibody resposes toward a panel of eight antigens using the method outlined in <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al 2020</a>.")),
         p(),
         Text(variant = "medium", HTML("Enrolled individuals in the year-long cohort studies provided a blood sample every month. Light microscopy and qPCR targeting the blood-stages of <em>P. vivax</em> were performed to 
-                                      detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the first visit of the 
+                                      detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the last visit of the 
                                       year-long study, enabling us to characterise antibody responses related with time since <em>P. vivax</em> infection. Negative controls from the Australian Red Cross, Brazil Red Cross, 
                                       Thai Red Cross and the Volunteer Blood Donor Registry in Victoria, Australia were included. These data were used as our <b>training dataset</b>.")),
         p(), 
@@ -1259,6 +1262,12 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
+      # PrimaryButton.shinyInput(
+      #   "downloadButtonCounts",
+      #   text = "Counts Data (.CSV)",
+      #   iconProps = list(iconName = "Download")
+      # ),
+      # div(style = "visibility: hidden;", downloadButton("downloadCounts","")),
       PrimaryButton.shinyInput(
         "downloadButtonReport",
         text = "Quality Control Report (.PDF)",
@@ -1278,14 +1287,11 @@ check_page <- function() {
         headerText = "Standard Curves",
         MessageBar(HTML(r"(Check the standard curves for each protein below. Grey dots in the background indicate the standard curve range observed at WEHI for "PNG" or "Ethiopian" 
                         samples where there are known differences in the standard curve.)")),
-        # Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
-        # withSpinner(plotlyOutput("stdcurve"), type = 8) # add spinner
         plotlyOutput("stdcurve", height = "1000px")
       ),
       PivotItem(
         headerText = "Plate QC", 
-        MessageBar("For quality control of each plate, we check that each well should have ≥15 beads/well. Any wells with <15 beads/well are indicated in red below and should be double-checked manually."), 
-        # withSpinner(plotlyOutput("plateqc"), type = 8), # add spinner 
+        MessageBar("For quality control of each plate, we check that each well should have ≥15 beads/well. Any wells with <15 beads/well are indicated in red below and should be double-checked manually."),
         uiOutput("plateqc"),
         conditionalPanel(
           condition = "output.check_repeats_text !== null",
@@ -1300,7 +1306,6 @@ check_page <- function() {
         headerText = "Blank Samples",
         MessageBar("Blank samples should record MFI<50 for each protein. If any proteins are above the dashed line, they should be double-checked manually. 
                    If you have more than one blank sample in your plate, make sure to label them as 'Blank1', 'Blank2' and so forth, otherwise the data shown here will be a cumulative result of all your blanks."), 
-        # withSpinner(plotlyOutput("blanks"), type = 8), # add spinner 
         uiOutput("blanks")
       ), 
       PivotItem(
