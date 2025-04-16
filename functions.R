@@ -3,6 +3,102 @@
 ##############################################################################
 
 ##############################################################################
+# euro_csv_read: Custom Read European CSV 
+# --------------------------
+#
+# Description: 
+# This function reads European CSV format where the deliminter is ";" and 
+# decimal points are ",". This is a helper function inside `readSeroData`. 
+# 
+# Usage: euro_csv_read(raw_data, filter_start, platform) 
+# 
+# Arguments: 
+#   - raw_data: String with the raw data path (reactive).
+#   - filter_start: String to filter the df as the start row.
+#   - filter_stop: String to filter the df as the final row. 
+#
+# Output:
+#   - df: Rows that correspond to the MFI, counts or raw data. 
+# 
+# Author: Dionne Argyropoulos
+##############################################################################
+
+euro_csv_read <- function(raw_data, filter_start, filter_stop) {
+  
+  # Read lines from the raw input
+  lines <- readLines(raw_data, encoding = "UTF-8")
+  
+  # Find start and end positions
+  start_line <- grep(filter_start, lines)
+  end_line <- grep(filter_stop, lines)
+  if (length(end_line) == 0) end_line <- length(lines) + 1
+  
+  # Extract relevant lines between start and stop
+  if(filter_start == "Program"){
+    data_lines <- lines[(start_line):(end_line - 1)]
+  } else {
+    data_lines <- lines[(start_line + 1):(end_line - 1)]
+  }
+  data_lines <- data_lines[nzchar(data_lines)]  # remove empty lines
+  
+  # Split each line by semicolon, clean quotes, convert comma decimals
+  clean_lines <- lapply(
+    str_split(data_lines, ";"),
+    function(row) {
+      row <- str_replace_all(row, '"', "")
+      row <- str_replace_all(row, "^(\\d+),(\\d+)$", "\\1.\\2")
+      row
+    }
+  )
+  
+  # Extract headers and pad data rows
+  headers <- clean_lines[[1]]
+  data_rows <- clean_lines[-1]
+  max_cols <- length(headers)
+  data_rows <- lapply(data_rows, function(row) {
+    length(row) <- max_cols
+    row
+  })
+  
+  # Build the data frame
+  df <- as.data.frame(do.call(rbind, data_rows), stringsAsFactors = FALSE)
+  colnames(df) <- headers
+  
+  # Replace junk string with NA and drop fully NA rows
+  df[df == ",,,,,,,,,,"] <- NA
+  df <- df[rowSums(is.na(df)) < ncol(df), ]
+  colnames(df) <- sub(",+$", "", colnames(df)) # Remove trailing commas from column names
+  df[] <- lapply(df, function(col) {
+    col <- str_remove(col, ",+$")  # Removes trailing commas using stringr
+    col
+  })
+  return(df)
+}
+
+##############################################################################
+# check_platform function: Check Platform 
+# --------------------------
+#
+# Description: 
+# This function checks the platform the user has input and whether it aligns
+# with the correct format as expected. Will report error if NOT aligned. 
+# 
+# Usage: check_platform(raw_data, raw_data_filenames, platform) 
+# 
+# Arguments: 
+#   - raw_data: String with the raw data path (reactive).
+#   - raw_data_filenames: String with the raw data filenames (reactive).
+#   - platform: "magpix" or "bioplex" (reactive).
+#
+# Output:
+#   - TRUE: if platform == file format
+#   - ERROR message when platform != file format 
+# 
+# Author: Dionne Argyropoulos
+##############################################################################
+
+
+##############################################################################
 # readSeroData function: Read Serological Data
 # --------------------------
 #
@@ -14,18 +110,20 @@
 # Usage: readSeroData(raw_data, raw_data_filenames, platform) 
 # 
 # Arguments: 
-#   - raw_data: String with the raw data path (reactive)
-#   - raw_data_filenames: String with the raw data filenames (reactive)
-#   - platform: "magpix" or "bioplex" (reactive)
+#   - raw_data: String with the raw data path (reactive).
+#   - raw_data_filenames: String with the raw data filenames (reactive).
+#   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
-#   - Data frame with sample-matched qpcr data
+#   - List of data frames: (i) raw data output, (ii) cleaned all results 
+#   (iii) count data, (iv) blanks only, (v) standards only, (vi) run 
+#   information. 
 # 
 # Authors: Shazia Ruybal-Pesántez, Dionne Argyropoulos
 ##############################################################################
 
 readSeroData <- function(raw_data, raw_data_filenames, platform){
-  # Load platemap
+  
   platemap <- read.csv(here::here("data/platemap.csv"))
   
   # Initialise master list to store files 
@@ -38,57 +136,52 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     run       = NULL   # Placeholder for any run data combined
   )
   
+  check_platform <- function(raw_data, raw_data_filenames, platform) {
+    
+    if (length(raw_data) == 0) {
+      stop("No raw data files were provided.")
+    }
+    
+    file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
+    
+    if (file_extension == "xlsx") {
+      df <- suppressMessages(readxl::read_excel(file, n_max = 5))
+    } else if (file_extension == "csv") {
+      df <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
+    }
+    
+    # Extract the first two column names
+    col_names <- colnames(df)
+    if (all(grepl("^X\\d+$", col_names))) {
+      df <- suppressWarnings(df %>% row_to_names(row_number = 1))
+    }
+    first_two_cols <- colnames(df)[1:2]
+    
+    # Detect if the file is Magpix based on column names
+    is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
+      any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
+    
+    # User selected "magpix" but the file does not have "Program" or "xPonent"
+    if (platform == "magpix" && !is_magpix) {
+      stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
+    }
+    
+    # User selected "bioplex" but the file contains "Program" or "xPonent"
+    if (platform == "bioplex" && is_magpix) {          
+      stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
+    }
+    
+    return(TRUE)
+    
+  }
+  
   # Loop through each file and process accordingly
   for (i in seq_along(raw_data)) {
     file <- raw_data[i]
     file_name <- raw_data_filenames[i]
     
-    check_platform <- function(raw_data, raw_data_filenames, platform) {
-      
-      file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
-      
-      if (file_extension == "xlsx") {
-        df <- suppressMessages(readxl::read_excel(file, n_max = 5))
-      } else if (file_extension == "csv") {
-        df <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
-      }
-      
-      # Extract the first two column names
-      col_names <- colnames(df)
-      if (all(grepl("^X\\d+$", col_names))) {
-        df <- suppressWarnings(df %>% row_to_names(row_number = 1))
-      }
-      first_two_cols <- colnames(df)[1:2]
-      
-      # Detect if the file is Magpix based on column names
-      is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
-        any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
-      
-      # Initialize result variable
-      result_msg <- "PASS"  # Default to "PASS"
-      
-      # User selected "magpix" but the file does not have "Program" or "xPonent"
-      if (platform == "magpix" && !is_magpix) {
-        stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
-      }
-      
-      # User selected "bioplex" but the file contains "Program" or "xPonent"
-      if (platform == "bioplex" && is_magpix) {          
-        stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
-      }
-      
-      return(result_msg)
-      
-    }
-    
-    # Store the check result
-    check_result <- check_platform(raw_data, raw_data_filenames, platform)
-    
-    # Print message based on check result
-    if (check_result == "PASS") {
+    if (check_platform(file, file_name, platform) == TRUE) {
       message("PASS: File ", file_name, " successfully validated.")
-    } else {
-      warning(check_result)  # Print warning message
     }
     
     if (platform == "magpix") { 
@@ -105,47 +198,50 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         count_row_number      <- which(df$xPONENT == "Count")
         endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
         
-        results <- read_excel(file, skip = median_row_number + 1)
-        counts <- read_excel(file, skip = count_row_number + 1, n_max = endcount_row_number - count_row_number - 2, col_names = TRUE)
-        run <- read_excel(file, n_max = median_row_number)
+        results <- suppressMessages(readxl::read_excel(file, skip = median_row_number + 1))
+        counts <- suppressMessages(readxl::read_excel(file, skip = count_row_number + 1, n_max = endcount_row_number - count_row_number - 2, col_names = TRUE))
+        run <- suppressMessages(readxl::read_excel(file, n_max = median_row_number))
         
       } else if (file_extension == "csv") {
         
         first_lines <- readLines(file, n = 5)           # Read the first few lines of the file
         
-        if (all(grepl(";", first_lines))) {
-          # If semicolons are consistently found, use read.csv2
-          full <- suppressMessages(readr::read_csv2(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE)) # Read in the data
-        } else {
+        if (any(grepl(";", first_lines))) { # If EUROPEAN CSV FORMAT 
+          
+          results <- suppressWarnings(euro_csv_read(file, "Median", "Net MFI"))
+          counts <- suppressWarnings(euro_csv_read(file, 'DataType:;\"\"Count', "Avg Net MFI"))
+          run <- suppressWarnings(euro_csv_read(file, "Program", "Results"))
+          data_raw <- run 
+          
+        } else { # IF CSV FORMAT 
           full <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE)) # Read in the data
+          df <- suppressWarnings(as.data.frame(full) %>% janitor::row_to_names(row_number = 1))
+          data_raw <- df
+          
+          median_row_number     <- which(df$xPONENT == "Median")
+          endmedian_row_number  <- which(df$xPONENT == "Net MFI")
+          count_row_number      <- which(df$xPONENT == "Count")
+          endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
+          
+          results <- df[(median_row_number + 1):(endmedian_row_number - 1), ]
+          colnames(results) <- results[1, ]
+          results <- results[-1, ]
+          results <- results[, colSums(!is.na(results)) > 0] # remove NA columns
+          results <- results[rowSums(!is.na(results)) > 0, ] # remove NA rows
+          rownames(results) <- NULL
+          
+          counts <- df[(count_row_number + 1):(endcount_row_number - 1), ]
+          counts <- counts[, colSums(!is.na(counts)) > 0] # remove NA columns
+          counts <- counts[rowSums(!is.na(counts)) > 0, ] # remove NA rows
+          colnames(counts) <- counts[1, ]
+          counts <- counts[-1, ]
+          rownames(counts) <- NULL
+          
+          run <- df[1:median_row_number, ]
+          run <- run[, colSums(!is.na(run)) > 0] # remove NA columns
+          run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
+          rownames(run) <- NULL
         }
-        
-        df <- suppressWarnings(as.data.frame(full) %>% janitor::row_to_names(row_number = 1))
-        data_raw <- df
-        
-        median_row_number     <- which(df$xPONENT == "Median")
-        endmedian_row_number  <- which(df$xPONENT == "Net MFI")
-        count_row_number      <- which(df$xPONENT == "Count")
-        endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
-        
-        results <- df[(median_row_number + 1):(endmedian_row_number - 1), ]
-        colnames(results) <- results[1, ]
-        results <- results[-1, ]
-        results <- results[, colSums(!is.na(results)) > 0] # remove NA columns
-        results <- results[rowSums(!is.na(results)) > 0, ] # remove NA rows
-        rownames(results) <- NULL
-        
-        counts <- df[(count_row_number + 1):(endcount_row_number - 1), ]
-        counts <- counts[, colSums(!is.na(counts)) > 0] # remove NA columns
-        counts <- counts[rowSums(!is.na(counts)) > 0, ] # remove NA rows
-        colnames(counts) <- counts[1, ]
-        counts <- counts[-1, ]
-        rownames(counts) <- NULL
-        
-        run <- df[1:median_row_number, ]
-        run <- run[, colSums(!is.na(run)) > 0] # remove NA columns
-        run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
-        rownames(run) <- NULL
         
       } else {
         stop("Unsupported file format! Please use .csv or .xlsx")
@@ -159,18 +255,18 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       
       # 2. Create results
       results <- results %>%
-        dplyr::select(-`Total Events`) %>%
-        mutate(across(everything(), ~ gsub("NaN", 0, .))) %>% # Change "NaN" to 0s
-        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
-                               ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
-        mutate(Sample = ifelse(Sample == "S", paste0("S", cumsum(Sample == "S")), Sample)) # Sequentially relabel Sample rows and keep other Sample values 
+        dplyr::select(-dplyr::any_of("Total Events")) %>%
+        dplyr::mutate(dplyr::across(everything(), ~ gsub("NaN", 0, .))) %>% # Change "NaN" to 0s
+        dplyr::mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
+                                      ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
+        dplyr::mutate(Sample = ifelse(Sample == "S", paste0("S", cumsum(Sample == "S")), Sample)) # Sequentially relabel Sample rows and keep other Sample values 
       
       # 3. Load counts for QC 
       counts <- counts %>%
-        mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
-                               ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
-        dplyr::select(-`Total Events`)
-      counts <- as_tibble(counts)
+        dplyr::mutate(Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), 
+                                      ifelse(Sample == "B", paste0("Blank", row_number()), Sample))) %>% # Sequentially relabel Blank rows and keep other Sample values unchanged
+        dplyr::select(-any_of("Total Events"))
+      counts <- tidyr::as_tibble(counts)
       
       # 4. Save blanks
       blanks <- results %>% dplyr::filter(grepl("Blank|^B$", Sample, ignore.case = TRUE))
@@ -192,7 +288,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       }
       
       # Save the plate number for this file 
-      plate_numbers <- file_name %>% str_extract("(?i)plate\\d+(?=[._-]|$)")
+      plate_numbers <- file_name %>% stringr::str_extract("(?i)(repeat)?plate\\d+(?=[._-]|$)")
       
       # Add 'plate' column to each dataframe
       data_raw$Plate <- plate_numbers
@@ -203,12 +299,12 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info$Plate <- plate_numbers
       
       # Add processed file's tables to the master list
-      master_list$data_raw <- bind_rows(master_list$data_raw, data_raw)   # Combine raw data
-      master_list$results  <- bind_rows(master_list$results, results)     # Combine processed results
-      master_list$counts   <- bind_rows(master_list$counts, counts)       # Combine counts
-      master_list$blanks   <- bind_rows(master_list$blanks, blanks)       # Combine blanks
-      master_list$stds     <- bind_rows(master_list$stds, stds)           # Combine stds
-      master_list$run      <- bind_rows(master_list$run, run_info)        # Combine run
+      master_list$data_raw <- suppressMessages(dplyr::bind_rows(master_list$data_raw, data_raw))   # Combine raw data
+      master_list$results  <- dplyr::bind_rows(master_list$results, results)     # Combine processed results
+      master_list$counts   <- dplyr::bind_rows(master_list$counts, counts)       # Combine counts
+      master_list$blanks   <- dplyr::bind_rows(master_list$blanks, blanks)       # Combine blanks
+      master_list$stds     <- dplyr::bind_rows(master_list$stds, stds)           # Combine stds
+      master_list$run      <- dplyr::bind_rows(master_list$run, run_info)        # Combine run
       
       
     } else if (platform == "bioplex") { 
@@ -226,10 +322,10 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         first_lines <- readLines(file, n = 5)
         
         if (all(grepl(";", first_lines))) {
-          full <- suppressMessages(read.csv2(file))
+          full <- suppressMessages(utils::read.csv2(file))
           df <- as.data.frame(full)
         } else {
-          full <- suppressMessages(read.csv(file))
+          full <- suppressMessages(utils::read.csv(file))
           df <- as.data.frame(full)
         }
         
@@ -249,21 +345,21 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       
       colnames(df) <- gsub("\\s*\\(.*\\)", "", colnames(df)) # Clean up column names
       df <- df %>% 
-        mutate(Type = ifelse(Type == "B", "Blank", Type), # Re-label 
-               suffix = as.numeric(gsub("\\D", "", Type)), # Order so that standards and blanks are at the top
-               prefix = substr(Type, 1, 1)) %>% # Order so that standards and blanks are at the top
-        arrange(prefix, suffix) %>% # Order so that standards and blanks are at the top 
-        left_join(platemap, by = "Well") %>%  # Join on the Well column
-        dplyr::select(-c(prefix, suffix, Region, Gate, Total, `% Agg Beads`, `Sampling Errors`, Well, any_of("Description"))) %>% # Remove unnecessary columns, including Description if it exists
+        dplyr::mutate(Type = ifelse(Type == "B", "Blank", Type), # Re-label 
+                      suffix = as.numeric(gsub("\\D", "", Type)), # Order so that standards and blanks are at the top
+                      prefix = substr(Type, 1, 1)) %>% # Order so that standards and blanks are at the top
+        dplyr::arrange(prefix, suffix) %>% # Order so that standards and blanks are at the top 
+        dplyr::left_join(platemap, by = "Well") %>%  # Join on the Well column
+        dplyr::select(-c(prefix, suffix, Region, Gate, Total, `% Agg Beads`, `Sampling Errors`, Well, dplyr::any_of("Description"))) %>% # Remove unnecessary columns, including Description if it exists
         dplyr::select(Location, Sample = Type, everything()) %>% # Rename columns to be same as magpix 
-        mutate(across(everything(), ~ gsub("NaN", 0, .)),  # Change "NaN" to 0s
-               across(everything(), ~ gsub("\\*\\*\\*", "0", .)), #Change "***" to 0s
-               Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), Sample)) # Sequentially relabel Blank rows and keep other Sample values unchanged
+        dplyr::mutate(dplyr::across(everything(), ~ gsub("NaN", 0, .)),  # Change "NaN" to 0s
+                      dplyr::across(everything(), ~ gsub("\\*\\*\\*", "0", .)), #Change "***" to 0s
+                      Sample = ifelse(Sample == "Blank", paste0("Blank", row_number()), Sample)) # Sequentially relabel Blank rows and keep other Sample values unchanged
       
-      results <- df %>% mutate(across(-c(Location, Sample), ~ gsub("\\s*\\(.*\\)", "", .)))
+      results <- df %>% dplyr::mutate(dplyr::across(-c(Location, Sample), ~ gsub("\\s*\\(.*\\)", "", .)))
       
       # 3. Load counts for QC 
-      counts <- df %>% mutate(across(-c(Location, Sample), ~ gsub(".*\\((.*)\\).*", "\\1", .)))
+      counts <- df %>% dplyr::mutate(dplyr::across(-c(Location, Sample), ~ gsub(".*\\((.*)\\).*", "\\1", .)))
       
       # 4. Save blanks
       blanks <- results %>% dplyr::filter(grepl("Blank", Sample, ignore.case = TRUE))
@@ -286,7 +382,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       }
       
       # Save the plate number for this file 
-      plate_numbers <- file_name %>% str_extract("(?i)plate\\d+(?=[._-]|$)")
+      plate_numbers <- file_name %>% stringr::str_extract("(?i)(repeat)?plate\\d+(?=[._-]|$)")
       
       # Add 'plate' column to each dataframe
       data_raw$Plate <- plate_numbers
@@ -297,7 +393,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       run_info$Plate <- plate_numbers
       
       # Stitch together for master file
-      master_list$data_raw <- bind_rows(master_list$data_raw, data_raw)   # Combine raw data
+      master_list$data_raw <- suppressMessages(bind_rows(master_list$data_raw, data_raw))   # Combine raw data
       master_list$results  <- bind_rows(master_list$results, results)     # Combine processed results
       master_list$counts   <- bind_rows(master_list$counts, counts)       # Combine counts
       master_list$blanks   <- bind_rows(master_list$blanks, blanks)       # Combine blanks
@@ -326,12 +422,12 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
 # Useage: readAntigens(raw_data, raw_data_filenames, platform)
 # 
 # Arguments: 
-#   - raw_data: String with the raw data path (reactive)
-#   - raw_data_filenames: String with the raw data filenames (reactive)
-#   - platform: "magpix" or "bioplex" (reactive)
+#   - raw_data: String with the raw data path (reactive).
+#   - raw_data_filenames: String with the raw data filenames (reactive).
+#   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
-#   - Data frame with relabelled column names for our antigen names 
+#   - List of data frames with relabelled column names for our antigen names.
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
@@ -340,15 +436,15 @@ readAntigens <- function(serodata_output){
   
   # Function to relabel column names
   relabel_columns <- function(df) {
-    colnames(df) <- case_when(
-      str_detect(colnames(df), regex("EBP", ignore_case = TRUE)) ~ "EBP",
-      str_detect(colnames(df), regex("LF005", ignore_case = TRUE)) ~ "LF005",
-      str_detect(colnames(df), regex("LF010", ignore_case = TRUE)) ~ "LF010",
-      str_detect(colnames(df), regex("LF016", ignore_case = TRUE)) ~ "LF016",
-      str_detect(colnames(df), regex("(MSP8|L34)", ignore_case = TRUE)) ~ "MSP8",
-      str_detect(colnames(df), regex("(P87|RBP2b-P87)", ignore_case = TRUE)) ~ "RBP2b.P87",
-      str_detect(colnames(df), regex("(PTEX|PTEX150|L18)", ignore_case = TRUE)) ~ "PTEX150",
-      str_detect(colnames(df), regex("CSS", ignore_case = TRUE)) ~ "PvCSS",
+    colnames(df) <- dplyr::case_when(
+      stringr::str_detect(colnames(df), regex("EBP", ignore_case = TRUE)) ~ "EBP",
+      stringr::str_detect(colnames(df), regex("LF005", ignore_case = TRUE)) ~ "LF005",
+      stringr::str_detect(colnames(df), regex("LF010", ignore_case = TRUE)) ~ "LF010",
+      stringr::str_detect(colnames(df), regex("LF016", ignore_case = TRUE)) ~ "LF016",
+      stringr::str_detect(colnames(df), regex("(MSP8|L34)", ignore_case = TRUE)) ~ "MSP8",
+      stringr::str_detect(colnames(df), regex("(P87|RBP2b-P87)", ignore_case = TRUE)) ~ "RBP2b.P87",
+      stringr::str_detect(colnames(df), regex("(PTEX|PTEX150|L18)", ignore_case = TRUE)) ~ "PTEX150",
+      stringr::str_detect(colnames(df), regex("CSS", ignore_case = TRUE)) ~ "PvCSS",
       TRUE ~ colnames(df) # Keep unmatched names as-is
     )
     return(df)
@@ -361,7 +457,7 @@ readAntigens <- function(serodata_output){
   results_df <- master_file$results %>%
     as.data.frame() %>%
     relabel_columns() %>%
-    dplyr::select(any_of(c("Location", "Sample",  "Plate", "EBP", "LF005", "LF010", "LF016", "MSP8", "RBP2b.P87", "PTEX150", "PvCSS")))
+    dplyr::select(dplyr::any_of(c("Location", "Sample",  "Plate", "EBP", "LF005", "LF010", "LF016", "MSP8", "RBP2b.P87", "PTEX150", "PvCSS")))
   master_file$results <- results_df
   
   # Step 3: Loop through and process specific data frames in `master_file`
@@ -385,14 +481,16 @@ readAntigens <- function(serodata_output){
 # ".xlsx" file must contain 13 columns (labelled
 # Plate, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) (columns A-M) and 9 rows 
 # (Plate, A, B, C, D, E, F, G, H) (rows 1-9). *Note that the first row/column 
-# i.e., the A1 cell in excel is called "Plate".
+# i.e., the A1 cell in excel is called "Plate". This function also checks that
+# the plate sheet labels are consistent with the MAGPIX file input names, as a
+# check prior to merging downstream. 
 # 
 # Usage: readPlateLayout(plate_layout)
 #
 # Arguments: 
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
-#   - antigen_output: Output from `readAntigens` (reactive)
+#     etc. (reactive).
+#   - antigen_output: Output from `readAntigens` (reactive).
 #
 # Output:
 #   - A list of data frames, with each one representing an individual plate.
@@ -402,12 +500,22 @@ readAntigens <- function(serodata_output){
 
 readPlateLayout <- function(plate_layout, antigen_output) {
   
+  if (is.null(plate_layout) || !file.exists(plate_layout)) {
+    stop("ERROR: Invalid plate layout file provided.")
+  }
+  
+  sheet_names <- tryCatch({
+    openxlsx::getSheetNames(plate_layout)
+  }, error = function(e) {
+    stop("ERROR: Failed to read sheet names. Ensure the file is a valid Excel file.")
+  })
+  
   # Step 1: Get the sheet names to confirm
-  sheet_names <- getSheetNames(plate_layout)
+  sheet_names <- openxlsx::getSheetNames(plate_layout)
   
   # Step 2: Read all sheets into plate_layout_list using indices
   plate_layout_list <- lapply(1:length(sheet_names), function(i) {
-    read.xlsx(plate_layout, sheet = i)
+    openxlsx::read.xlsx(plate_layout, sheet = i)
   })
   
   # Step 3: Name each element in the list after the corresponding sheet name
@@ -424,13 +532,44 @@ readPlateLayout <- function(plate_layout, antigen_output) {
   antigen_output_levels <- unique(as.character(antigen_output$results$Plate))  # Convert factor to character
   
   # Step 6: Compare plate names
-  if (setequal(sheet_names, antigen_output_levels)) {
+  if (all(antigen_output_levels %in% sheet_names)) {
     message("Plate layouts correctly identified!")
   } else {
     stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
   }
   
   return(plate_layout_list)
+}
+
+##############################################################################
+#' process_counts(antigen_output)
+#' @description
+#' A helper function to process counts data. 
+#'
+#' @param antigen_output Output from `readAntigens` (reactive). 
+#' 
+#' @return Returns a long table of counts with "Warning" category (<15 == 1 and 
+#' ≥ 15 == 0) for downstream wrangling.
+#' @export
+#' Author: Dionne Argyropoulos
+##############################################################################
+
+process_counts <- function(antigen_output){
+  
+  # 1. Store Counts Data 
+  counts_data <- antigen_output$counts 
+  
+  # 2. Data Wrangling 
+  counts_data <- counts_data %>%
+    dplyr::mutate(Location=gsub(".*,", "", Location)) %>%
+    dplyr::mutate(Location=substr(Location, 1, nchar(Location)-1))  %>% 
+    tidyr::pivot_longer(-c(Sample, Location, Plate), names_to = "Antigen", values_to = "Count") %>% 
+    dplyr::mutate(Warning = case_when(
+      as.numeric(Count)<15~1,
+      as.numeric(Count)>=15~0
+    )) 
+  
+  return(counts_data)
 }
 
 ##############################################################################
@@ -446,44 +585,199 @@ readPlateLayout <- function(plate_layout, antigen_output) {
 # Usage: getCounts(raw_data, raw_data_filenames, platform)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #
 # Output:
-#   - Data frame providing bead counts per well per plate 
+#   - Data frame providing bead counts per well per plate.
 #   - Designates whether wells should be repeated if there are ≤ 15 beads 
-#     (repeat) or if they are sufficient with > 15 beads (sufficient beads)
+#     (repeat) or if they are sufficient with > 15 beads (sufficient beads).
 # 
 # Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
-getCounts <- function(antigen_output){
+getCounts <- function(process_counts){
   
-  master_file <- antigen_output
-  counts <- master_file$counts
-  
-  counts <- counts %>%
-    dplyr::select(-Sample) %>% # can maybe "keep" relevant columns + protein names?
-    dplyr::mutate(Location=gsub(".*,", "", Location)) %>%
-    dplyr::mutate(Location=substr(Location, 1, nchar(Location)-1))  %>% 
-    tidyr::pivot_longer(-c(Location, Plate), names_to = "Antigen", values_to = "Count") %>% 
-    dplyr::mutate(Warning = case_when(
-      as.numeric(Count)<15~1,
-      as.numeric(Count)>=15~0
-    )) %>%
+  counts <- process_counts %>%
     dplyr::select(Location, Warning, Plate) %>%
     dplyr::group_by(Location, Plate) %>%
     dplyr::summarise(Sum = sum(Warning)) %>%
-    dplyr::mutate(Colour = case_when(
+    dplyr::mutate(Repeat = case_when(
       Sum>=1 ~ "repeat",
       Sum<1 ~ "sufficient beads"
     )) %>%
-    dplyr::mutate(Row = substr(Location, 1, nchar(Location)-1)) %>%
-    dplyr::mutate(Col = substr(Location, 2, nchar(Location))) %>%
-    dplyr::mutate(Row = gsub("1", "", Row)) %>%
-    dplyr::mutate(Row = as.factor(Row)) %>%
-    dplyr::mutate(Col = as.numeric(Col))
+    dplyr::mutate(
+      Row = as.factor(substr(Location, 1, nchar(Location)-1)),
+      Row = gsub("1", "", Row),
+      Col = as.numeric(substr(Location, 2, nchar(Location))),
+      QC_total = ifelse(Repeat == "sufficient beads", "pass", "fail")
+    )
   
   return(counts)
+}
+
+##############################################################################
+#' getSampleID(process_counts, plate_list)
+#' @description
+#' A helper function to extract Sample ID based on plate name and row/col
+#'
+#' @param process_counts Output from `process_counts`.
+#' @param plate_name Plate name inside of the plate layout file. 
+#' 
+#' @return Returns the corresponding Sample ID for the correct row/column in 
+#' the plate layout file. Henceforth "Sample ID" refers to the code in the 
+#' plate layout file, while "Sample" is the code in the Luminex file. 
+#' @export
+#' Author: Dionne Argyropoulos
+##############################################################################
+
+getSampleID <- function(process_counts, plate_list) {
+  
+  # Initialise plate layout longer 
+  plate_layout_longer <- list() 
+  
+  for (plate_level in seq_along(unique(process_counts$Plate))) {
+    
+    # Read Plate i 
+    plate_layout <- plate_list[[plate_level]]
+    # Data wrangling for Plate i 
+    names(plate_layout)[1] <- "Row"
+    plate_layout_level <- plate_layout %>% 
+      pivot_longer(c(`1`:`12`), names_to = "Col", values_to = "SampleID") %>%
+      mutate(Location = paste0(Row, Col))
+    
+    # Save to list
+    plate_layout_longer[[plate_level]] <- plate_layout_level
+    
+  }
+  
+  # Combine all into single data frame
+  plate_layout_longer_df <- bind_rows(plate_layout_longer)
+  
+  # Join to antigen_specific_df 
+  final_table <- plate_layout_longer_df %>% 
+    left_join(process_counts, by = "Location") %>% 
+    dplyr::select(-c(Row, Col))
+  
+  return(final_table)
+  
+}
+
+##############################################################################
+#' getAntigenCounts(antigen_output, plate_list)
+#' @description
+#' xxxx
+#'
+#' @param process_counts Output from `process_counts`.
+#' @param plate_name Plate name inside of the plate layout file. 
+#' 
+#' @return x
+#' @export
+#' Author: Dionne Argyropoulos
+##############################################################################
+
+getAntigenCounts <- function(process_counts, plate_list){
+  
+  #############################################################################
+  # Data Wrangling 
+  #############################################################################
+  
+  antigen_specific_df <- process_counts %>%
+    dplyr::select(Location, Antigen, Warning, Count, Plate) %>%
+    dplyr::group_by(Location, Antigen, Count, Plate) %>%
+    dplyr::summarise(Sum = sum(Warning)) %>%
+    dplyr::mutate(Repeat = case_when(
+      Sum>=1 ~ "repeat",
+      Sum<1 ~ "sufficient beads"
+    )) %>%
+    dplyr::mutate(
+      Count = as.numeric(Count), 
+      Repeat = factor(Repeat, levels = c("sufficient beads", "repeat")), 
+      QC_antigen = ifelse(Repeat == "sufficient beads", "pass", "fail")
+    )
+  
+  #############################################################################
+  # Create Table Output 
+  #############################################################################
+  
+  table <- getSampleID(process_counts, plate_list) %>% 
+    ungroup() %>% 
+    dplyr::select(SampleID, Location, Antigen, Plate, Count) %>% 
+    mutate(Count = as.numeric(Count))
+  antigen_specific_df_final <- antigen_specific_df %>% 
+    dplyr::left_join(table, by = c("Plate", "Count", "Antigen", "Location")) %>% 
+    dplyr::select(-Sum) %>% 
+    arrange(Location, Antigen, Plate)
+  
+  return(antigen_specific_df_final)
+  
+}
+
+##############################################################################
+#' getCountsQC(antigen_counts_output, counts_output)
+#' @description
+#' xxxx
+#'
+#' @param antigen_counts_output xxx
+#' @param counts_output xxx
+#' 
+#' @return x
+#' @export
+#' Author: Dionne Argyropoulos
+##############################################################################
+
+getCountsQC <- function(antigen_counts_output, counts_output){
+  
+  #############################################################################
+  # Data Wrangling 
+  #############################################################################
+  
+  # 1. Data Wrangling to store counts per antigen output
+  antigen_counts_only <- antigen_counts_output %>% 
+    tidyr::pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "Count") %>% ungroup() %>% 
+    dplyr::mutate(across(-c(SampleID, Location, Plate), as.numeric)) %>% 
+    dplyr::select(Location, SampleID, Plate, everything()) %>% 
+    dplyr::rename_with(~ paste0(., "_Count"), .cols = where(is.numeric))
+  
+  # 2. Data Wrangling to store QC pass/fail per antigen output 
+  antigen_QC_only <- antigen_counts_output %>% 
+    pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "QC_antigen") %>% 
+    dplyr::rename_with(~ paste0(., "_QC"), .cols = -c(SampleID, Location, Plate))
+  
+  # 3. Join both antigen-specific data frames together 
+  joined_antigen_counts <- antigen_counts_only %>% 
+    left_join(antigen_QC_only, by = c("SampleID", "Location", "Plate"))
+  
+  #############################################################################
+  # Re-arrange data 
+  #############################################################################
+  
+  # Get all base marker names by stripping _Count
+  marker_bases <- names(joined_antigen_counts) %>%
+    grep("_Count$", ., value = TRUE) %>%
+    sub("_Count$", "", .)
+  
+  # Create the desired column order
+  new_order <- c(
+    "Location", "SampleID", "Plate",
+    unlist(lapply(marker_bases, function(x) c(paste0(x, "_Count"), paste0(x, "_QC"))))
+  )
+  
+  # Reordered data frame
+  joined_antigen_counts <- joined_antigen_counts %>% 
+    dplyr::select(all_of(new_order))
+  
+  #############################################################################
+  # Add total counts 
+  #############################################################################
+  
+  total_counts_only <- counts_output %>% 
+    dplyr::select(Location, Plate, QC_total)
+  
+  total_counts_final_output <- joined_antigen_counts %>% 
+    left_join(total_counts_only, by = c("Location", "Plate")) 
+  
+  return(total_counts_final_output)
+  
 }
 
 ##############################################################################
@@ -498,8 +792,8 @@ getCounts <- function(antigen_output){
 # Usage: plotCounts(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - counts_output: Output from `getCounts` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
+#   - counts_output: Output from `getCounts` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
 #
 # Output:
 #   - Tile Plot showing binary result of "sufficient beads" with cut-off >15
@@ -512,43 +806,52 @@ plotCounts <- function(counts_output, experiment_name){
   bead_counts <- counts_output
   bead_counts$Plate <- factor(bead_counts$Plate, levels = unique(bead_counts$Plate[order(as.numeric(str_extract(bead_counts$Plate, "\\d+")))])) # reorder by plate number 
   bead_counts %>% 
-    ggplot(mapping = aes(x = Col, y = fct_rev(Row), fill = Colour), fill = summary) +
-    geom_tile(aes(height = 0.90, width = 0.90)) +
-    scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12),
-                       position = "top") +
-    scale_fill_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
-    theme_bw() +
-    labs(x = "", y = "", title = experiment_name , fill = "") +
-    facet_wrap( ~ Plate, ncol = 3, scales = "free_y")  # This will create separate facets for each level of 'Plate'
+    ggplot2::ggplot(mapping = aes(x = Col, y = fct_rev(Row), fill = Repeat), fill = summary) +
+    ggplot2::geom_tile(aes(height = 0.90, width = 0.90)) +
+    ggplot2::scale_x_continuous(breaks = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), position = "top") +
+    ggplot2::scale_fill_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
+    ggplot2::theme_bw() +
+    ggplot2::labs(x = "", y = "", title = experiment_name , fill = "") +
+    ggplot2::facet_wrap( ~ Plate, ncol = 3, scales = "free_y")  # This will create separate facets for each level of 'Plate'
 }
 
 ##############################################################################
-# check_repeats function: Check Beads to Repeat
+# getRepeats: Check Beads to Repeat
 # --------------------------
 #
 # Description: 
 # This function gets the count data and outputs a table of the isolates to 
 # repeat or a statement to confirm that none need to be repeated.
 # 
-# Usage: check_repeats(counts_output)
+# Usage: getRepeats(counts_output, process_counts, plate_list)
 #
 # Arguments: 
-#   - counts_output: Output from `getCounts` (reactive)
+#   - counts_output: Output from `getCounts` (reactive).
+#   - process_counts Output from `process_counts`.
+#   - plate_list: 
 #
 # Output:
-#   - Data frame with wells to "repeat", OR 
-#   - If no "repeats" found will return text "No repeats necessary"
+#   - Data frame with wells to "fail", OR
+#   - If no "fail" found will return text "No repeats necessary".
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
 
-check_repeats <- function(counts_output) {
-  bead_counts <- counts_output
-  repeat_rows <- bead_counts %>% filter(Colour == "repeat")
-  if (nrow(repeat_rows) == 0) {
+getRepeats <- function(counts_output, process_counts, plate_list) {
+  
+  # 1. Filter "Repeats" in Counts Output 
+  repeats <- counts_output %>% dplyr::filter(QC_total == "fail")
+  
+  # 2. If zero "Repeats" found, then write text. If "Repeats" found, then output table. 
+  if (nrow(repeats) == 0) {
     return("No repeats necessary.")
   } else {
-    return(repeat_rows)
+    table <- getSampleID(process_counts, plate_list) %>% dplyr::distinct(SampleID, Location, Plate)
+    table <- table %>% 
+      dplyr::left_join(repeats, by = c("Location", "Plate")) %>% 
+      drop_na() %>% 
+      dplyr::select(Location, SampleID, Plate, QC = QC_total)
+    return(table)
   }
 }
 
@@ -563,8 +866,9 @@ check_repeats <- function(counts_output) {
 # Usage: plotBlanks(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
+#   - plate_list: Output from `readPlateLayout` (reactive).
 #
 # Output:
 #   - Bar plot showing whether MFI values for the blanks for each antigen per 
@@ -578,17 +882,17 @@ plotBlanks <- function(antigen_output, experiment_name){
   blanks <- master_file$blanks
   blanks %>% 
     dplyr::select(-Location) %>% 
-    pivot_longer(-c(Sample, Plate), names_to = "Antigen", values_to = "MFI") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))]))) %>% # Reorder by plate number 
-    ggplot(aes(x = factor(Antigen), y = as.numeric(MFI), fill = Sample)) +
-    geom_bar(stat = "identity", position = "dodge") +
-    geom_hline(yintercept = 50, linetype = "dashed", color = "grey") +
-    labs(x = "Antigen", 
-         y = "MFI",
-         title = experiment_name) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    facet_wrap(~ Plate)  # Create separate facets for each 'plate'
+    tidyr::pivot_longer(-c(Sample, Plate), names_to = "Antigen", values_to = "MFI") %>% 
+    dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))]))) %>% # Reorder by plate number 
+    ggplot2::ggplot(aes(x = factor(Antigen), y = as.numeric(MFI), fill = Sample)) +
+    ggplot2::geom_bar(stat = "identity", position = "dodge") +
+    ggplot2::geom_hline(yintercept = 50, linetype = "dashed", color = "grey") +
+    ggplot2::labs(x = "Antigen", 
+                  y = "MFI",
+                  title = experiment_name) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggplot2::facet_wrap(~ Plate)  # Create separate facets for each 'plate'
 }
 
 ############################################################################## 
@@ -602,9 +906,9 @@ plotBlanks <- function(antigen_output, experiment_name){
 # Usage: plotStds(antigen_output, experiment_name)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - experiment_name: User-input experiment name (reactive)
-#   - location: "PNG" or "ETH" to filter WEHI standard curve data (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - experiment_name: User-input experiment name (reactive).
+#   - location: "PNG" or "ETH" to filter WEHI standard curve data (reactive).
 #
 # Output:
 #   - Dot and line plot of standard curves (S1-S10) with PNG or Ethiopia stds 
@@ -621,29 +925,29 @@ plotStds <- function(antigen_output, location, experiment_name){
   
   stds_1 <- stds %>% 
     dplyr::select(-Location) %>% 
-    pivot_longer(-c(Sample, Plate), names_to = "Antigen", values_to = "MFI") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
-           Sample = factor(Sample, c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10")), 
-           MFI = as.numeric(MFI)) 
+    tidyr::pivot_longer(-c(Sample, Plate), names_to = "Antigen", values_to = "MFI") %>% 
+    dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # reorder by plate number 
+                  Sample = factor(Sample, c("S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9", "S10")), 
+                  MFI = as.numeric(MFI)) 
   
   location_1 <- ifelse(location == "ETH", "ETH", "PNG")
   
   wehi_stds <- read.csv("data/wehi_compare_data/all_stds_MFI.csv")
-  wehi_stds <- wehi_stds %>% filter(Location==location_1)
+  wehi_stds <- wehi_stds %>% dplyr::filter(Location==location_1)
   
   gg <- 
-    ggplot() + 
-    geom_point(data = wehi_stds, aes(x = Sample, y = MFI), colour = "grey", alpha = 0.25) + 
-    geom_point(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate, 
-                                  text = paste("Sample:", Sample, "<br>MFI:", MFI, "<br>Plate:", Plate))) + 
-    geom_line(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
-    scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
-    labs(x = "Standard Curve", 
-         y = "log(MFI)",
-         title = experiment_name) +
-    facet_wrap(~Antigen) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    ggplot2::ggplot() + 
+    ggplot2::geom_point(data = wehi_stds, aes(x = Sample, y = MFI), colour = "grey", alpha = 0.25) + 
+    ggplot2::geom_point(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate, 
+                                           text = paste("Sample:", Sample, "<br>MFI:", MFI, "<br>Plate:", Plate))) + 
+    ggplot2::geom_line(data = stds_1, aes(x = Sample, y = MFI, color = Plate, group = Plate)) + 
+    ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+    ggplot2::labs(x = "Standard Curve", 
+                  y = "log(MFI)",
+                  title = experiment_name) +
+    ggplot2:: facet_wrap(~Antigen) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
 }
 
@@ -659,9 +963,8 @@ plotStds <- function(antigen_output, location, experiment_name){
 # Usage: MFItoRAU(antigen_output, plate_layout)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - plate_list: Output from `readPlateLayout` (reactive).
 #
 # Output: A list of three data frames:
 #   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
@@ -671,11 +974,11 @@ plotStds <- function(antigen_output, location, experiment_name){
 # Authors: Connie Li Wai Suen, Dionne Argyropoulos
 ##############################################################################
 
-MFItoRAU_PNG <- function(antigen_output, plate_layout){
+MFItoRAU_PNG <- function(antigen_output, plate_list, counts_QC_output){
   
   master_file <- antigen_output
   L <- master_file$results
-  layout <- readPlateLayout(plate_layout, antigen_output)
+  layout <- plate_list
   
   excluded_cols <- c("Location", "Sample", "Plate")
   remaining_cols <- setdiff(colnames(L), excluded_cols)
@@ -804,6 +1107,7 @@ MFItoRAU_PNG <- function(antigen_output, plate_layout){
     location.2 <- data.frame(Location.2=location.1, alpha=gsub("[[:digit:]]", "", location.1), numeric=gsub("[^[:digit:]]", "", location.1), SampleID=NA, stringsAsFactors = FALSE)
     for (i in location.2[, "Location.2"]){
       plate_layout_current <- layout[[plate_level]]
+      names(plate_layout_current)[1] <- "Plate" # Relabel first column to be "Plate"
       location.2[location.2$Location.2==i, "SampleID"] <- plate_layout_current[
         plate_layout_current$Plate == unique(location.2[location.2$Location.2 == i, "alpha"]), 
         colnames(plate_layout_current) == unique(location.2[location.2$Location.2 == i, "numeric"])
@@ -842,8 +1146,19 @@ MFItoRAU_PNG <- function(antigen_output, plate_layout){
     MFI_RAU_results_all[[plate_level]] <- MFI_RAU_results
   }
   
-  final_results <- dplyr::bind_rows(results_all)
-  final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all)
+  #############################################################################
+  # Return the final results tables with QC pass/fail
+  #############################################################################
+  
+  counts_data <- counts_QC_output %>%
+    ungroup() %>% 
+    dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
+  
+  final_results <- dplyr::bind_rows(results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Plate"))
+  
+  final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Plate"))
   
   # Output
   return(list(final_results, final_MFI_RAU_results, model_results_all))
@@ -861,26 +1176,55 @@ MFItoRAU_PNG <- function(antigen_output, plate_layout){
 # Usage: MFItoRAU(antigen_output, plate_layout)
 # 
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#     etc. (reactive).
 #
 # Output: A list of three data frames:
 #   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
-#   2. Plot information for `plotModel` function 
+#   2. Plot information for `plotModel` function.
 #   3. Data frame of RAU data for random forest classification use. 
 # 
 # Authors: Eamon Conway, Dionne Argyropoulos
 ##############################################################################
 
-MFItoRAU_ETH <- function(antigen_output, plate_layout){
+MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   
   master_file <- antigen_output$results
   L <- master_file %>% mutate(across(-c(Location, Sample, Plate), as.numeric))
-  layout <- readPlateLayout(plate_layout, antigen_output)
+  layout <- plate_list
+  
+  ##########################################################################################################
+  #### Reference Fit 
+  ##########################################################################################################
   
   refs <- read.csv(here::here("data/png_eth_stds.csv"))
+  # MAGIC PARAMETERS FOR THIS SECTION
   s1_concentration <- 1/50
+  s10_relative_dilution <- 2^-9
+  current_min_relative_dilution <- s10_relative_dilution
+  # END MAGIC PARAMETER DEFINITIONS
+  
+  control = list(maxit = 10000,
+                 abstol = 1e-10,
+                 reltol = 1e-8)
+  
+  initial_solution = c(-1.0, 0.0, 10, 0.0, 0.0)
+  
+  ref_fit <- refs %>% 
+    dplyr::group_by(.data$std_plate, .data$antigen) %>% 
+    tidyr::nest()  %>% 
+    dplyr::mutate(
+      .keep = "none",
+      eth_fit = purrr::map(data, ~ {
+        fit_standard_curve(.x$eth_mfi, .x$dilution, control)
+      }),
+      png_fit = purrr::map(data, ~ {
+        fit_standard_curve(.x$png_mfi, .x$dilution, control)
+      })
+    )
+  
+  reference_antigens = unique(ref_fit$antigen)
   
   excluded_cols <- c("Location", "Sample", "Plate")
   remaining_cols <- setdiff(colnames(L), excluded_cols)
@@ -902,37 +1246,12 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
     subset_data <- L[L$Plate == plate_level, ]
     
     ##########################################################################################################
-    #### Reference Fit 
-    ##########################################################################################################
-    
-    control = list(maxit = 10000,
-                   abstol = 1e-10,
-                   reltol = 1e-8)
-    
-    initial_solution = c(-1.0, 0.0, 10, 0.0, 0.0)
-    
-    ref_fit <- refs %>% 
-      dplyr::group_by(.data$std_plate, .data$antigen) %>% 
-      tidyr::nest()  %>% 
-      dplyr::mutate(
-        .keep = "none",
-        eth_fit = purrr::map(data, ~ {
-          fit_standard_curve(.x$eth_mfi, .x$dilution, control)
-        }),
-        png_fit = purrr::map(data, ~ {
-          fit_standard_curve(.x$png_mfi, .x$dilution, control)
-        })
-      )
-    
-    reference_antigens = unique(ref_fit$antigen)
-    
-    ##########################################################################################################
     #### Apply conversion  
     ##########################################################################################################
     
     eth_qa_sc <- subset_data %>% 
-      filter(type.letter == "S") %>% 
-      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+      dplyr::filter(type.letter == "S") %>% 
+      tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
       dplyr::mutate(dilution = 2 ^ (-as.numeric(gsub( # 2 = dilution factor 
         "\\D", "", .data$`Sample`
       )) + 1))  %>% 
@@ -940,8 +1259,8 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
       tidyr::nest()
     
     eth_qa_mfi <- subset_data %>% 
-      filter(type.letter == "U") %>% 
-      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+      dplyr::filter(type.letter == "U") %>% 
+      tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
       dplyr::group_by(.data$antigen) %>% 
       tidyr::nest()
     
@@ -959,7 +1278,10 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
           .keep = "none",
           mfi = .data$mfi,
           Sample = .data$Sample,
-          dilution = convert_between_curves(.data$mfi, new_fit, eth_fit, png_fit)
+          # dilution = convert_between_curves(.data$mfi, new_fit, eth_fit, png_fit)
+          dilution = convert_mfi_to_dilution_no_lower_bound(mfi,new_fit, current_min_relative_dilution*2^-1), #This makes it s11 not s10 - Eamon 
+          ref_mfi = convert_dilution_to_mfi(dilution,eth_fit),
+          dilution = convert_mfi_to_dilution(ref_mfi,png_fit, s10_relative_dilution)
         )
       )) %>%
       tidyr::unnest(cols = data)
@@ -1001,7 +1323,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
     # Bind to location
     eth_converted_locations <- subset_data %>% 
       dplyr::select(Location, Sample, Plate) %>%
-      right_join(estimate_eth, by = "Sample")
+      dplyr::right_join(estimate_eth, by = "Sample")
     
     results.location <- matrix(unlist(strsplit(as.character(eth_converted_locations$Location), ",")), ncol = 2, byrow = TRUE)[, 2]
     results.location <- substr(results.location, 1, nchar(results.location) - 1)
@@ -1020,7 +1342,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
       ]
     }
     row_to_match <- location.2[,c("Location.2", "SampleID")]
-    row_to_match <- row_to_match %>% distinct(SampleID, Location.2, .keep_all = T) %>% na.omit()
+    row_to_match <- row_to_match %>% dplyr::distinct(SampleID, Location.2, .keep_all = T) %>% na.omit()
     
     ## Using join() from plyr package to add SampleID information to results.df.wide. (default or given folder location and unique name)
     eth_converted_locations <- plyr::join(eth_converted_locations, row_to_match, by="Location.2", type="left")
@@ -1040,20 +1362,21 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
     
     # Make long data frame wide 
     eth_converted_locations_mfi <-eth_converted_locations %>%
-      dplyr::select(-mfi) %>%
-      pivot_wider(names_from = "antigen", values_from = "dilution") %>% 
-      rename_with(~paste0(.x, "_MFI"), -c(SampleID, Location.2, Location, Sample, Plate))
+      dplyr::select(-dilution) %>%
+      tidyr::pivot_wider(names_from = "antigen", values_from = "mfi") %>% 
+      dplyr::rename_with(~paste0(.x, "_MFI"), -c(SampleID, Location.2, Location, Sample, Plate))
     eth_converted_locations_dilutions <- eth_converted_locations %>%
       dplyr::select(-mfi) %>%
-      pivot_wider(names_from = "antigen", values_from = "dilution") %>% 
-      rename_with(~paste0(.x, "_Dilution"), -c(SampleID, Location.2, Location, Sample, Plate))
-    eth_converted_wide <- eth_converted_locations_mfi %>% left_join(eth_converted_locations_dilutions, by = c("SampleID", "Location.2", "Location", "Sample", "Plate"))
+      tidyr::pivot_wider(names_from = "antigen", values_from = "dilution") %>% 
+      dplyr::rename_with(~paste0(.x, "_Dilution"), -c(SampleID, Location.2, Location, Sample, Plate))
+    eth_converted_wide <- eth_converted_locations_mfi %>% 
+      dplyr::left_join(eth_converted_locations_dilutions, by = c("SampleID", "Location.2", "Location", "Sample", "Plate"))
     
     ##########################################################################################################
     #### Create output dataframes
     ##########################################################################################################
     # Save just MFI and RAU for downstream analyses
-    col_selection <- grepl("SampleID|Plate|_MFI|\\_Dilution$", colnames(eth_converted_wide))
+    col_selection <- grepl("SampleID|Location.2|Plate|_MFI|\\_Dilution$", colnames(eth_converted_wide))
     MFI_RAU_results <- eth_converted_wide[, col_selection]
     
     # Store results and models for current plate: `results_all` and `model_results_all` store all results and model plots for each plate.
@@ -1064,10 +1387,44 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
   }
   
   ##########################################################################################################
-  #### Final output joining all plate data 
+  #### Joining all plate data 
   ##########################################################################################################
-  final_results <- dplyr::bind_rows(results_all)
-  final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all)
+  
+  counts_data <- counts_QC_output_eth %>%
+    ungroup() %>% 
+    dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
+  
+  final_results <- dplyr::bind_rows(results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Location.2", "Plate"))
+  
+  final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Location.2", "Plate"))
+  
+  #############################################################################
+  # Re-arrange data for final outputs
+  #############################################################################
+  
+  # Get all base marker names by stripping _Count
+  marker_bases <- names(final_results) %>%
+    grep("_MFI$", ., value = TRUE) %>%
+    sub("_MFI$", "", .)
+  
+  # Create the desired column order
+  final_results_order <- c(
+    "SampleID", "Location.2", "Location", "Sample", "Plate", "QC_total",
+    unlist(lapply(marker_bases, function(x) c(paste0(x, "_MFI"), paste0(x, "_Dilution"))))
+  )
+  final_MFI_RAU_order <- c(
+    "SampleID", "Plate", "QC_total",
+    unlist(lapply(marker_bases, function(x) c(paste0(x, "_MFI"), paste0(x, "_Dilution"))))
+  )
+  
+  # Reordered data frame
+  final_results <- final_results %>% 
+    dplyr::select(all_of(final_results_order))
+  
+  final_MFI_RAU_results <- final_MFI_RAU_results %>% 
+    dplyr::select(all_of(final_MFI_RAU_order))
   
   return(list(final_results, final_MFI_RAU_results, model_results_all))
 }
@@ -1082,20 +1439,20 @@ MFItoRAU_ETH <- function(antigen_output, plate_layout){
 # Antibody Units (RAU) model results data and plots the model fits based on
 # MFItoRAU_PNG.
 # 
-# Usage: plotModel(mfi_to_rau_output, antigens_output)
+# Usage: plotModel(mfi_to_rau_output, antigen_output)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - mfi_to_rau_output: Output from `MFItoRAU_PNG` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - mfi_to_rau_output: Output from `MFItoRAU_PNG` (reactive).
 #
 # Output:
 #   - List of dot and line plots of MFI to RAU model standard curve, with each 
-#     one representing an individual plate (ggplots)
+#     one representing an individual plate (ggplots).
 # 
 # Authors: Shazia Ruybal-Pesantez, Dionne Argyropoulos
 ##############################################################################
 
-plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
+plotModel_PNG <- function(mfi_to_rau_output, antigen_output){
   
   model_results <- mfi_to_rau_output[[3]]
   
@@ -1116,12 +1473,12 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
   combined_data <- do.call(rbind, combined_data)
   
   ### Get Standards for points
-  stds_file <- antigens_output$stds
+  stds_file <- antigen_output$stds
   stds_log <- 
     stds_file %>%
-    mutate(across(-c(Location, Sample, Plate), ~ as.numeric(.))) %>% 
-    pivot_longer(-c(Location, Sample, Plate), names_to = "Antigen", values_to = "StdCurve") %>%
-    mutate(dilution = ifelse(
+    dplyr::mutate(across(-c(Location, Sample, Plate), ~ as.numeric(.))) %>% 
+    tidyr::pivot_longer(-c(Location, Sample, Plate), names_to = "Antigen", values_to = "stdcurve") %>%
+    dplyr::mutate(dilution = ifelse(
       Sample == "S1", 1/50, 
       ifelse(Sample == "S2", 1/100, 
              ifelse(Sample == "S3", 1/200, 
@@ -1133,20 +1490,19 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
                                                        ifelse(Sample == "S9", 1/12800, 
                                                               ifelse(Sample == "S10", 1/25600, NA)))))))))))
   
-  # Generate plots for each plate, grouping antigens together
+  # Generate plots for each plate, grouping proteins together
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
-    ggplot(data = subset(combined_data, Plate == plate_name), 
-           aes(x = dilution, y = `1`, color = Antigen)) +  # Use 'Antigen' to differentiate lines
-      geom_line() +
-      scale_x_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
-                    labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
-      scale_y_log10() +
-      geom_point(data = subset(stds_log, Plate == plate_name), aes(x = dilution, y = StdCurve, color = Antigen)) +
-      labs(x = "Antibody Dilution",
-           y = "Standard Curve (log(MFI))",
-           title = paste("Standard Curves for Plate:", plate_name)) +
-      theme_bw() +
-      facet_wrap(~ Antigen, scales = "free")  # Create a separate plot for each Antigen
+    ggplot2::ggplot() +  # Use 'protein' to differentiate lines
+      ggplot2::geom_line(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = exp(`1`), color = Antigen)) +
+      ggplot2::geom_point(data = subset(stds_log, Plate == plate_name), aes(x = dilution, y = stdcurve, color = Antigen)) +
+      ggplot2::scale_x_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
+                             labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
+      ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+      ggplot2::labs(x = "Antibody Dilution",
+                    y = "Standard Curve (log(MFI))",
+                    title = paste("Standard Curves for Plate:", plate_name)) +
+      ggplot2::theme_bw() +
+      ggplot2::facet_wrap(~ Antigen, scales = "free")  # Create a separate plot for each antigen
   })
   
   # Assign names to the list of plots for clarity
@@ -1165,44 +1521,44 @@ plotModel_PNG <- function(mfi_to_rau_output, antigens_output){
 #
 # Description: 
 # This function gets the Median Fluorescent Intensity (MFI) to Relative Antibody
-# Units (RAU) model results data and plots the model fits
+# Units (RAU) model results data and plots the model fits.
 # 
-# Usage: plotModel(mfi_to_rau_output, antigens_output)
+# Usage: plotModel(mfi_to_rau_output, antigen_output)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - mfi_to_rau_output: Output from `MFItoRAU_ETH` (reactive)
+#   - antigen_output: Output from `readAntigens` (reactive).
+#   - mfi_to_rau_output: Output from `MFItoRAU_ETH` (reactive).
 #
 # Output:
 #   - List of dot and line plots of MFI to RAU model standard curve, with each 
-#     one representing an individual plate (ggplots)
+#     one representing an individual plate (ggplots).
 # 
 # Authors: Dionne Argyropoulos
 ##############################################################################
 
-plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
+plotModel_ETH <- function(mfi_to_rau_output, antigen_output){
   
   # Load model results 
   model_results <- mfi_to_rau_output[[3]]
   
   # Convert the list of data frames into a single data frame
   combined_data <- model_results %>% 
-    bind_rows(.id = "Plate")
+    dplyr::bind_rows(.id = "Plate")
   
   # Generate plots for each plate, grouping antigens together
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
-    ggplot(data = subset(combined_data, Plate == plate_name), 
-           aes(x = dilution, y = mfi, color = antigen)) +  # Use 'Antigen' to differentiate lines
-      geom_line() +
-      scale_x_log10() +
-      scale_y_log10() +
-      geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi_pred, color = antigen)) +
-      labs(x = "Antibody Dilution",
-           y = "Standard Curve (log(MFI))",
-           fill = "Antigen",
-           title = paste("Standard Curves for Plate:", plate_name)) +
-      theme_bw() +
-      facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
+    ggplot2::ggplot(data = subset(combined_data, Plate == plate_name), 
+                    aes(x = dilution, y = mfi_pred, color = antigen)) +  # Use 'Antigen' to differentiate lines
+      ggplot2::geom_line() +
+      ggplot2::scale_x_log10() +    
+      ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+      ggplot2::geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi, color = antigen)) +
+      ggplot2::labs(x = "Antibody Dilution",
+                    y = "Standard Curve (log(MFI))",
+                    fill = "Antigen",
+                    title = paste("Standard Curves for Plate:", plate_name)) +
+      ggplot2::theme_bw() +
+      ggplot2::facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
   })
   
   # Assign names to the list of plots for clarity
@@ -1217,7 +1573,7 @@ plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
 #
 # Description: 
 # This function classifies unknown samples as recently exposed or not 
-# (Note: MFItoRAU() needs to be run first to convert to RAU)
+# (Note: MFItoRAU() needs to be run first to convert to RAU).
 #  
 # Usage: classify_final_results(mfi_to_rau_output, algorithm_type, Sens_Spec)
 #
@@ -1236,19 +1592,27 @@ plotModel_ETH <- function(mfi_to_rau_output, antigens_output){
 #       * "95\% specificity".
 #
 # Output:
-#   - Data frame with exposure status for every sample
-#   - Summary table with positive/negative results for each classifier
+#   - Data frame with exposure status for every sample.
+#   - Summary table with positive/negative results for each threshold.
 # 
 # Authors: Lauren Smith, Dionne Argyropoulos
 ##############################################################################
 
-classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec) {
+classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec, counts_QC_output) {
+  
+  #############################################################################
+  # Data wrangling
+  #############################################################################
   
   rau_data <- mfi_to_rau_output[[2]]
   rau_data <- rau_data %>%
     dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
-    mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
-    rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
+    dplyr::mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
+    dplyr::rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
+  
+  #############################################################################
+  # Model-specific functions
+  #############################################################################
   
   # Step 1. Reads in serostatus using the trained random forest
   antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds")) # Model 1: All top 8
@@ -1285,24 +1649,36 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
   # Step 4: Run the model
   # Retrieve the model based on the algorithm_type string
   model <- get(algorithm_type)
+  
+  #############################################################################
+  # Model outputs
+  #############################################################################
+  
   # Classify rau_data using the specified model
   class_preds <- predict(model, new_data = rau_data)
   prob_preds <- predict(model, new_data = rau_data, type = "prob")
   # Binds predictions to rau_data
-  results <- rau_data %>% bind_cols(class_preds, prob_preds)
+  results <- rau_data %>% dplyr::bind_cols(class_preds, prob_preds)
   # Classify new (seropositive) / old (seronegative) based on selected threshold
   results <- results %>%
-    mutate(pred_class_max = ifelse(.pred_new > threshold, "new", "old"),
-           pred_class_max = as.factor(pred_class_max))
+    dplyr::mutate(pred_class_max = ifelse(.pred_new > threshold, "new", "old"),
+                  pred_class_max = as.factor(pred_class_max))
   # Final processing and renaming
   final_results <- results %>%
     dplyr::select(-c(.pred_class, .pred_new, .pred_old)) %>%
-    mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) 
+    dplyr::mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) 
   
-  # Step 5: Return the table of prediction classes
-  return(final_results)
+  #############################################################################
+  # Return the table of prediction classes and QC pass/fail
+  #############################################################################
+  
+  final_classification_qc <- counts_QC_output %>% 
+    dplyr::ungroup() %>% 
+    dplyr::select(SampleID, Plate, QC_total) %>% 
+    dplyr::inner_join(final_results, by = c("SampleID", "Plate"))
+  
+  return(final_classification_qc)
 }
-
 
 ##############################################################################
 # plotBoxPlotClassification function: Plot Classification
@@ -1318,11 +1694,11 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 # Arguments: 
 #   - all_classifications: Data frame of `classify_final_results()` for all 
 #     Sens_Spec thresholds. 
-#   - selected_threshold: String with the threshold (reactive)
+#   - selected_threshold: String with the threshold (reactive).
 #
 # Output:
 #   - Box plots with RAU values for each protein stratified by classification 
-#     (ggplot)
+#     (ggplot).
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
@@ -1330,18 +1706,18 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec)
 plotBoxPlotClassification <- function(all_classifications, selected_threshold){
   
   all_classifications %>% 
-    filter(Sens_Spec == selected_threshold) %>% 
-    pivot_longer(-c(SampleID, Plate, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
-    mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
-    ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
-    geom_boxplot() +
-    scale_y_log10() +
-    scale_fill_manual(values = c(seronegative = "#878787", seropositive = "#d6604d")) +
-    labs(title = paste0("Threshold Chosen: "), selected_threshold, 
-         x = "Classification", y = "RAU", fill = "Classification") +
-    facet_grid(~Antigen) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    dplyr::filter(Sens_Spec == selected_threshold) %>% 
+    tidyr::pivot_longer(-c(SampleID, Plate, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
+    dplyr::mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
+    ggplot2::ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
+    ggplot2::geom_boxplot() +
+    ggplot2::scale_y_log10() +
+    ggplot2::scale_fill_manual(values = c(seronegative = "#878787", seropositive = "#d6604d")) +
+    ggplot2::labs(title = paste0("Threshold Chosen: "), selected_threshold, 
+                  x = "Classification", y = "RAU", fill = "Classification") +
+    ggplot2::facet_grid(~Antigen) +
+    ggplot2:: theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
 }
 
@@ -1350,7 +1726,7 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
 # --------------------------
 #
 # Description: 
-# Boxplot of the MFI values 
+# Boxplot of the MFI values.
 # 
 # Usage: plotMFI(mfi_to_rau_output)
 # 
@@ -1369,41 +1745,23 @@ plotMFI <- function(mfi_to_rau_output, location){
   df_results <- mfi_to_rau_output[[2]]
   df_results <- df_results %>%
     dplyr::select(SampleID, Plate, ends_with("_MFI")) %>%
-    rename_with(~str_replace(., "_MFI", ""), ends_with("_MFI")) %>%
-    pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "MFI") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
-           MFI = as.numeric(MFI)) 
+    dplyr::rename_with(~str_replace(., "_MFI", ""), ends_with("_MFI")) %>%
+    tidyr::pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "MFI") %>% 
+    dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
+                  MFI = as.numeric(MFI)) 
   
-  if (location == "PNG"){
-    
-    df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
-    
-    plot <- df_results %>% 
-      ggplot(aes(x= Antigen, y = MFI)) +
-      geom_boxplot(data = df_wehi, aes(x = Antigen, y = MFI), fill = "grey", colour = "darkgrey") + 
-      geom_boxplot(aes(fill = Antigen)) +
-      scale_y_log10(breaks = c(10, 100, 1000, 10000), limits = c(10, 10000), labels = c("10", "100", "1,000", "10,000")) +
-      scale_fill_brewer(palette = "Paired", type = "qual") +
-      labs(x = "Antigen", y = "Antibody log(MFI)") +
-      facet_wrap( ~ Plate) +
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-            legend.position = "none") 
-    
-  } else if (location == "ETH") {
-    
-    plot <- df_results %>% 
-      ggplot(aes(x= Antigen, y = MFI, fill = Antigen)) +
-      geom_boxplot() +
-      scale_y_log10() +
-      scale_fill_brewer(palette = "Paired", type = "qual") +
-      labs(x = "Antigen", y = "Antibody log(MFI)") +
-      facet_wrap( ~ Plate) +
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-            legend.position = "none") 
-    
-  }
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
+  
+  plot <- df_results %>% 
+    ggplot2::ggplot(aes(x= Antigen, y = MFI)) +
+    ggplot2::geom_boxplot(data = df_wehi, aes(x = Antigen, y = MFI), fill = "grey", colour = "darkgrey") + 
+    ggplot2::geom_boxplot(aes(fill = Antigen)) +
+    ggplot2::scale_y_log10(breaks = c(10, 100, 1000, 10000), limits = c(10, 10000), labels = c("10", "100", "1,000", "10,000")) +
+    ggplot2::scale_fill_brewer(palette = "Paired", type = "qual") +
+    ggplot2::labs(x = "Antigen", y = "Antibody log(MFI)") +
+    ggplot2::facet_wrap( ~ Plate) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") 
   
   return(plot)
   
@@ -1414,7 +1772,7 @@ plotMFI <- function(mfi_to_rau_output, location){
 # --------------------------
 #
 # Description: 
-# Boxplot of the RAU values 
+# Boxplot of the RAU values. 
 # 
 # Usage: plotRAU(mfi_to_rau_output)
 # 
@@ -1433,40 +1791,24 @@ plotRAU <- function(mfi_to_rau_output, location){
   df_results <- mfi_to_rau_output[[2]]
   df_results <- df_results %>%
     dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
-    rename_with(~str_replace(., "_Dilution", ""), ends_with("_Dilution")) %>%
-    pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "RAU") %>% 
-    mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
-           RAU = as.numeric(RAU)) 
+    dplyr::rename_with(~str_replace(., "_Dilution", ""), ends_with("_Dilution")) %>%
+    tidyr::pivot_longer(-c(SampleID, Plate), names_to = "Antigen", values_to = "RAU") %>% 
+    dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
+                  RAU = as.numeric(RAU)) 
   
-  if (location == "PNG"){
-    
-    df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
-    
-    plot <- df_results %>%
-      ggplot(aes(x= Antigen, y = RAU, fill = Antigen)) +
-      geom_boxplot(data = df_wehi, aes(x = Antigen, y = RAU), fill = "grey", colour = "darkgrey") +
-      geom_boxplot() +
-      scale_y_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
-                    labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
-      scale_fill_brewer(palette = "Paired", type = "qual") +
-      labs(x = "Antigen", y = "Antibody RAU") +
-      facet_wrap( ~ Plate) + 
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-  } else if (location == "ETH") {
-    
-    plot <- df_results %>%
-      ggplot(aes(x= Antigen, y = RAU, fill = Antigen)) +
-      geom_boxplot() +
-      scale_y_log10() +
-      scale_fill_brewer(palette = "Paired", type = "qual") +
-      labs(x = "Antigen", y = "Antibody RAU") +
-      facet_wrap( ~ Plate) + 
-      theme_bw() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-  }
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
+  
+  plot <- df_results %>%
+    ggplot2::ggplot(aes(x= Antigen, y = RAU, fill = Antigen)) +
+    ggplot2::geom_boxplot(data = df_wehi, aes(x = Antigen, y = RAU), fill = "grey", colour = "darkgrey") +
+    ggplot2::geom_boxplot() +
+    ggplot2::scale_y_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
+                           labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
+    ggplot2::scale_fill_brewer(palette = "Paired", type = "qual") +
+    ggplot2::labs(x = "Antigen", y = "Antibody RAU") +
+    ggplot2::facet_wrap( ~ Plate) + 
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
   
   return(plot)
   
@@ -1484,9 +1826,7 @@ plotRAU <- function(mfi_to_rau_output, location){
 # Usage: plotBeadCounts(antigen_output, plate_layout)
 #
 # Arguments: 
-#   - antigen_output: Output from `readAntigens` (reactive)
-#   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
-#     etc. (reactive)
+#   - antigen_counts_output: Output from `getAntigenCounts` (reactive).
 #
 # Output:
 #   - Dot plot with values > 15 threshold coloured in blue (sufficient beads) 
@@ -1495,78 +1835,24 @@ plotRAU <- function(mfi_to_rau_output, location){
 # Author: Dionne Argyropoulos
 ##############################################################################
 
-plotBeadCounts <- function(antigen_output, plate_layout){
+plotBeadCounts <- function(antigen_counts_output){
   
-  master_file <- antigen_output
-  counts <- master_file$counts
-  counts <- counts %>%
-    dplyr::select(-Sample) %>% # can maybe "keep" relevant columns + protein names?
-    dplyr::mutate(Location=gsub(".*,", "", Location)) %>%
-    dplyr::mutate(Location=substr(Location, 1, nchar(Location)-1))  %>% 
-    tidyr::pivot_longer(-c(Location, Plate), names_to = "Antigen", values_to = "Count") %>% 
-    dplyr::mutate(Warning = case_when(
-      as.numeric(Count)<15~1,
-      as.numeric(Count)>=15~0
-    )) %>%
-    dplyr::select(Location, Antigen, Warning, Count, Plate) %>%
-    dplyr::group_by(Location, Antigen, Count, Plate) %>%
-    dplyr::summarise(Sum = sum(Warning)) %>%
-    dplyr::mutate(Colour = case_when(
-      Sum>=1 ~ "repeat",
-      Sum<1 ~ "sufficient beads"
-    )) %>%
-    dplyr::mutate(Row = substr(Location, 1, nchar(Location)-1)) %>%
-    dplyr::mutate(Col = substr(Location, 2, nchar(Location))) %>%
-    dplyr::mutate(Row = gsub("1", "", Row)) %>%
-    dplyr::mutate(Row = as.factor(Row)) %>%
-    dplyr::mutate(Col = as.numeric(Col))
-  
-  bead_counts <- counts %>% 
-    mutate(Count = as.numeric(Count), 
-           Repeat = factor(Colour, levels = c("sufficient beads", "repeat"))) 
-  bead_counts$Plate <- factor(bead_counts$Plate, levels = unique(bead_counts$Plate[order(as.numeric(str_extract(bead_counts$Plate, "\\d+")))])) # reorder by plate number 
-  
-  check_repeats_output <- check_repeats(bead_counts)
-  table <- bead_counts
-  layout <- readPlateLayout(plate_layout, antigen_output)
-  
-  # Extract the row and column information from the 'location' column in table
-  table$Row <- substr(table$Location, 1, 1)  # Extract row (e.g., 'A')
-  table$Col <- substr(table$Location, 2, 2)  # Extract column (e.g., '1')
-  
-  # Function to extract Sample based on plate name and row/col
-  get_sample_id <- function(plate_name, Row, Col) {
-    # Get the platelayout data frame based on the plate name
-    platelayout_df <- layout[[plate_name]]
-    # Find the correct row and column in platelayout
-    row_index <- which(platelayout_df$Plate == Row)
-    col_index <- as.integer(Col) + 1  # Adding 1 because platelayout has column names as strings
-    # Extract the corresponding Sample
-    return(platelayout_df[row_index, col_index])
-  }
-  
-  # Apply the function to extract Sample for each row in table
-  table$Sample <- mapply(function(Plate, Row, Col) {
-    get_sample_id(Plate, Row, Col)
-  }, table$Plate, table$Row, table$Col)
-  
-  table <- table %>% ungroup() %>% dplyr::select(Sample, Location, Antigen, Plate, Colour, Count)
-  bead_counts_1 <- bead_counts %>% left_join(table, by = c("Plate", "Count", "Antigen", "Location"))
-  
-  bead_counts_1 %>% 
-    ggplot(aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat, 
-               text = paste("Sample:", Sample, "<br>Bead Count:", Count, "<br>Location:", Location,"<br>Plate:", Plate))) + 
-    geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
-    geom_point() +
-    scale_y_continuous(breaks = c(0, 15, 50, 100, 150, 200)) +
-    scale_colour_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
-    scale_alpha_manual(values = c("sufficient beads" = 0.5, "repeat" = 1)) +
-    scale_size_manual(values = c("sufficient beads" = 1, "repeat" = 3)) + 
-    labs(x = "Plate", y = "Bead Counts", alpha = "", colour = "", size = "") +  # Add legend title
-    facet_grid(~ Antigen) +
-    theme_bw() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") + # Show legend
-    guides(alpha = "none") + 
-    guides(size = "none") 
+  antigen_counts_output$Plate <- factor(antigen_counts_output$Plate, levels = unique(antigen_counts_output$Plate[order(as.numeric(str_extract(antigen_counts_output$Plate, "\\d+")))])) # reorder by plate number 
+  antigen_counts_output %>% 
+    ggplot2::ggplot(
+      aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat,
+          text = paste("Sample:", SampleID, "<br>Bead Count:", Count, "<br>Location:", Location,"<br>Plate:", Plate))) + 
+    ggplot2::geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
+    ggplot2::geom_point() +
+    ggplot2::scale_y_continuous(breaks = c(0, 15, 50, 100, 150, 200)) +
+    ggplot2::scale_colour_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
+    ggplot2::scale_alpha_manual(values = c("sufficient beads" = 0.5, "repeat" = 1)) +
+    ggplot2::scale_size_manual(values = c("sufficient beads" = 1, "repeat" = 3)) + 
+    ggplot2::labs(x = "Plate", y = "Bead Counts", alpha = "", colour = "", size = "") +  # Add legend title
+    ggplot2::facet_grid(~ Antigen) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") + # Show legend
+    ggplot2::guides(alpha = "none") + 
+    ggplot2::guides(size = "none") 
   
 }
