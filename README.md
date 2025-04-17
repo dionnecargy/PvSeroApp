@@ -18,6 +18,8 @@ luminexfile_plate1.csv
 luminexfile_plate2.csv #....etc.
 ```
 
+As of v1.2.0 you can label your plates with "REPEATplate1" or "Repeatplate1" or "repeatplate1" e.g., "luminexfile_todaysdate_repeatplate3.csv". 
+
 ## Question 2. 
 >[!NOTE]
 >How do I name my plate layout files?
