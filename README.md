@@ -6,7 +6,7 @@ The source code for the PvSeroApp Shiny web application, which streamlines the d
 >[!NOTE]
 >How do I name my raw luminex files?
 
-Please name them with the folowing convention with `plate1` (other characters and capitalisations are OPTIONAL). The important part is that the labels correspond to the plate layout files as indicated in the next Question!
+Please name them with the following convention with `plate1` (other characters and capitalisations are OPTIONAL). The important part is that the labels correspond to the plate layout files as indicated in the next Question!
 - If you're using .xlsx files:
 ```
 luminexfile_plate1.xlsx
@@ -19,6 +19,8 @@ luminexfile_plate2.csv #....etc.
 ```
 
 As of v1.2.0 you can label your plates with "REPEATplate1" or "Repeatplate1" or "repeatplate1" e.g., "luminexfile_todaysdate_repeatplate3.csv". 
+
+The code searches for the string `plate` and the number that follows. It also accepts `repeatplate` and the number that follows. The words `repeat` and `plate` are allowed to have any capitalisations. Other numbers are allowed in the name as well, but ensure they are spaced with an underscore or another string e.g., `02473292_experiment20238_plate1_03042025.csv` is acceptable. 
 
 ## Question 2. 
 >[!NOTE]
