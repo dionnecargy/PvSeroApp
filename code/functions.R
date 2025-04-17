@@ -2,6 +2,11 @@
 # This script stores the functions used in the app 
 ##############################################################################
 
+############################################################################################################################################################
+# App Content functions
+# Author: Dionne Argyropoulos
+############################################################################################################################################################
+
 ###############################################################################
 # renderDetailsList function
 # --------------------------
@@ -116,6 +121,11 @@ makeCard <- function(title, id, content, size = 12, style = "") {
     )
   )
 }
+
+############################################################################################################################################################
+# Data processing and classification functions
+# Author: Dionne Argyropoulos, Shazia Ruybal-Pesantez, Lauren Smith, Eamon Conway, Connie Li Wai Suen
+############################################################################################################################################################
 
 ##############################################################################
 # euro_csv_read: Custom Read European CSV 
@@ -1304,7 +1314,7 @@ MFItoRAU_PNG <- function(antigen_output, plate_list, counts_QC_output){
     dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
   
   final_results <- dplyr::bind_rows(results_all) %>% 
-    inner_join(counts_data, by = c("SampleID", "Plate"))
+    inner_join(counts_data, by = c("SampleID", "Plate", "Location.2"))
   
   final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
     inner_join(counts_data, by = c("SampleID", "Plate"))
@@ -1399,8 +1409,8 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
     ##########################################################################################################
     
     eth_qa_sc <- subset_data %>% 
-      dplyr::filter(type.letter == "S") %>% 
-      tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+      filter(type.letter == "S") %>% 
+      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
       dplyr::mutate(dilution = 2 ^ (-as.numeric(gsub( # 2 = dilution factor 
         "\\D", "", .data$`Sample`
       )) + 1))  %>% 
@@ -1408,8 +1418,8 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
       tidyr::nest()
     
     eth_qa_mfi <- subset_data %>% 
-      dplyr::filter(type.letter == "U") %>% 
-      tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+      filter(type.letter == "U") %>% 
+      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
       dplyr::group_by(.data$antigen) %>% 
       tidyr::nest()
     
@@ -1539,7 +1549,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   #### Joining all plate data 
   ##########################################################################################################
   
-  counts_data <- counts_QC_output_eth %>%
+  counts_data <- counts_QC_output %>%
     ungroup() %>% 
     dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
   
@@ -1753,9 +1763,9 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   # Data wrangling
   #############################################################################
   
-  rau_data <- mfi_to_rau_output[[2]]
+  rau_data <- mfi_to_rau_output[[1]]
   rau_data <- rau_data %>%
-    dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
+    dplyr::select(SampleID, Plate, Location.2, ends_with("_Dilution")) %>%
     dplyr::mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
     dplyr::rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
   
@@ -1823,8 +1833,9 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   
   final_classification_qc <- counts_QC_output %>% 
     dplyr::ungroup() %>% 
-    dplyr::select(SampleID, Plate, QC_total) %>% 
-    dplyr::inner_join(final_results, by = c("SampleID", "Plate"))
+    dplyr::select(SampleID, Plate, Location.2 = Location, QC_total) %>% 
+    dplyr::inner_join(final_results, by = c("SampleID", "Plate", "Location.2")) %>% 
+    dplyr::select(-Location.2)
   
   return(final_classification_qc)
 }
@@ -1856,7 +1867,7 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
   
   all_classifications %>% 
     dplyr::filter(Sens_Spec == selected_threshold) %>% 
-    tidyr::pivot_longer(-c(SampleID, Plate, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
+    tidyr::pivot_longer(-c(SampleID, Plate, QC_total, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
     dplyr::mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
     ggplot2::ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
     ggplot2::geom_boxplot() +
@@ -2004,4 +2015,141 @@ plotBeadCounts <- function(antigen_counts_output){
     ggplot2::guides(alpha = "none") + 
     ggplot2::guides(size = "none") 
   
+}
+
+############################################################################################################################################################
+# Ethiopian standard curve functions
+# Author: Eamon Conway
+############################################################################################################################################################
+
+#' Convert between curves.
+#' @description
+#' Convert mfi on new plate to the dilution on the reference plate.
+#'
+#' @param mfi Known mfi of samples to be converted
+#' @param params_new Known parameters for five parameter logistic fit.
+#' @param params_ref_new Known parameters for five parameter logistic fit on reference plate
+#' @param params_ref_old Known parameters for five parameter logistic fit of the old beads on the sample plate.
+#' @return Returns the predicted dilution in comparison to the reference plate
+#' @export
+convert_between_curves <- function(mfi, params_new, params_ref_new, params_ref_old) {
+  dilution <- convert_mfi_to_dilution(mfi,params_new)
+  ref_mfi <- convert_dilution_to_mfi(dilution,params_ref_new)
+  convert_mfi_to_dilution(ref_mfi,params_ref_old)
+}
+
+#' Convert known dilution to mfi from fitted standard curve
+#' @description
+#' Convert dilution to predicted mfi using known standard curve fit.
+#'
+#' @param dilution Known dilution of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @return Returns the predicted mfi of a sample with known dilution.
+#' @export
+convert_dilution_to_mfi <- function(dilution, params) {
+  if (is.null(dilution) || is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  exp(log_logistic_5p(dilution, params[1], params[2], params[3], params[4], exp(params[5])))
+}
+
+#' Convert mfi to dilution using known standard curve fit.
+#' @description
+#' Convert mfi to dilution using known standard curve fit.
+#'
+#' @param mfi Known mfi of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1. 
+#' @return Returns the dilution of each sample in mfi.
+#' @export
+convert_mfi_to_dilution <- function(mfi, params, min_relative_dilution) {
+  if (is.null(mfi) | is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  y <- log(mfi)
+  result <- inverse_log_logistic_5p(
+    y,
+    params[1],
+    params[2],
+    params[3],
+    params[4],
+    exp(params[5])
+  )
+  result[y > (params[2] + params[3])] <- 1.0
+  result[y < params[2]] <- min_relative_dilution
+  result[y < params[6]] <- min_relative_dilution
+  result[y > params[7]] <- 1.0
+  # I dont think this will happen - Eamon (ask if needed)
+  result[result > 1.0] <- 1.0
+  return(result)
+}
+
+
+#' Convert mfi to dilution using known standard curve fit and no lower bound
+#' @description
+#' Convert mfi to dilution using known standard curve fit and no lower bound unless you are below the asymptote of the standard curve. 
+#' In this situation we set your value to min_relative_dilution. I dunno argue? 
+#' @param mfi Known mfi of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1. 
+#' @return Returns the dilution of each sample in mfi.
+#' @export
+convert_mfi_to_dilution_no_lower_bound <- function(mfi, params, min_relative_dilution) {
+  if (is.null(mfi) | is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  y <- log(mfi)
+  result <- inverse_log_logistic_5p(
+    y,
+    params[1],
+    params[2],
+    params[3],
+    params[4],
+    exp(params[5])
+  )
+  result[y > (params[2] + params[3])] <- 1.0
+  result[y < params[2]] <- min_relative_dilution
+  result[y > params[7]] <- 1.0
+  # I dont think this will happen - Eamon (ask if needed)
+  result[result > 1.0] <- 1.0
+  return(result)
+}
+
+#' Fit a standard curve to known mfi and dilution values.
+#' @description
+#' We wish to convert the standard curve samples to a five parameter logistic curve.
+#' This function takes those values and calls optim to determine the fit.
+#'
+#' @param mfi Known mfi of samples
+#' @param dilution Known dilution of samples
+#' @param init Initial guess for solution of fit.
+#' @param control Optional list of control parameters for the underlying call to optim.
+#' @export
+fit_standard_curve <- function(mfi, dilution, control = NULL) {
+  if (is.null(mfi) | is.null(dilution)) {
+    error("Require both mfi and dilution to run.")
+  }
+  
+  y1 <- log(mfi)
+  initial_solution <- c(-1.0, 0.0, max(y1), 0.0, 0.0)
+  
+  error_func <- function(x) {
+    f1 <- log_logistic_5p(dilution, x[1], x[2], x[3], x[4], exp(x[5]))
+    sum((y1 - f1)^2.0)
+  }
+  
+  solution <- optim(par = initial_solution, fn = error_func, control = control)
+  if (solution$convergence != 0) {
+    stop("Standard curve failed to converge. Look at data and possibly change control parameters from default.")
+  }
+  c(solution$par, min(y1), max(y1))
+}
+
+inverse_log_logistic_5p <- function(y,b,c,d,e,f){
+  A <- (d/(y-c))^(1/f)-1
+  return(exp(-e) *A^(1/b))
+}
+
+log_logistic_5p <- function(x, b, c, d, e, f) {
+  return(c + d / (1.0 + exp(b * (log(x) + e)))^f)
 }

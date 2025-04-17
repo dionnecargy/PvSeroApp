@@ -29,7 +29,6 @@ require(gt)
 # require(ggalt)
 
 source(here::here("code/functions.R"))
-source(here::here("code/stdcurves_functions.R"))
 ```
 
 # Load Data
@@ -60,35 +59,41 @@ counts_QC_output_png        <- getCountsQC(antigencounts_png, counts_png)
 
 ############### MFI TO RAU ############### 
 mfitorau_png <- MFItoRAU_PNG(antigen_output_png, plate_list_png, counts_QC_output_png)
-mfitorau_png[[3]]
+
+############### classification ############### 
+results_of_classification <- classify_final_results(mfitorau_png, "antibody_model", "maximised", counts_QC_output_png)
+mfitorau_png[[1]]
 ```
 
 ## ETH 
 ```{r}
-# ############### RAW FILES ############### 
-# raw_data_eth <- "../data/conversion/ETH_data_ramin/Ethiop-plate1-200325_20250320_133643.xlsx"
-# raw_data_filenames_eth <- "Ethiop-plate1-200325_20250320_133643.xlsx"
-# platform <- "magpix"
-# plate_layout_eth <- "../data/conversion/ETH_data_ramin/Ethiopia Biobank samples-Clinical_2023.xlsx"
-# 
-# ############### DATA PROCESSING ############### 
-# serodata_eth              <- readSeroData(raw_data_eth, raw_data_filenames_eth, platform)
-# antigen_output_eth        <- readAntigens(serodata_eth)
-# plate_list_eth            <- readPlateLayout(plate_layout_eth, antigen_output_eth)
-# processed_counts_eth      <- process_counts(antigen_output_eth)
-# antigencounts_eth         <- getAntigenCounts(process_counts = processed_counts_eth, plate_list_eth) ############## this is where we get an error for some reason?!?!?!?!?
-# counts_eth                <- getCounts(processed_counts_eth)
-# counts_QC_output_eth      <- getCountsQC(antigencounts_eth, counts_eth)
-# 
-# ############### MFI TO RAU ############### 
-# mfitorau_eth              <- MFItoRAU_ETH(antigen_output_eth, plate_list_eth, counts_QC_output_eth)
-# mfitorau_eth[[3]]
+############### RAW FILES ###############
+raw_data_eth <- c(
+  "/Users/argyropoulos.d/OneDrive - wehi.edu.au/2_Projects/#PvSeroTaT/App_Shiny/Data/conversion/ETH_data_ramin/Ethiop-plate1-200325_20250320_133643.xlsx",
+  "/Users/argyropoulos.d/OneDrive - wehi.edu.au/2_Projects/#PvSeroTaT/App_Shiny/Data/conversion/ETH_data_ramin/Ethiop-plate2- 200325_20250320_154812.xlsx",
+  "/Users/argyropoulos.d/OneDrive - wehi.edu.au/2_Projects/#PvSeroTaT/App_Shiny/Data/conversion/ETH_data_ramin/Ethiop-plate3-200325_20250320_163911.xlsx"
+)
+raw_data_filenames_eth <-  c(
+  "Ethiop-plate1-200325_20250320_133643.xlsx",
+  "Ethiop-plate2- 200325_20250320_154812.xlsx",
+  "Ethiop-plate3-200325_20250320_163911.xlsx"
+)
+platform <- "magpix"
+plate_layout_eth <- "/Users/argyropoulos.d/OneDrive - wehi.edu.au/2_Projects/#PvSeroTaT/App_Shiny/Data/conversion/ETH_data_ramin/Ethiopia Biobank samples-Clinical_2023.xlsx"
+
+############### DATA PROCESSING ###############
+serodata_eth              <- readSeroData(raw_data_eth, raw_data_filenames_eth, platform)
+antigen_output_eth        <- readAntigens(serodata_eth)
+plate_list_eth            <- readPlateLayout(plate_layout_eth, antigen_output_eth)
+processed_counts_eth      <- process_counts(antigen_output_eth)
+antigencounts_eth         <- getAntigenCounts(process_counts = processed_counts_eth, plate_list_eth) ############## this is where we get an error for some reason?!?!?!?!?
+counts_eth                <- getCounts(processed_counts_eth)
+counts_QC_output_eth      <- getCountsQC(antigencounts_eth, counts_eth)
+
+############### MFI TO RAU ###############
+mfitorau_eth              <- MFItoRAU_ETH(antigen_output_eth, plate_list_eth, counts_QC_output_eth)
+mfitorau_eth[[1]]
+
+############### classification ###############
+results_of_classification <- classify_final_results(mfitorau_eth, "antibody_model", "maximised", counts_QC_output_eth)
 ```
-
-# check bead count
-
-```{r}
-
-  
-```
-

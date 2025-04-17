@@ -39,7 +39,6 @@ waiter_set_theme(html = spin_3(), color = transparent(.5))
 
 source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
-source(here::here("code/stdcurves_functions.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
@@ -1518,7 +1517,7 @@ shinyServer(function(input, output, session){
   })
   
   output$classify_plots <- renderPlotly({
-    
+    req(input$allclassifytable_rows_selected)
     selected_row <- input$allclassifytable_rows_selected
     selected_value <- allclassify_df()[selected_row, "Sensitivity/Specificity", drop = TRUE]
     
@@ -1560,8 +1559,8 @@ shinyServer(function(input, output, session){
   })
   
   output$bead_count_plotly <- renderPlotly({
-    req(all_counts_qc_output())
-    plotly_bead_count <- plotBeadCounts(all_counts_qc_output())
+    req(antigens_counts_output())
+    plotly_bead_count <- plotBeadCounts(antigens_counts_output())
     plotly_bead_count_1 <- ggplotly(plotly_bead_count, tooltip = "text") %>%
       layout(
         showlegend = TRUE, 
