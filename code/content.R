@@ -956,6 +956,9 @@ input_page <- function() {
     p(),
     MessageBar(messageBarType = 3, HTML("All data uploaded must be de-identified and not re-identifiable (see<a href='https://posit.co/about/posit-service-terms-of-use/' class='_blank'>Posit Service Terms of Use</a>)")),
     p(),
+    MessageBar(messageBarType = 3, HTML(r"(You can label your raw data files using "luminexfile_plate1.csv" or if it is a <b>repeat</b> plate then you can use the convention "luminexfile_repeatplate1.csv". See the
+                                        <a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more details.)")),
+    p(),
     useShinyjs(),
     Stack(
       horizontal = TRUE,
