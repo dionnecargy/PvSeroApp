@@ -26,10 +26,17 @@ require(rsconnect)
 require(httr)
 require(jsonlite)
 require(ranger)
+require(spsComps) # shinyCatch function
+require(waiter)
 
-source("functions.R")
-source("stdcurves_functions.R")
-source("content.R")
+waiter_set_theme(html = spin_3(), color = transparent(.5))
+
+# require(devtools)
+# devtools::install_github("dionnecargy/PvSeroAppFns")
+# require(PvSeroAppFns)
+
+source(here::here("code/functions.R"))
+source(here::here("code/content.R"))
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
@@ -42,6 +49,7 @@ platemap <- read.csv(here::here("data/platemap.csv"))
 shinyUI(
   fluentPage(
     useShinyjs(),
+    autoWaiter(),
     tags$head(
       if (file.exists("google_analytics.html")) {
         includeHTML("google_analytics.html")
@@ -154,7 +162,7 @@ shinyUI(
         div(
           style = "display: flex; align-items: center;",
           # IconButton.shinyInput(
-          #   inputId = "toggle_theme", 
+          #   inputId = "toggle_theme",
           #   iconProps = list(iconName = "Contrast")),
           CommandButton.shinyInput(
             inputId = "github_dropdown",

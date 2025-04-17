@@ -3,121 +3,6 @@
 # Author: Dionne C. Argyropoulos 
 ###############################################################################
 
-###############################################################################
-# renderDetailsList function
-# --------------------------
-#
-# This function makes the table in a Fluent UI format. 
-#
-# PARAMETERS: 
-#   - DATA FRAME: any processed data frame
-#
-# OUTPUT:
-#   - Table
-###############################################################################
-
-renderDetailsList <- function(df) {
-  div(
-    class = "ms-Grid-row",
-    div(
-      class = "ms-Grid-col ms-sm12",  # Use ms-sm12 for full width on small screens
-      Stack(
-        tokens = list(childrenGap = 10),
-        horizontal = TRUE,
-        div(
-          style = "max-height: 600px; overflow: auto; width: 100%;",
-          DetailsList(
-            items = df,
-            columns = tibble(fieldName = names(df), name = names(df)),
-            constrainMode = 0,
-            checkboxVisibility = 2,
-            styles = list(
-              root = list(
-                width = "100%",  # Ensure table width is constrained within the available space
-                minWidth = "fit-content",  # Allow table to grow to fit content
-                overflowX = "auto"  # Enable horizontal scrolling only when necessary
-              )
-            )
-          )
-        )
-      )
-    )
-  )
-}
-
-###############################################################################
-# fluent_two_cols function
-# --------------------------
-#
-# This function creates two columns in the Fluent UI format.
-#
-# PARAMETERS: 
-#   - first_col: A list of content for the first column
-#   - second_col: A list of content for the second column
-#   - first_width: Percent width of the column space (default: 50%)
-#   - second_width: Percent width of the column space (default: 50%)
-#
-# OUTPUT:
-#   - Two columns 
-###############################################################################
-
-fluent_two_cols <- function(
-    first_col, 
-    second_col, 
-    first_width = "50%", 
-    second_width = "50%"
-) {
-  Stack(
-    horizontal = TRUE,
-    tokens = list(childrenGap = 40),
-    children = list(
-      # First Column
-      div(
-        tokens = list(childrenGap = 15),
-        style = list(width = first_width),
-        children = first_col  # First column content
-      ), 
-      # Second Column
-      div(
-        tokens = list(childrenGap = 15),
-        style = list(width = second_width),
-        children = second_col  # Second column content
-      )
-    )
-  )
-}
-
-
-##############################################################################
-# makeCard function
-# --------------------------
-#
-# This function imports the makes a card following the Fluent UI format. 
-#
-# PARAMETERS: 
-#   - title: String with the large title that will be printed in the card
-#   - id: Identifying tag for use to link 
-#   - content: A list of content to be rendered
-#   - size: A value from 1 to 12 of the width of the screen (default = 12)
-#   - style: Value for any css styling (reactive)
-#
-# OUTPUT:
-#   - A "card" in the Fluent UI format with content. 
-##############################################################################
-
-makeCard <- function(title, id, content, size = 12, style = "") {
-  div(
-    id = id,
-    class = glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
-    style = style,
-    Stack(
-      tokens = list(padding = 20, childrenGap = 5),
-      Text(variant = "large", title, block = TRUE),
-      content
-    )
-  )
-}
-
 ######### CONTENT #############################################################
 # The second part of this script stores functions used as the pages in the web
 # Author: Dionne C. Argyropoulos 
@@ -143,25 +28,20 @@ home_page <- function() {
     Text(variant = "medium",
          HTML("For details on how to use this app, follow the step-by-step tutorial <a href='#tutorial' class='link'>here</a>.")
     ),
-    tags$figure(
-      class = "centerFigure",
-      tags$img(
-        src = "1_main/pvserotat_app_overview.png",
-        style =  "max-width: 100%; height: auto; display: block; margin: 0 auto;"
-      )
-    ),
+    Image(src = "1_main/pvseroapp_overview.png", width = "1000px", height = "auto"),
     Text(variant = "large", "Acknowledgements"),
     Text(variant = "medium", HTML("The code and scripts used to develop this R Shiny web application are available on <a href='https://github.com/dionnecargy/pvserotat' class-'link'>GitHub</a>. 
     The scripts and functions used in this application were developed by Lauren Smith and Dionne Argyropoulos, with contributions from the following researchers:
       <ul>
         <li>Lauren Smith, WEHI (classification algorithm development)</li>
-        <li>Connie Li Wai Suen, WEHI (original 5-parameter logistic model development for conversion of MFI to RAU)</li>
+        <li>Connie Li Wai Suen, WEHI (original 5-parameter logistic model development for conversion of MFI to RAU for PNG Pool Standard Curve)</li>
+        <li>Eamon Conway for ongoing advice, WEHI (5-parameter logistic model development for conversion of MFI to RAU for Ethiopian Pool Standard Curve)</li>
         <li>Thomas Obadia, Institut Pasteur (development of serological classification algorithm, application scripts and functions for <em>P. vivax</em>)</li>
         <li>Shazia Ruybal-Pesántez, WEHI* (application scripts and functions for SARS-Cov-2)</li>
         <li>Narimane Nekkab** and Michael White, Institut Pasteur (original development of serological classification algorithm for <em>P. vivax</em>)</li>
       </ul>Current address: *Imperial College London; **Swiss Tropical and Public Health Institute.")),
     Text(variant = "medium", "Many thanks to Pailene Lim, Anju Abraham, Macie Lamont, Caitlin Bourke and Nick Walker for trailing and providing feedback on this tool."),
-    Text(variant = "medium", "We thank Eamon Conway for ongoing advice. This work was conducted under supervision of Rhea Longley and Ivo Mueller."), 
+    Text(variant = "medium", "This work was conducted under supervision of Rhea Longley and Ivo Mueller."), 
     Text(variant = "large", "Funding"),
     Text(variant = "medium", "We acknowledge grant funding from the Bill and Melinda Gates Foundation (INV-051542), the WEHI Global Impact Fund, and a Ramaciotti Health Investment Grant (2022HIG52), to support development of this RShiny App.")
   )
@@ -179,7 +59,7 @@ tutorial_page <- function() {
       horizontal = TRUE, tokens = list(childrenGap = 20), horizontalAlign = "start",
       div(
         class = "main-content",
-        style = "flex-grow: 1; padding: 20px;",# Main content takes 80% width
+        style = "flex-grow: 1; padding: 20px;", # Main content takes 80% width
         
         ######### ------------ Introduction ------------
         div(
@@ -195,6 +75,7 @@ tutorial_page <- function() {
             Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."))
           )
         ),
+        p(),
         ######### ------------ Raw Data Requirements  ------------
         div(
           id = "tutorial/rawdata",
@@ -260,8 +141,11 @@ tutorial_page <- function() {
                     Text(variant = "medium", "You can pre-program the MAGPIX machine so that you can export all the raw data directly from the machine once the plate reading is completed. 
                          There is no need to edit the raw data file that comes from the MAGPIX."),
                     p(),
-                    Text(variant = "medium", HTML(r"(Within your plate layout in the MAGPIX, you can use the "U" button for all unknown samples, "B" button for Background or Blank samples, and "S" for Standard Curve samples. 
-                                                  For the control wells, please feel free to edit these labels so that the ID is just "B", "S1", "S2", "S3"...."S10".)")),
+                    Text(variant = "medium", 
+                         HTML(r"(Within your plate layout in the MAGPIX, you can use the "U" button for all unknown samples, "B" button for Background or Blank samples, and "S" for Standard Curve samples. 
+                              For the control wells, please feel free to edit these labels so that the ID is just "B", "S1", "S2", "S3"...."S10".)")),
+                    p(),
+                    Text(variant = "medium", "On the MAGPIX machine, you can also write in the Operator i.e., who ran the assay! This is useful to track variation in plates between experiments."),
                     p(),
                     MessageBar("Ensure that the antigens are labelled the same way in all plate runs! You can do this by setting up the protocol directly on the MAGPIX and using it for all your plate runs."),
                     p(),
@@ -269,7 +153,7 @@ tutorial_page <- function() {
                                                       that <b>"plate1"</b> corresponds to the <b>"plate1"</b> in the plate layout excel file. It is important that there are <b>no other numbers in the file name</b> 
                                                       so that we can link the plate number and file number to each other.)")),
                     p(),
-                    Image(src = "2_tutorial/magpix_example.png", width = 800, height = 800, imageFit = "container")
+                    Image(src = "2_tutorial/2.3.1_magpix_raw.png", width = 800, height = 800, imageFit = "container")
                   ),
                   PivotItem(
                     headerText = "2.3.2. Bio-Plex",
@@ -277,13 +161,14 @@ tutorial_page <- function() {
                     p(),
                     Text(variant = "medium", "Isolate names will tend to be written as 'X1', 'X2', 'X3'... and saved as an .xlsx file. Specifics on Bio-Plex machines will be added shortly."),
                     p(),
-                    Image(src = "2_tutorial/bioplex_example.png", width = 800, height = 200, imageFit = "container")
+                    Image(src = "2_tutorial/2.3.2_bioplex_raw.png", width = 800, height = 200, imageFit = "container")
                   )
                 )
               )
             )
           )
         ),
+        p(),
         ######### ------------ Navigating the App ------------
         div(
           id = "tutorial/app_nav",
@@ -326,6 +211,7 @@ tutorial_page <- function() {
             )
           )
         ),
+        p(),
         ######### ------------ Importing your data ------------
         div(
           id = "tutorial/import_data",
@@ -344,7 +230,7 @@ tutorial_page <- function() {
                 MessageBar(HTML(r"(Try to keep your experiment name/filename free of spaces and instead use '_' or '-'. All of your downloadable files (processed data, quality control report, etc) will be labeled
                        as "<b>ExperimentName_Date_VersionNumber</b>")")),
                 Text(variant = "medium", HTML("A step-by-step guide is available in the <b>Input Data</b> Page which will walk you through how to input your files successfully.")),
-                Image( src = "2_tutorial/input_data_0_stepbystep.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/4.1_input_data_1.png", width = "auto", height = "auto") 
               )
             ),
             makeCard(
@@ -374,7 +260,7 @@ tutorial_page <- function() {
                         MessageBar(messageBarType = 3, HTML(r"(If you cannot see your data correctly in the "Check Raw Data" or "Check Run Info" tabs, it is likely you have not chosen the correct platform option for your data!)"))
                       ), 
                       second_col = Image(
-                        src = "2_tutorial/input_data_1.png", 
+                        src = "2_tutorial/4.1_input_data_2.png", 
                         width = "550px",   # Set a specific width (e.g., 500px)
                         height = "auto"    # Automatically adjust the height to maintain aspect ratio
                       )
@@ -394,7 +280,7 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", HTML(r"(When your raw data and plate layouts are uploaded correctly, your screen should look like this, with the green success message, "Files Imported!")"))
                       ), 
-                      second_col = Image(src = "2_tutorial/input_data_3.png", width = "550px", height = "auto")
+                      second_col = Image(src = "2_tutorial/4.1_input_data_3.png", width = "550px", height = "auto")
                     )
                   ),
                   PivotItem(
@@ -408,7 +294,7 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", HTML(r"(If you would like to change any of the data import entries or upload new raw data files or plate layouts, you will need to click the "<b>Save Inputs</b>" again.)"))
                       ), 
-                      second_col = Image(src = "2_tutorial/input_data_4.png", width = "550px", height = "auto") 
+                      second_col = Image(src = "2_tutorial/4.1_input_data_4.png", width = "550px", height = "auto") 
                     )
                   ),
                   PivotItem(
@@ -422,13 +308,21 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", HTML(r"(2. We are using a <b>Magpix</b> raw data file so we click the "Magpix" button.)")),
                         p(),
-                        Text(variant = "medium", HTML(r"(3. We can then upload our <a href='github.com/dionnecargy/pvserotat' class='_blank'>raw data files</a> and <a href='github.com/dionnecargy/pvserotat' class='_blank'>plate layout</a>.)")),
+                        Text(variant = "medium", HTML(r"(3. We can then upload our <a href='https://github.com/dionnecargy/PvSeroApp/tree/main/data' class='_blank'>raw data files</a> and 
+                                                      <a href='https://github.com/dionnecargy/PvSeroApp/blob/main/data/example_platelayout_1.xlsx' class='_blank'>plate layout</a>.)")),
                         p(),
                         Text(variant = "medium", "Your screen should now look like the image on the right hand side here."),
                         p(),
+                        Text(variant = "medium", "And you will also receive a message at the bottom left hand corner of your screen indicating whether the raw data and plate layouts are read correctly."),
+                        p(),
+                        fluent_two_cols(
+                          first_col = Image(src = "2_tutorial/4.1_input_data_6.png", width = "200px", height = "auto"), 
+                          second_col = Image(src = "2_tutorial/4.1_input_data_7.png", width = "200px", height = "auto")
+                        ),
+                        p(),
                         Text(variant = "medium", "Congratulations 🎉")
                       ), 
-                      second_col = Image(src = "2_tutorial/input_data_5.png", width = "550px", height = "auto") 
+                      second_col = Image(src = "2_tutorial/4.1_input_data_5.png", width = "550px", height = "auto")
                     )
                   )
                 )
@@ -438,7 +332,7 @@ tutorial_page <- function() {
               id = "tutorial/import_data/check", 
               title = "4.2. Check Your Data Is Loaded Correctly",
               content = list(
-                Text(variant = "medium", "Click each tab below to follow how we ...."),
+                Text(variant = "medium", "Click each tab below to see how we verify that the data you entered has been successfully added to the app!"),
                 Pivot(
                   PivotItem(
                     headerText = "Step 1: Checking the Raw Data", 
@@ -453,7 +347,7 @@ tutorial_page <- function() {
                         p(),
                         MessageBar(messageBarType = 3, HTML(r"(If they are not the right file/s, you can click on the "Import Your Data" tab again, upload the correct file, and save your new inputs!)"))
                       ), 
-                      second_col = Image(src = "2_tutorial/check_data_1.png", width = "550px", height = "auto") 
+                      second_col = Image(src = "2_tutorial/4.2_check_data_1.png", width = "550px", height = "auto") 
                     )
                   ),
                   PivotItem(
@@ -473,7 +367,7 @@ tutorial_page <- function() {
                                                   <span style="color:#4C3867; font-weight: bold">"PvSeroTaT_v1.0"</span>, and the <span style="color:#2C72A8; font-weight: bold">Sample Volume</span> should be 
                                                   <span style="color:#2C72A8; font-weight: bold">"50uL"</span> as we can see in the right hand side image here. )"))
                       ), 
-                      second_col = Image(src = "2_tutorial/check_data_2.png", width = "550px", height = "auto") 
+                      second_col = Image(src = "2_tutorial/4.2_check_data_2.png", width = "550px", height = "auto") 
                     )
                   ),
                   PivotItem(
@@ -499,7 +393,7 @@ tutorial_page <- function() {
                     Text(variant = "medium", "In the case of the example data, the plate layout should appear as on the right hand side here.")
                       ), 
                     second_col = list(
-                      Image(src = "2_tutorial/check_data_3.png", width = "550px", height = "auto"), 
+                      Image(src = "2_tutorial/4.2_check_data_3.png", width = "550px", height = "auto"), 
                       MessageBar(HTML(r"(You can look at each tab by pressing the "Next →" or "Previous ←" buttons provided. You are allowed to upload an .xlsx file with extra tabs (i.e., there is no "matching" raw data file). 
                                     Tabs without a corresponding raw data file will not be processed in the future steps.)"))
                     )
@@ -510,6 +404,7 @@ tutorial_page <- function() {
             )
           )
         ),
+        p(),
         ######### ------------ Quality control ------------
         div(
           id = "tutorial/quality_control",
@@ -519,8 +414,18 @@ tutorial_page <- function() {
             Text(variant = "medium", HTML(r"(This section allows you to check the quality of your Luminex run, you can navigate each tab individually and also click the "<b>Download</b>" tab to download your processed sample data, 
                                           the standard curve values and the quality control report. All of the plots in the "Quality Control" section will be included in the QC report (.pdf) when downloaded.)")),
             makeCard(
+              id = "tutorial/quality_control/location", 
+              title = "5.1. Initialising the Quality Control Report", 
+              content = list(
+                Text(variant = "medium", "As there are epidemiological differences in antibody levels for various antigens, we have based our calculations (so far) on either a PNG or Ethiopian pool of standards. The first step of quality control analysis is 
+                     to tell the app which control you are using, so that the appropriate standard curve calculations are performed."),
+                p(),
+                Image(src = "2_tutorial/5.1_qc_tute_1.png", width = "auto", height = "auto")
+              )
+            ), 
+            makeCard(
               id = "tutorial/quality_control/check", 
-              title = "5.1. Checking the Quality Control Reports", 
+              title = "5.2. Checking the Quality Control Reports", 
               content = list(
                 MessageBar(HTML("For each of these plots, there are buttons on the top right of the plot that can be used to download the plot as a png (<i class='fas fa-camera'></i>), as well as other capabilties: <i class='fas fa-search'></i> zoom,  
               <i class='fas fa-arrows-alt'></i> move, <i class='fas fa-plus-square'></i> zoom in, <i class='fas fa-minus-square'></i> zoom out, <i class='fas fa-expand-arrows-alt'></i> autoscale, <i class='fas fa-home'></i> reset axes).")),
@@ -533,9 +438,19 @@ tutorial_page <- function() {
                     first_col = list(
                       Text(variant = "medium", "The standard curve plots are generated from the antibody data from the standards you indicated in your plate layout (e.g. S1-S10) and Median Fluorescent Intensity (MFI) units are displayed in log10-scale."),
                       p(),
-                      Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)")
+                      Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
+                      p(),
+                      Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
+                      p(),
+                      Image(src = "2_tutorial/5.2_qc_tute_3.png", width = "225px", height = "auto"),
+                      p(),
+                      Text(variant = "medium", "And you can click on which plates you would like to see in the legend [image below]."),
+                      p(),
+                      Image(src = "2_tutorial/5.2_qc_tute_4.png", width = "275px", height = "auto"),
+                      p(),
+                      Text(variant = "medium", "You will also notice that there are grey dots behind your data points. These indicate the WEHI standard curves that we have performed in house. These can be used as a guide to see if your standard curves fall within a similar line.")
                     ),
-                    second_col = Image(src = "2_tutorial/qc_tute_1.png", width = "auto", height = "auto")
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_2.png", width = "auto", height = "auto")
                   )
                 ), 
                 PivotItem(
@@ -550,7 +465,7 @@ tutorial_page <- function() {
                       p(),
                       Text(variant = "medium", HTML(r"(The app will inform you whether there are "No repeats necessary" or provide a list of samples to be re-run. In the example data, the beads in plate 2 wells <b>A1</b> and <b>A2</b> will need to be repeated)"))
                     ), 
-                    second_col = Image(src = "2_tutorial/qc_tute_2.png", width = "auto", height = "auto")
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_5.png", width = "auto", height = "auto")
                   )
                 ), 
                 PivotItem(
@@ -560,11 +475,11 @@ tutorial_page <- function() {
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML( r"(The Median Fluorescent Intensity (MFI) units for each antigen is displayed for your blank samples.
-                                                   In general, each blank sample should have ≤50 MFI for each antigen, if they are higher they should be cross-checked manually.)")),
+                                                     In general, each blank sample should have ≤50 MFI for each antigen, if they are higher they should be cross-checked manually.)")),
                       p(),
                       Text(variant = "medium", HTML("In the example data, blank samples recorded higher MFI values for <b>LF005</b> on plate 1 and should be checked to confirm this is expected from the assay."))
                     ), 
-                    second_col = Image(src = "2_tutorial/qc_tute_3.png", width = "auto", height = "auto")
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_6.png", width = "auto", height = "auto")
                   )
                 ), 
                 PivotItem(
@@ -574,13 +489,13 @@ tutorial_page <- function() {
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML(r"(The automated data processing in this app allows you to convert your Median Fluorescent Intensity (MFI) data into Relative Antibody Units (RAU) by fitting a 5-parameter
-                    logistic function to the standard curve on a per-antigen level.)")),
-                    p(),
-                    Text(variant = "medium", "The results from this log-log conversion should look relatively linear for each antigen."),
-                    p(),
-                    MessageBar(HTML(r"(You can view each plate by pressing the "Next →" or "Previous ←" buttons provided.)"))
+                          logistic function to the standard curve on a per-antigen level.)")),
+                      p(),
+                      Text(variant = "medium", "The results from this log-log conversion should look relatively linear for each antigen."),
+                      p(),
+                      MessageBar(HTML(r"(You can view each plate by pressing the "Next →" or "Previous ←" buttons provided.)"))
                     ), 
-                    second_col = Image(src = "2_tutorial/qc_tute_4.png", width = "auto", height = "auto")
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_7.png", width = "auto", height = "auto")
                   )
                 ), 
                 PivotItem(
@@ -590,43 +505,44 @@ tutorial_page <- function() {
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML(r"(The results from the data processing are displayed in an interactive table that can be explored directly within the app and/or the data can also be downloaded in .csv format
-                                                  in the <a href='#tutorial/download_processed' class=`link`>Download</a> tab.)")),
+                                                    in the <a href='#tutorial/download_processed' class=`link`>Download</a> tab.)")),
                       p(),
                       Text(variant = "medium", "The converted Relative Antibody Units (RAU) are displayed for each antigen and for each sample. Scroll to explore the data.")
                     ),
-                    second_col = Image(src = "2_tutorial/qc_tute_5.png", width = "auto", height = "auto")
+                    second_col = Image(src = "2_tutorial/5.2_qc_tute_8.png", width = "auto", height = "auto")
                   )
                 ), 
                 PivotItem(
                   headerText = "Step 6: Example",
                   Text(variant = "medium", HTML(r"(You can explore the processed data directly within the app, for example you can use the search bar to search for a particular sample name. 
-                                              In the example below we filter for sample <b>ABC036</b> as shown in the red box at the top right hand side of the tab.)")),
-                  Image(src = "2_tutorial/qc_tute_6.png", width = "auto", height = "auto"), 
+                                                In the example below we filter for sample <b>ABC036</b> as shown in the red box at the top right hand side of the tab.)")),
+                  Image(src = "2_tutorial/5.2_qc_tute_9.png", width = "auto", height = "auto"), 
                   Text(variant = "medium", HTML(r"(You can also re-order specific columns and sort them from highest to lowest, or vice versa by clicking on the triangles next to the column name. 
-                                              In the example below we sorted from lowest to highest RAU value for <b>EBP</b>, as indicated in the red box.)")),
-                  Image(src = "2_tutorial/qc_tute_7.png", width = "auto", height = "auto"),
+                                                In the example below we sorted from lowest to highest RAU value for <b>EBP</b>, as indicated in the red box.)")),
+                  Image(src = "2_tutorial/5.2_qc_tute_10.png", width = "auto", height = "auto"),
                   p(),
                   Text(variant = "medium", HTML(r"(When you are finished you can download the data and quality control report by clicking on the <a href='#tutorial/download_processed' class-`link`>Download</a> tab.)")),
                   p(),
                   MessageBar("You can quickly check that your data processing has gone as expected by counting the number of entries in this table is the same as the number of samples (excluding standards and blanks)
-                           in your plate layout, and to check that RAU values have been calculated for all of your antigens!")
+                             in your plate layout, and to check that RAU values have been calculated for all of your antigens!")
                 )
               )
               )
             ),
             makeCard(
               id = "tutorial/quality_control/download", 
-              title = "5.2. Downloading Your Processed Data", 
-              content = list(Text(variant = "large", ""), 
-                             Text(variant = "medium", HTML(r"(You can download your processed data by clicking on the button "Download MFI/RAU Data". In some cases it may be useful to compare your standard curve data across multiple 
+              title = "5.3. Downloading Your Processed Data", 
+              content = list(
+                Text(variant = "medium", HTML(r"(You can download your processed data by clicking on the button "Download MFI/RAU Data". In some cases it may be useful to compare your standard curve data across multiple 
                  plate runs, so you can also download the standard curve data separately by clicking the button "Download Standard Curve Data". You can also download your quality control report, which includes 
                  all of the plots in the <a href='#tutorial/quality_control' class-`link`>Quality Control</a> tab as well as the information you entered in the <a href='#tutorial/import_data' class-`link`>Import Data</a>
-                 tab (i.e., experiment name, notes, date and uploaded files).)"))#,
-                 # second_col = Image(src = "2_tutorial/qc_tute_8.png", width = "auto", height = "auto"),
+                 tab (i.e., experiment name, notes, date and uploaded files).)")),
+                Image(src = "2_tutorial/5.3_qc_tute_11.png", width = "auto", height = "auto")
               )
             )
           )
         ),
+        p(),
         ######### ------------ Classifying your samples ------------
         div(
           id = "tutorial/classify",
@@ -649,7 +565,7 @@ tutorial_page <- function() {
                     Text(variant = "medium", HTML("For specific details about the PvSeroTaT algorithms, click on the <a href='#algorithm' class-'link'>Algorithm</a> Section in the navigation menu.")),
                     p()
                   ), 
-                  second_col = Image(src = "2_tutorial/classify_1.png", width = "auto", height = "auto")
+                  second_col = Image(src = "2_tutorial/6.1_classify_tute_1.png", width = "auto", height = "auto")
                 )
               )
             ), 
@@ -657,9 +573,8 @@ tutorial_page <- function() {
               id = "tutorial/classify/perform", 
               title = "6.2. Perform Classification", 
               content = list(
-                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see below). The example data was generated using the PvSeroTaT assay with all eight antigens 
-                 and therefore you should select the "PvSeroTaT Algorithm" for this tutorial.)"))#, 
-                #Image(src = "2_tutorial/classify_2.png", width = "auto", height = "auto")
+                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see above). The example data was generated using the PvSeroTaT assay with all eight antigens 
+                 and therefore you should select the "PvSeroTaT Algorithm" for this tutorial.)"))
               )
             ), 
             makeCard(
@@ -680,7 +595,7 @@ tutorial_page <- function() {
                     MessageBar(messageBarType = 3, HTML("Remember that although the algorithms have high specificity and sensitivity, they are not 100% and so false positives/negatives may still occur. 
                        See the <a href='#algorithm' class-'link'>Algorithm Section</a> for more information."))
                   ), 
-                  second_col = Image(src = "2_tutorial/classify_3.png", width = "auto", height = "auto")
+                  second_col = Image(src = "2_tutorial/6.3_classify_tute_2.png", width = "auto", height = "auto")
                 )
               )
             ), 
@@ -690,12 +605,12 @@ tutorial_page <- function() {
               content = list(
                 Text(variant = "medium", HTML(r"(You can download your classification data by clicking on the button "Download Classification Data". Make sure that you click on the correct button depending on the algorithm 
                                           you applied to your data. The downloaded .csv file will include the algorithm, threshold and version in the file name, 
-                                          which you can also cross-check to make sure the appropriate algorithm and threshold was applied to classify the data.)"))#,
-                # Image(src = "2_tutorial/classify_5.png", width = "auto", height = "auto")
+                                          which you can also cross-check to make sure the appropriate algorithm and threshold was applied to classify the data.)"))
               )
             )
           ) 
         ),
+        p(),
         ######### ------------ Data visualisation ------------
         div(
           id = "tutorial/data_vis",
@@ -709,56 +624,79 @@ tutorial_page <- function() {
               id = "tutorial/data_vis/class_boxplot",
               title = "7.1. Relative Antibody Units (RAU) per Antigen stratified by Classification", 
               content = list(
-                Text(variant = "medium", 
-                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
-                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                Text(variant = "medium", "Here are the results of all classification thresholds explored in the PvSeroApp: maximised, 85%, 90% and 95% sensitivity, 85%, 90% and 95% specificity. The N's for the random forest model classifications based on
+                     these classifications are displayed. You can visualise the RAU values for seropositive and seronegative isolates for each threshold by clicking on the threshold of interest (shown in blue here: clicking on the maximised threshold) and then 
+                     visualising the boxplot (median, min and max RAU IQR values)."),
                 p(),
-                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/7.1_datavis_tute_1.png", width = "auto", height = "auto")
               )
             ),
             makeCard(
               id = "tutorial/data_vis/mfi_boxplot",
               title = "7.2. Median Fluorescent Intensity (MFI) Boxplot Per Antigen", 
               content = list(
-                Text(variant = "medium", 
-                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
-                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                Text(variant = "medium", "The box plots allow you to take a look at the converted Median Fluorescent Intensity (MFI) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
+                 over each antigen box plot to see the min, median, max MFI and IQR values."),
                 p(),
-                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+                Text(variant = "medium", "The grey boxplots in the background indicate the MFI values for the dataset used to train the PvSeroApp model."),
+                p(),
+                Image(src = "2_tutorial/7.2_datavis_tute_2.png", width = "auto", height = "auto"),
+                p(),
+                Text(variant = "medium", "By clicking on the antigens in the legend you can see the boxplot of the data observed for our study. This can be used as a comparison or visual check to see if your values are within a similar range. "),
+                p(),
+                Image(src = "2_tutorial/7.2_datavis_tute_3.png", width = "auto", height = "auto")
               )
             ),
             makeCard(
               id = "tutorial/data_vis/rau_boxplot",
               title = "7.3. Relative Antibody Units (RAU) Boxplot Per Antigen", 
               content = list(
-                Text(variant = "medium", 
-                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
-                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                Text(variant = "medium","The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
+                 over each antigen box plot to see the min, median, max MFI and IQR values."),
                 p(),
-                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+                Text(variant = "medium", "The grey boxplots in the background indicate the MFI values for the dataset used to train the PvSeroApp model."),
+                p(),
+                Image(src = "2_tutorial/7.3_datavis_tute_4.png", width = "auto", height = "auto"), 
+                p(),
+                Text(variant = "medium", "By clicking on the antigens in the legend you can see the boxplot of the data observed for our study. This can be used as a comparison or visual check to see if your values are within a similar range. "),
+                p(),
+                Image(src = "2_tutorial/7.3_datavis_tute_5.png", width = "auto", height = "auto")
               )
             ),
             makeCard(
               id = "tutorial/data_vis/beads_perantigen",
               title = "7.4. Beads Counts per Antigen", 
               content = list(
-                Text(variant = "medium", 
-                     "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. This plot is interactive and you can hover your mouse 
-                 over each antigen box plot to see the min, median, max MFI and IQR values. In the example below, the mouse was hovered over the NL63 antigen."),
+                Text(variant = "medium", "This dot plot shows the raw bead counts for each antigen in each plate. This is intended as a quality control check to be able to identify which bead may be an issue."),
                 p(),
-                Image(src = "2_tutorial/datavis_1.png", width = "auto", height = "auto")
+                Image(src = "2_tutorial/7.4_datavis_tute_6.png", width = "auto", height = "auto"),
+                p(),
+                Text(variant = "medium", "By hovering over the dots you will be able to see the Sample ID (e.g., Blank2 [left] or ABC141 [right]), the Bead Count, Location on the plate (e.g., A2 [left], E9 [right]) and which plate this sample was on. 
+                     The red dotted line indicates an arbitrary low threshold of 15 beads."),
+                p(),
+                fluent_two_cols(
+                  first_col = Image(src = "2_tutorial/7.4_datavis_tute_7.png", width = "400px", height = "auto"), 
+                  second_col = Image(src = "2_tutorial/7.4_datavis_tute_8.png", width = "400px", height = "auto")
+                )
               )
             )
           )
         ),
+        p(),
         ######### ------------ Output from this tutorial ------------
         div(
           id = "tutorial/output_tutorial",
           Stack(
             tokens = list(childrenGap = 10),
             Separator(Text(variant = "xxLarge", "8. Output From This Tutorial"), alignContent = "start"),
-            Text(variant = "medium", "If you followed along in this tutorial and downloaded your processed data, QC report and classification data, you can compare your files to the expected output from this tutorial."),   
-            Text(variant = "medium", HTML("Click here to download an example of the output from this tutorial <a href='https://github.com' class='link'>here</a>."))
+            Text(variant = "medium", "If you followed along in this tutorial and downloaded your processed data, QC report and classification data, you can compare your files to the expected output from this tutorial."),
+            Text(variant = "medium", HTML("Click here to download an example of the output from this tutorial <a href='https://github.com/dionnecargy/PvSeroApp/blob/main/data/example_output.zip' class='link'>here</a>.")),
+            fluent_two_cols(
+              first_width = "80%", second_width = "20%", 
+              first_col = Text(variant = "medium", HTML("If you have any <a href='#feature' class='link'>Requests for Features</a> or would like to <a href='#bug' class='link'>Report A Bug</a> please see the sections in the left-hand menu bar. 
+                                          Alternatively there is a shortcut to these links at the top menu bar of the PvSeroApp with the GitHub Logo where you can publish your issues directly with the developer [see image to the right].")),
+              second_col = Image(src = "2_tutorial/8_github_toggle.png", width = "200px", height = "auto")
+            )
           )
         )
       ),
@@ -766,8 +704,6 @@ tutorial_page <- function() {
       div(
         class = "nav-panel",
         style = "border-left: 1px solid #ccc; padding-left: 10px; position: sticky; top: 0; height: 100vh;",
-        # Stack(
-        #   tokens = list(childrenGap = 10),
         Text(variant = "large", "Contents"),
         Nav(
           groups = list(
@@ -811,8 +747,9 @@ tutorial_page <- function() {
                   expandAriaLabel = "Expand Home section",
                   collapseAriaLabel = "Collapse Home section",
                   links = list(
-                    list(name = "5.1. Quality Control Check", url = "#tutorial/quality_control/check", key = "qc1"),
-                    list(name = "5.2. Downloading Processed Data", url = "#tutorial/quality_control/download", key = "qc2")
+                    list(name = "5.1. Quality Control Report", url = "#tutorial/quality_control/location", key = "qc1"),
+                    list(name = "5.1. Quality Control Check", url = "#tutorial/quality_control/check", key = "qc2"),
+                    list(name = "5.2. Downloading Processed Data", url = "#tutorial/quality_control/download", key = "qc3")
                   ),
                   isExpanded = TRUE
                 ),
@@ -838,7 +775,6 @@ tutorial_page <- function() {
                   url = "#tutorial/output_tutorial",
                   key = "output_tute"
                 )
-                # )
               )
             )
           )
@@ -867,7 +803,7 @@ algorithm_page <- function() {
         p(),
         Text(variant = "medium", HTML("Enrolled individuals in the year-long cohort studies provided a blood sample every month. Light microscopy and qPCR targeting the blood-stages of <em>P. vivax</em> were performed to 
                                       detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the first visit of the 
-                                      year-long study, enabling us to characterise antobdy responses related with time since <em>P. vivax</em> infection. Negative controls from the Australian Red Cross, Brazil Red Cross, 
+                                      year-long study, enabling us to characterise antibody responses related with time since <em>P. vivax</em> infection. Negative controls from the Australian Red Cross, Brazil Red Cross, 
                                       Thai Red Cross and the Volunteer Blood Donor Registry in Victoria, Australia were included. These data were used as our <b>training dataset</b>.")),
         p(), 
         DTOutput("methods1"), 
@@ -1088,6 +1024,15 @@ input_page <- function() {
                       choices = list("Magpix" = "magpix", "Bioplex" = "bioplex"),
                       selected = "magpix"),
                     style = "margin-top: 10px;"
+                  ),                  
+                  Label(HTML("5. Are you only looking at the standard curve?: <span style='color:#a4262c;'>*</span>")),
+                  div(
+                    radioButtons(
+                      "standardcurveonly",
+                      label = NULL,
+                      choices = list("Yes", "No"),
+                      selected = "No"),
+                    style = "margin-top: 10px;"
                   )
                 )
               )
@@ -1096,14 +1041,14 @@ input_page <- function() {
               div(
                 tokens = list(childrenGap = 15),
                 children = list(
-                  Label(HTML("5. Upload Files: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("6. Upload Files: <span style='color:#a4262c;'>*</span>")),
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
                   fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
-                  Label(HTML("6. Save Inputs: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(
                     style = "margin-bottom: 10px;",  # Space for the text above the button
                     PrimaryButton.shinyInput(
@@ -1172,6 +1117,7 @@ input_page <- function() {
 ###############################################################################
 check_page <- function() {
   fluentPage(
+    useWaiter(),
     useShinyjs(),
     Text(variant = "xxLarge", "Quality control"),
     Separator(),
@@ -1195,8 +1141,9 @@ check_page <- function() {
       textOutput("dropdownValue")
     ),
     p(),
-    MessageBar("Click the buttons below to download the data and quality control report."),
+    MessageBar("Click the buttons below to download the data and quality control report. The report and .zip file may take some time to load."),
     p(),
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     div(
       style = "display: flex; gap: 10px;",
       PrimaryButton.shinyInput(
@@ -1211,6 +1158,12 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
+      # PrimaryButton.shinyInput(
+      #   "downloadButtonCounts",
+      #   text = "Counts Data (.CSV)",
+      #   iconProps = list(iconName = "Download")
+      # ),
+      # div(style = "visibility: hidden;", downloadButton("downloadCounts","")),
       PrimaryButton.shinyInput(
         "downloadButtonReport",
         text = "Quality Control Report (.PDF)",
@@ -1222,7 +1175,7 @@ check_page <- function() {
         text = "All Files (.ZIP)",
         iconProps = list(iconName = "Download")
       ),
-      div(style = "visibility: hidden;", downloadButton("download_zip", ""))
+      div(style = "visibility: hidden;", triggerWaiter(downloadButton("download_zip", "")))
     ), 
     Separator(),
     Pivot(
@@ -1230,14 +1183,11 @@ check_page <- function() {
         headerText = "Standard Curves",
         MessageBar(HTML(r"(Check the standard curves for each protein below. Grey dots in the background indicate the standard curve range observed at WEHI for "PNG" or "Ethiopian" 
                         samples where there are known differences in the standard curve.)")),
-        # Toggle.shinyInput(inputId = "toggle_png_eth", label = "Select Standards: ", onText = "Ethiopia", offText = "PNG", value = FALSE),
-        # withSpinner(plotlyOutput("stdcurve"), type = 8) # add spinner
         plotlyOutput("stdcurve", height = "1000px")
       ),
       PivotItem(
         headerText = "Plate QC", 
-        MessageBar("For quality control of each plate, we check that each well should have ≥15 beads/well. Any wells with <15 beads/well are indicated in red below and should be double-checked manually."), 
-        # withSpinner(plotlyOutput("plateqc"), type = 8), # add spinner 
+        MessageBar("For quality control of each plate, we check that each well should have ≥15 beads/well. Any wells with <15 beads/well are indicated in red below and should be double-checked manually."),
         uiOutput("plateqc"),
         conditionalPanel(
           condition = "output.check_repeats_text !== null",
@@ -1252,7 +1202,6 @@ check_page <- function() {
         headerText = "Blank Samples",
         MessageBar("Blank samples should record MFI<50 for each protein. If any proteins are above the dashed line, they should be double-checked manually. 
                    If you have more than one blank sample in your plate, make sure to label them as 'Blank1', 'Blank2' and so forth, otherwise the data shown here will be a cumulative result of all your blanks."), 
-        # withSpinner(plotlyOutput("blanks"), type = 8), # add spinner 
         uiOutput("blanks")
       ), 
       PivotItem(
@@ -1280,6 +1229,7 @@ check_page <- function() {
 ###############################################################################
 model_page <- function() {
   fluentPage(
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     Text(variant = "xxLarge", "Classify exposure"),
     Separator(),
     Text(variant = "medium", HTML("Using this tool, you can classify individuals as seropositive or seronegative for recent <em>Plasmodium vivax</em> exposure (i.e. within previous 9 months). 
@@ -1393,20 +1343,13 @@ datavis_page <- function() {
     p(),
     Text(variant = "large", HTML("<b>Classification</b>")),
     Separator(),
-    Stack(
-      tokens = list(childrenGap = 20),
-      children = list(
-        Label(HTML("Select Sensitivity/Specificity Type: <span style='color:#a4262c;'>*</span>")),
-        MessageBar("Click on the Sensitivity/Specificity Random Forest Threshold of interest to see a boxplot appear! 
-                 You can click on any threshold to see how increasing or decreasing each value changes the interquartile range and median of RAU values."),
-        # withSpinner(DTOutput("allclassifytable"), type = 8),  # Spinner added here
-        fluentPage(DTOutput("allclassifytable")),
-        
-        Label(HTML("Relative Antibody Units (RAU) per Antigen stratified by Classification")),
-        # withSpinner(plotOutput("classify_plots"), type = 8),  # Spinner added here
-        plotlyOutput("classify_plots")
-      )
-    ),
+    Label(HTML("<b>Select Sensitivity/Specificity Type: <span style='color:#a4262c;'>*</span></b>")),
+    MessageBar("Click on the Sensitivity/Specificity Random Forest Threshold of interest to see a boxplot appear! You can click on any threshold to see how increasing or decreasing each value changes the interquartile range and median of RAU values."),
+    DTOutput("allclassifytable"),
+    p(),
+    Label(HTML("<b>Relative Antibody Units (RAU) per Antigen stratified by Classification</b>")),
+    plotlyOutput("classify_plots"),
+    p(),
     Text(variant = "large", HTML("<b>Quality Control Checks: Supplementary</b>")),
     Separator(),
     MessageBar("Here we present your data in the coloured boxplots and the dataset used in this model is presented in grey behind. By clicking on the antigens in the legend you can see the 
@@ -1415,18 +1358,25 @@ datavis_page <- function() {
     p(),
     Label(HTML("<b>Median Fluorescent Intensity (MFI) Per Antigen</b>")),
     p(),
+    Text(variant = "medium", "The box plots allow you to take a look at the converted Median Fluorescent Intensity (MFI) for each of the antigens in the panel. 
+         This plot is interactive and you can hover your mouse over each antigen box plot to see the min, median, max MFI and IQR values. "),
+    p(),
     plotlyOutput("mfi_plotly"),
     p(),
     Label(HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
+    p(),
+    Text(variant = "medium", "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. 
+         This plot is interactive and you can hover your mouse over each antigen box plot to see the min, median, max MFI and IQR values."),
     p(),
     plotlyOutput("rau_plotly"),
     p(),
     Label(HTML("<b>Bead Counts per Antigen</b>")), 
     p(),
+    Text(variant = "medium", "This dot plot is also interactive and displays the raw bead counts for each antigen in each plate. The red dotted line indicates an arbitrary low threshold of 15 beads."),
+    p(),
     plotlyOutput("bead_count_plotly")
   )
 }
-
 
 ###############################################################################
 # --------------------------- App Version History Page ---------------------------
@@ -1449,6 +1399,9 @@ apphistory_page <- function() {
     p(),
     Text(variant = "large", HTML("<b>v1.0.0</b>")),
     Text(variant = "medium", "Key updates made to the tutorial, inputs more flexible, data visualisation options and export data. The standard curve conversion factor for Ethiopian pools to the Papua New Guinea pool has been added. Same classification model as v0.1.0 and v0.2.0."),
+    p(),
+    Text(variant = "large", HTML("<b>v1.1.0</b>")),
+    Text(variant = "medium", "Update to the Ethiopian standard curve conversion function `MFItoRAU_ETH` to account for the relative minimum dilution. The app now has loading spinners and notifications for troubleshooting.")
   )
 }
 

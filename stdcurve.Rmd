@@ -18,7 +18,6 @@ params:
   blanks_plot: NA
   check_repeats_output: NA
   check_repats_table_pdf: NA
-  model_plot: NA
   operator_output: NA
   volume_output: NA
   calibration_output: NA
@@ -44,26 +43,6 @@ require(kableExtra)
 
 ```{r standard curves plot}
 params$stdcurve_plot
-```
-\newpage
-#### Plot of Model Results
-
-```{r model results plot, results='asis'}
-first_plot <- TRUE                          # Flag to track the first plot
-model_plot <- params$model_plot
-
-# Loop through each plot in model_plot and print it
-for (plot_name in names(model_plot)) {
-  
-  if (!first_plot){                         # Insert a page break before the plot but not for the first one 
-    cat("\\newpage\n")                      # Page break before each plot
-  }
-  
-  cat(paste0("##### ", plot_name, "\n\n"))  # Adds a title for each plot
-  print(model_plot[[plot_name]])            # Render the actual plot
-  
-  first_plot <- FALSE                       # Update_reactive flag after first plot is printed 
-}
 ```
 \newpage
 
