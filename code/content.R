@@ -802,11 +802,7 @@ algorithm_page <- function() {
                                   measured for antigen-specific IgG antibody resposes toward a panel of eight antigens using the method outlined in <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al 2020</a>.")),
         p(),
         Text(variant = "medium", HTML("Enrolled individuals in the year-long cohort studies provided a blood sample every month. Light microscopy and qPCR targeting the blood-stages of <em>P. vivax</em> were performed to 
-<<<<<<< HEAD
                                       detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the last visit of the 
-=======
-                                      detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the first visit of the 
->>>>>>> d15b2562b45868748206fef79cd14f008c06580b
                                       year-long study, enabling us to characterise antibody responses related with time since <em>P. vivax</em> infection. Negative controls from the Australian Red Cross, Brazil Red Cross, 
                                       Thai Red Cross and the Volunteer Blood Donor Registry in Victoria, Australia were included. These data were used as our <b>training dataset</b>.")),
         p(), 
