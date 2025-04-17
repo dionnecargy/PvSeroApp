@@ -30,7 +30,7 @@ require(ranger)
 require(rlang) # used in the classify_final_results
 require(spsComps) # shinyCatch function
 require(waiter)
-# 
+
 # require(devtools)
 # devtools::install_github("dionnecargy/PvSeroAppFns")
 # require(PvSeroAppFns)
@@ -839,7 +839,7 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Create Repeats Check
   check_repeats_output <- reactive({
     req(process_counts_output())
-    getRepeats(counts_output, process_counts_output(), plate_list())
+    getRepeats(counts_output(), process_counts_output(), plate_list())
   })
   
   # APP RESPONSE: Create blanks plot
@@ -1382,7 +1382,7 @@ shinyServer(function(input, output, session){
     class_col <- names(classified_data())[grepl("class$", names(classified_data()))]
     
     summary_table <- classified_data() %>%
-      group_by(Sens_Spec, .data[[class_col]]) %>%
+      group_by(.data[[class_col]]) %>%
       summarise(n = n(), .groups = "drop")
     
     colnames(summary_table) <- c("Status", "Count")
@@ -1518,7 +1518,7 @@ shinyServer(function(input, output, session){
   })
   
   output$classify_plots <- renderPlotly({
-    req(selected_row)
+    
     selected_row <- input$allclassifytable_rows_selected
     selected_value <- allclassify_df()[selected_row, "Sensitivity/Specificity", drop = TRUE]
     
@@ -1560,9 +1560,8 @@ shinyServer(function(input, output, session){
   })
   
   output$bead_count_plotly <- renderPlotly({
-    req(antigen_output(), plate_layout_reactive())
-    plotly_bead_count <- plotBeadCounts(antigen_output = antigen_output(),
-                                        plate_layout = plate_layout_reactive()$datapath)
+    req(all_counts_qc_output())
+    plotly_bead_count <- plotBeadCounts(all_counts_qc_output())
     plotly_bead_count_1 <- ggplotly(plotly_bead_count, tooltip = "text") %>%
       layout(
         showlegend = TRUE, 

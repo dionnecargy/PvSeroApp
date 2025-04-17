@@ -2,6 +2,121 @@
 # This script stores the functions used in the app 
 ##############################################################################
 
+###############################################################################
+# renderDetailsList function
+# --------------------------
+#
+# This function makes the table in a Fluent UI format. 
+#
+# PARAMETERS: 
+#   - DATA FRAME: any processed data frame
+#
+# OUTPUT:
+#   - Table
+###############################################################################
+
+renderDetailsList <- function(df) {
+  div(
+    class = "ms-Grid-row",
+    div(
+      class = "ms-Grid-col ms-sm12",  # Use ms-sm12 for full width on small screens
+      Stack(
+        tokens = list(childrenGap = 10),
+        horizontal = TRUE,
+        div(
+          style = "max-height: 600px; overflow: auto; width: 100%;",
+          DetailsList(
+            items = df,
+            columns = tibble(fieldName = names(df), name = names(df)),
+            constrainMode = 0,
+            checkboxVisibility = 2,
+            styles = list(
+              root = list(
+                width = "100%",  # Ensure table width is constrained within the available space
+                minWidth = "fit-content",  # Allow table to grow to fit content
+                overflowX = "auto"  # Enable horizontal scrolling only when necessary
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+}
+
+###############################################################################
+# fluent_two_cols function
+# --------------------------
+#
+# This function creates two columns in the Fluent UI format.
+#
+# PARAMETERS: 
+#   - first_col: A list of content for the first column
+#   - second_col: A list of content for the second column
+#   - first_width: Percent width of the column space (default: 50%)
+#   - second_width: Percent width of the column space (default: 50%)
+#
+# OUTPUT:
+#   - Two columns 
+###############################################################################
+
+fluent_two_cols <- function(
+    first_col, 
+    second_col, 
+    first_width = "50%", 
+    second_width = "50%"
+) {
+  Stack(
+    horizontal = TRUE,
+    tokens = list(childrenGap = 40),
+    children = list(
+      # First Column
+      div(
+        tokens = list(childrenGap = 15),
+        style = list(width = first_width),
+        children = first_col  # First column content
+      ), 
+      # Second Column
+      div(
+        tokens = list(childrenGap = 15),
+        style = list(width = second_width),
+        children = second_col  # Second column content
+      )
+    )
+  )
+}
+
+
+##############################################################################
+# makeCard function
+# --------------------------
+#
+# This function imports the makes a card following the Fluent UI format. 
+#
+# PARAMETERS: 
+#   - title: String with the large title that will be printed in the card
+#   - id: Identifying tag for use to link 
+#   - content: A list of content to be rendered
+#   - size: A value from 1 to 12 of the width of the screen (default = 12)
+#   - style: Value for any css styling (reactive)
+#
+# OUTPUT:
+#   - A "card" in the Fluent UI format with content. 
+##############################################################################
+
+makeCard <- function(title, id, content, size = 12, style = "") {
+  div(
+    id = id,
+    class = glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
+    style = style,
+    Stack(
+      tokens = list(padding = 20, childrenGap = 5),
+      Text(variant = "large", title, block = TRUE),
+      content
+    )
+  )
+}
+
 ##############################################################################
 # euro_csv_read: Custom Read European CSV 
 # --------------------------
@@ -87,7 +202,6 @@ euro_csv_read <- function(raw_data, filter_start, filter_stop) {
 # 
 # Arguments: 
 #   - raw_data: String with the raw data path (reactive).
-#   - raw_data_filenames: String with the raw data filenames (reactive).
 #   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
@@ -97,6 +211,44 @@ euro_csv_read <- function(raw_data, filter_start, filter_stop) {
 # Author: Dionne Argyropoulos
 ##############################################################################
 
+check_platform <- function(raw_data, platform) {
+  
+  if (length(raw_data) == 0) {
+    stop("No raw data files were provided.")
+  }
+  
+  file_extension <- tools::file_ext(raw_data)  # Identify the file extension and read the file accordingly
+  
+  if (file_extension == "xlsx") {
+    df <- suppressMessages(readxl::read_excel(raw_data, n_max = 5))
+  } else if (file_extension == "csv") {
+    df <- suppressMessages(readr::read_csv(raw_data, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
+  }
+  
+  # Extract the first two column names
+  col_names <- colnames(df)
+  if (all(grepl("^X\\d+$", col_names))) {
+    df <- suppressWarnings(df %>% row_to_names(row_number = 1))
+  }
+  first_two_cols <- colnames(df)[1:2]
+  
+  # Detect if the file is Magpix based on column names
+  is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
+    any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
+  
+  # User selected "magpix" but the file does not have "Program" or "xPonent"
+  if (platform == "magpix" && !is_magpix) {
+    stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
+  }
+  
+  # User selected "bioplex" but the file contains "Program" or "xPonent"
+  if (platform == "bioplex" && is_magpix) {          
+    stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
+  }
+  
+  return(TRUE)
+  
+}
 
 ##############################################################################
 # readSeroData function: Read Serological Data
@@ -136,51 +288,12 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     run       = NULL   # Placeholder for any run data combined
   )
   
-  check_platform <- function(raw_data, raw_data_filenames, platform) {
-    
-    if (length(raw_data) == 0) {
-      stop("No raw data files were provided.")
-    }
-    
-    file_extension <- tools::file_ext(file)  # Identify the file extension and read the file accordingly
-    
-    if (file_extension == "xlsx") {
-      df <- suppressMessages(readxl::read_excel(file, n_max = 5))
-    } else if (file_extension == "csv") {
-      df <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
-    }
-    
-    # Extract the first two column names
-    col_names <- colnames(df)
-    if (all(grepl("^X\\d+$", col_names))) {
-      df <- suppressWarnings(df %>% row_to_names(row_number = 1))
-    }
-    first_two_cols <- colnames(df)[1:2]
-    
-    # Detect if the file is Magpix based on column names
-    is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
-      any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
-    
-    # User selected "magpix" but the file does not have "Program" or "xPonent"
-    if (platform == "magpix" && !is_magpix) {
-      stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
-    }
-    
-    # User selected "bioplex" but the file contains "Program" or "xPonent"
-    if (platform == "bioplex" && is_magpix) {          
-      stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
-    }
-    
-    return(TRUE)
-    
-  }
-  
   # Loop through each file and process accordingly
   for (i in seq_along(raw_data)) {
     file <- raw_data[i]
     file_name <- raw_data_filenames[i]
     
-    if (check_platform(file, file_name, platform) == TRUE) {
+    if (check_platform(file, platform) == TRUE) {
       message("PASS: File ", file_name, " successfully validated.")
     }
     
@@ -542,16 +655,21 @@ readPlateLayout <- function(plate_layout, antigen_output) {
 }
 
 ##############################################################################
-#' process_counts(antigen_output)
-#' @description
-#' A helper function to process counts data. 
-#'
-#' @param antigen_output Output from `readAntigens` (reactive). 
-#' 
-#' @return Returns a long table of counts with "Warning" category (<15 == 1 and 
-#' ≥ 15 == 0) for downstream wrangling.
-#' @export
-#' Author: Dionne Argyropoulos
+# process_counts function: Process Counts from Luminex file 
+# --------------------------
+#
+# Description: 
+# A helper function to process counts data. 
+#  
+# Usage: process_counts(antigen_output)
+# 
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive).
+#
+# Output: Returns a long table of counts with "Warning" category (<15 == 1 and 
+# ≥ 15 == 0) for downstream wrangling.
+# 
+# Authors: Dionne Argyropoulos
 ##############################################################################
 
 process_counts <- function(antigen_output){
@@ -573,11 +691,11 @@ process_counts <- function(antigen_output){
 }
 
 ##############################################################################
-# getCounts function: Get Count Data from Raw Median Fluescent Itensity
+# getCounts function: Get Count Data from Raw Median Fluorescent Intensity
 # --------------------------
 #
 # Description: 
-# This function obtains the count data from the raw Median Fluescent Itensity
+# This function obtains the count data from the raw Median Fluorescent Intensity
 # (MFI). This is an interim function used for the plotCounts function.
 # This function relies on the `readAntigens` and `readSeroData` data processing
 # functions.
@@ -615,47 +733,60 @@ getCounts <- function(process_counts){
   return(counts)
 }
 
+
 ##############################################################################
-#' getSampleID(process_counts, plate_list)
-#' @description
-#' A helper function to extract Sample ID based on plate name and row/col
-#'
-#' @param process_counts Output from `process_counts`.
-#' @param plate_name Plate name inside of the plate layout file. 
-#' 
-#' @return Returns the corresponding Sample ID for the correct row/column in 
-#' the plate layout file. Henceforth "Sample ID" refers to the code in the 
-#' plate layout file, while "Sample" is the code in the Luminex file. 
-#' @export
-#' Author: Dionne Argyropoulos
+# getSampleID function: Get SampleID from Plate Layout
+# --------------------------
+#
+# Description: 
+# A helper function to extract Sample ID based on plate name and row/col
+#  
+# Usage: getSampleID(process_counts, plate_list)
+# 
+# Arguments: 
+#   - process_counts: Output from `process_counts` (reactive).
+#   - plate_name: Plate name inside of the plate layout file. 
+#
+# Output:Returns the corresponding Sample ID for the correct row/column in 
+# the plate layout file. Henceforth "Sample ID" refers to the code in the 
+# plate layout file, while "Sample" is the code in the Luminex file. 
+# 
+# Authors: Dionne Argyropoulos
 ##############################################################################
 
 getSampleID <- function(process_counts, plate_list) {
+  plate_layout_longer <- list()  
   
-  # Initialise plate layout longer 
-  plate_layout_longer <- list() 
-  
-  for (plate_level in seq_along(unique(process_counts$Plate))) {
+  for (plate_level in seq_along(plate_list)) {
     
-    # Read Plate i 
+    # Get plate name (or fallback to index)
+    plate_name <- names(plate_list)[plate_level]
+    if (is.null(plate_name) || plate_name == "") {
+      plate_name <- as.character(plate_level)
+    }
+    
+    # Read and wrangle Plate i
     plate_layout <- plate_list[[plate_level]]
-    # Data wrangling for Plate i 
     names(plate_layout)[1] <- "Row"
+    
     plate_layout_level <- plate_layout %>% 
-      pivot_longer(c(`1`:`12`), names_to = "Col", values_to = "SampleID") %>%
-      mutate(Location = paste0(Row, Col))
+      pivot_longer(cols = `1`:`12`, names_to = "Col", values_to = "SampleID") %>%
+      mutate(
+        Location = paste0(Row, Col),
+        Plate = plate_name  # Add Plate info here
+      )
     
     # Save to list
     plate_layout_longer[[plate_level]] <- plate_layout_level
-    
   }
   
-  # Combine all into single data frame
-  plate_layout_longer_df <- bind_rows(plate_layout_longer)
+  # Combine all into a single data frame
+  plate_layout_longer_df <- bind_rows(plate_layout_longer) %>%
+    mutate(Plate = factor(Plate))  # Make Plate a factor
   
   # Join to antigen_specific_df 
   final_table <- plate_layout_longer_df %>% 
-    left_join(process_counts, by = "Location") %>% 
+    dplyr::left_join(process_counts, by = c("Location", "Plate")) %>% 
     dplyr::select(-c(Row, Col))
   
   return(final_table)
@@ -663,16 +794,27 @@ getSampleID <- function(process_counts, plate_list) {
 }
 
 ##############################################################################
-#' getAntigenCounts(antigen_output, plate_list)
-#' @description
-#' xxxx
-#'
-#' @param process_counts Output from `process_counts`.
-#' @param plate_name Plate name inside of the plate layout file. 
-#' 
-#' @return x
-#' @export
-#' Author: Dionne Argyropoulos
+# getAntigenCounts function: Get Count Data for each Antigen
+# from the Raw Median Fluorescent Intensity
+# --------------------------
+#
+# Description: 
+# This function obtains the count data from the raw Median Fluorescent Intensity
+# (MFI). This function relies on the `readAntigens` and `readSeroData` data
+# processing functions.
+#  
+# Usage: getAntigenCounts(process_counts, plate_list)
+# 
+# Arguments: 
+#   - process_counts: Output from `process_counts` (reactive).
+#   - plate_name: Plate name inside of the plate layout file. 
+#
+# Output: 
+#   - Data frame providing bead counts per antigen per well per plate.
+#   - Designates whether wells should be repeated if there are ≤ 15 beads 
+#     (repeat) or if they are sufficient with > 15 beads (sufficient beads).
+#
+# Authors: Dionne Argyropoulos
 ##############################################################################
 
 getAntigenCounts <- function(process_counts, plate_list){
@@ -713,16 +855,23 @@ getAntigenCounts <- function(process_counts, plate_list){
 }
 
 ##############################################################################
-#' getCountsQC(antigen_counts_output, counts_output)
-#' @description
-#' xxxx
-#'
-#' @param antigen_counts_output xxx
-#' @param counts_output xxx
-#' 
-#' @return x
-#' @export
-#' Author: Dionne Argyropoulos
+# getCountsQC function: Get All Counts Data 
+# --------------------------
+#
+# Description: 
+# This function obtains the count data from the raw Median Fluorescent Intensity
+# (MFI). This function relies on the output of the Antigen-specific counts 
+# (getAntigenCounts) and the Well or Sample-specific counts(getCounts). 
+#  
+# Usage: getCountsQC(antigen_counts_output, counts_output)
+# 
+# Arguments: 
+#   - antigen_counts_output: Output from `getAntigenCounts` (reactive).
+#   - counts_output: Output from `getCounts` (reactive).
+#
+# Output: Joined data frame for all count data.
+#
+# Authors: Dionne Argyropoulos
 ##############################################################################
 
 getCountsQC <- function(antigen_counts_output, counts_output){
@@ -733,8 +882,7 @@ getCountsQC <- function(antigen_counts_output, counts_output){
   
   # 1. Data Wrangling to store counts per antigen output
   antigen_counts_only <- antigen_counts_output %>% 
-    tidyr::pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "Count") %>% ungroup() %>% 
-    dplyr::mutate(across(-c(SampleID, Location, Plate), as.numeric)) %>% 
+    tidyr::pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "Count") %>% ungroup() %>%
     dplyr::select(Location, SampleID, Plate, everything()) %>% 
     dplyr::rename_with(~ paste0(., "_Count"), .cols = where(is.numeric))
   
@@ -851,6 +999,7 @@ getRepeats <- function(counts_output, process_counts, plate_list) {
       dplyr::left_join(repeats, by = c("Location", "Plate")) %>% 
       drop_na() %>% 
       dplyr::select(Location, SampleID, Plate, QC = QC_total)
+    
     return(table)
   }
 }
@@ -1549,16 +1698,16 @@ plotModel_ETH <- function(mfi_to_rau_output, antigen_output){
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
     ggplot2::ggplot(data = subset(combined_data, Plate == plate_name), 
                     aes(x = dilution, y = mfi_pred, color = antigen)) +  # Use 'Antigen' to differentiate lines
-      ggplot2::geom_line() +
-      ggplot2::scale_x_log10() +    
-      ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
-      ggplot2::geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi, color = antigen)) +
-      ggplot2::labs(x = "Antibody Dilution",
-                    y = "Standard Curve (log(MFI))",
-                    fill = "Antigen",
-                    title = paste("Standard Curves for Plate:", plate_name)) +
-      ggplot2::theme_bw() +
-      ggplot2::facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
+    ggplot2::geom_line() +
+    ggplot2::scale_x_log10() +    
+    ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+    ggplot2::geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi, color = antigen)) +
+    ggplot2::labs(x = "Antibody Dilution",
+                  y = "Standard Curve (log(MFI))",
+                  fill = "Antigen",
+                  title = paste("Standard Curves for Plate:", plate_name)) +
+    ggplot2::theme_bw() +
+    ggplot2::facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
   })
   
   # Assign names to the list of plots for clarity
