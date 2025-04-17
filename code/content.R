@@ -3,121 +3,6 @@
 # Author: Dionne C. Argyropoulos 
 ###############################################################################
 
-###############################################################################
-# renderDetailsList function
-# --------------------------
-#
-# This function makes the table in a Fluent UI format. 
-#
-# PARAMETERS: 
-#   - DATA FRAME: any processed data frame
-#
-# OUTPUT:
-#   - Table
-###############################################################################
-
-renderDetailsList <- function(df) {
-  div(
-    class = "ms-Grid-row",
-    div(
-      class = "ms-Grid-col ms-sm12",  # Use ms-sm12 for full width on small screens
-      Stack(
-        tokens = list(childrenGap = 10),
-        horizontal = TRUE,
-        div(
-          style = "max-height: 600px; overflow: auto; width: 100%;",
-          DetailsList(
-            items = df,
-            columns = tibble(fieldName = names(df), name = names(df)),
-            constrainMode = 0,
-            checkboxVisibility = 2,
-            styles = list(
-              root = list(
-                width = "100%",  # Ensure table width is constrained within the available space
-                minWidth = "fit-content",  # Allow table to grow to fit content
-                overflowX = "auto"  # Enable horizontal scrolling only when necessary
-              )
-            )
-          )
-        )
-      )
-    )
-  )
-}
-
-###############################################################################
-# fluent_two_cols function
-# --------------------------
-#
-# This function creates two columns in the Fluent UI format.
-#
-# PARAMETERS: 
-#   - first_col: A list of content for the first column
-#   - second_col: A list of content for the second column
-#   - first_width: Percent width of the column space (default: 50%)
-#   - second_width: Percent width of the column space (default: 50%)
-#
-# OUTPUT:
-#   - Two columns 
-###############################################################################
-
-fluent_two_cols <- function(
-    first_col, 
-    second_col, 
-    first_width = "50%", 
-    second_width = "50%"
-) {
-  Stack(
-    horizontal = TRUE,
-    tokens = list(childrenGap = 40),
-    children = list(
-      # First Column
-      div(
-        tokens = list(childrenGap = 15),
-        style = list(width = first_width),
-        children = first_col  # First column content
-      ), 
-      # Second Column
-      div(
-        tokens = list(childrenGap = 15),
-        style = list(width = second_width),
-        children = second_col  # Second column content
-      )
-    )
-  )
-}
-
-
-##############################################################################
-# makeCard function
-# --------------------------
-#
-# This function imports the makes a card following the Fluent UI format. 
-#
-# PARAMETERS: 
-#   - title: String with the large title that will be printed in the card
-#   - id: Identifying tag for use to link 
-#   - content: A list of content to be rendered
-#   - size: A value from 1 to 12 of the width of the screen (default = 12)
-#   - style: Value for any css styling (reactive)
-#
-# OUTPUT:
-#   - A "card" in the Fluent UI format with content. 
-##############################################################################
-
-makeCard <- function(title, id, content, size = 12, style = "") {
-  div(
-    id = id,
-    class = glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
-    style = style,
-    Stack(
-      tokens = list(padding = 20, childrenGap = 5),
-      Text(variant = "large", title, block = TRUE),
-      content
-    )
-  )
-}
-
 ######### CONTENT #############################################################
 # The second part of this script stores functions used as the pages in the web
 # Author: Dionne C. Argyropoulos 
@@ -917,7 +802,11 @@ algorithm_page <- function() {
                                   measured for antigen-specific IgG antibody resposes toward a panel of eight antigens using the method outlined in <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al 2020</a>.")),
         p(),
         Text(variant = "medium", HTML("Enrolled individuals in the year-long cohort studies provided a blood sample every month. Light microscopy and qPCR targeting the blood-stages of <em>P. vivax</em> were performed to 
+<<<<<<< HEAD
                                       detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the last visit of the 
+=======
+                                      detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the first visit of the 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
                                       year-long study, enabling us to characterise antibody responses related with time since <em>P. vivax</em> infection. Negative controls from the Australian Red Cross, Brazil Red Cross, 
                                       Thai Red Cross and the Volunteer Blood Donor Registry in Victoria, Australia were included. These data were used as our <b>training dataset</b>.")),
         p(), 
@@ -1139,6 +1028,15 @@ input_page <- function() {
                       choices = list("Magpix" = "magpix", "Bioplex" = "bioplex"),
                       selected = "magpix"),
                     style = "margin-top: 10px;"
+                  ),                  
+                  Label(HTML("5. Are you only looking at the standard curve?: <span style='color:#a4262c;'>*</span>")),
+                  div(
+                    radioButtons(
+                      "standardcurveonly",
+                      label = NULL,
+                      choices = list("Yes", "No"),
+                      selected = "No"),
+                    style = "margin-top: 10px;"
                   )
                 )
               )
@@ -1147,14 +1045,14 @@ input_page <- function() {
               div(
                 tokens = list(childrenGap = 15),
                 children = list(
-                  Label(HTML("5. Upload Files: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("6. Upload Files: <span style='color:#a4262c;'>*</span>")),
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
                   fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
-                  Label(HTML("6. Save Inputs: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(
                     style = "margin-bottom: 10px;",  # Space for the text above the button
                     PrimaryButton.shinyInput(
@@ -1223,6 +1121,7 @@ input_page <- function() {
 ###############################################################################
 check_page <- function() {
   fluentPage(
+    useWaiter(),
     useShinyjs(),
     Text(variant = "xxLarge", "Quality control"),
     Separator(),
@@ -1248,6 +1147,7 @@ check_page <- function() {
     p(),
     MessageBar("Click the buttons below to download the data and quality control report. The report and .zip file may take some time to load."),
     p(),
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     div(
       style = "display: flex; gap: 10px;",
       PrimaryButton.shinyInput(
@@ -1279,7 +1179,7 @@ check_page <- function() {
         text = "All Files (.ZIP)",
         iconProps = list(iconName = "Download")
       ),
-      div(style = "visibility: hidden;", downloadButton("download_zip", ""))
+      div(style = "visibility: hidden;", triggerWaiter(downloadButton("download_zip", "")))
     ), 
     Separator(),
     Pivot(
@@ -1333,6 +1233,7 @@ check_page <- function() {
 ###############################################################################
 model_page <- function() {
   fluentPage(
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     Text(variant = "xxLarge", "Classify exposure"),
     Separator(),
     Text(variant = "medium", HTML("Using this tool, you can classify individuals as seropositive or seronegative for recent <em>Plasmodium vivax</em> exposure (i.e. within previous 9 months). 

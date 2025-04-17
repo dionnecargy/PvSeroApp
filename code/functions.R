@@ -2,6 +2,207 @@
 # This script stores the functions used in the app 
 ##############################################################################
 
+<<<<<<< HEAD
+=======
+############################################################################################################################################################
+# App Content functions
+# Author: Dionne Argyropoulos
+############################################################################################################################################################
+
+###############################################################################
+# renderDetailsList function
+# --------------------------
+#
+# This function makes the table in a Fluent UI format. 
+#
+# PARAMETERS: 
+#   - DATA FRAME: any processed data frame
+#
+# OUTPUT:
+#   - Table
+###############################################################################
+
+renderDetailsList <- function(df) {
+  div(
+    class = "ms-Grid-row",
+    div(
+      class = "ms-Grid-col ms-sm12",  # Use ms-sm12 for full width on small screens
+      Stack(
+        tokens = list(childrenGap = 10),
+        horizontal = TRUE,
+        div(
+          style = "max-height: 600px; overflow: auto; width: 100%;",
+          DetailsList(
+            items = df,
+            columns = tibble(fieldName = names(df), name = names(df)),
+            constrainMode = 0,
+            checkboxVisibility = 2,
+            styles = list(
+              root = list(
+                width = "100%",  # Ensure table width is constrained within the available space
+                minWidth = "fit-content",  # Allow table to grow to fit content
+                overflowX = "auto"  # Enable horizontal scrolling only when necessary
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+}
+
+###############################################################################
+# fluent_two_cols function
+# --------------------------
+#
+# This function creates two columns in the Fluent UI format.
+#
+# PARAMETERS: 
+#   - first_col: A list of content for the first column
+#   - second_col: A list of content for the second column
+#   - first_width: Percent width of the column space (default: 50%)
+#   - second_width: Percent width of the column space (default: 50%)
+#
+# OUTPUT:
+#   - Two columns 
+###############################################################################
+
+fluent_two_cols <- function(
+    first_col, 
+    second_col, 
+    first_width = "50%", 
+    second_width = "50%"
+) {
+  Stack(
+    horizontal = TRUE,
+    tokens = list(childrenGap = 40),
+    children = list(
+      # First Column
+      div(
+        tokens = list(childrenGap = 15),
+        style = list(width = first_width),
+        children = first_col  # First column content
+      ), 
+      # Second Column
+      div(
+        tokens = list(childrenGap = 15),
+        style = list(width = second_width),
+        children = second_col  # Second column content
+      )
+    )
+  )
+}
+
+
+##############################################################################
+# makeCard function
+# --------------------------
+#
+# This function imports the makes a card following the Fluent UI format. 
+#
+# PARAMETERS: 
+#   - title: String with the large title that will be printed in the card
+#   - id: Identifying tag for use to link 
+#   - content: A list of content to be rendered
+#   - size: A value from 1 to 12 of the width of the screen (default = 12)
+#   - style: Value for any css styling (reactive)
+#
+# OUTPUT:
+#   - A "card" in the Fluent UI format with content. 
+##############################################################################
+
+makeCard <- function(title, id, content, size = 12, style = "") {
+  div(
+    id = id,
+    class = glue("card ms-depth-8 ms-sm{size} ms-xl{size}"),
+    style = style,
+    Stack(
+      tokens = list(padding = 20, childrenGap = 5),
+      Text(variant = "large", title, block = TRUE),
+      content
+    )
+  )
+}
+
+############################################################################################################################################################
+# Data processing and classification functions
+# Author: Dionne Argyropoulos, Shazia Ruybal-Pesantez, Lauren Smith, Eamon Conway, Connie Li Wai Suen
+############################################################################################################################################################
+
+##############################################################################
+# euro_csv_read: Custom Read European CSV 
+# --------------------------
+#
+# Description: 
+# This function reads European CSV format where the deliminter is ";" and 
+# decimal points are ",". This is a helper function inside `readSeroData`. 
+# 
+# Usage: euro_csv_read(raw_data, filter_start, platform) 
+# 
+# Arguments: 
+#   - raw_data: String with the raw data path (reactive).
+#   - filter_start: String to filter the df as the start row.
+#   - filter_stop: String to filter the df as the final row. 
+#
+# Output:
+#   - df: Rows that correspond to the MFI, counts or raw data. 
+# 
+# Author: Dionne Argyropoulos
+##############################################################################
+
+euro_csv_read <- function(raw_data, filter_start, filter_stop) {
+  
+  # Read lines from the raw input
+  lines <- readLines(raw_data, encoding = "UTF-8")
+  
+  # Find start and end positions
+  start_line <- grep(filter_start, lines)
+  end_line <- grep(filter_stop, lines)
+  if (length(end_line) == 0) end_line <- length(lines) + 1
+  
+  # Extract relevant lines between start and stop
+  if(filter_start == "Program"){
+    data_lines <- lines[(start_line):(end_line - 1)]
+  } else {
+    data_lines <- lines[(start_line + 1):(end_line - 1)]
+  }
+  data_lines <- data_lines[nzchar(data_lines)]  # remove empty lines
+  
+  # Split each line by semicolon, clean quotes, convert comma decimals
+  clean_lines <- lapply(
+    str_split(data_lines, ";"),
+    function(row) {
+      row <- str_replace_all(row, '"', "")
+      row <- str_replace_all(row, "^(\\d+),(\\d+)$", "\\1.\\2")
+      row
+    }
+  )
+  
+  # Extract headers and pad data rows
+  headers <- clean_lines[[1]]
+  data_rows <- clean_lines[-1]
+  max_cols <- length(headers)
+  data_rows <- lapply(data_rows, function(row) {
+    length(row) <- max_cols
+    row
+  })
+  
+  # Build the data frame
+  df <- as.data.frame(do.call(rbind, data_rows), stringsAsFactors = FALSE)
+  colnames(df) <- headers
+  
+  # Replace junk string with NA and drop fully NA rows
+  df[df == ",,,,,,,,,,"] <- NA
+  df <- df[rowSums(is.na(df)) < ncol(df), ]
+  colnames(df) <- sub(",+$", "", colnames(df)) # Remove trailing commas from column names
+  df[] <- lapply(df, function(col) {
+    col <- str_remove(col, ",+$")  # Removes trailing commas using stringr
+    col
+  })
+  return(df)
+}
+
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 ##############################################################################
 # check_platform function: Check Platform 
 # --------------------------
@@ -14,7 +215,10 @@
 # 
 # Arguments: 
 #   - raw_data: String with the raw data path (reactive).
+<<<<<<< HEAD
 #   - raw_data_filenames: String with the raw data filenames (reactive).
+=======
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 #   - platform: "magpix" or "bioplex" (reactive).
 #
 # Output:
@@ -24,6 +228,47 @@
 # Author: Dionne Argyropoulos
 ##############################################################################
 
+<<<<<<< HEAD
+=======
+check_platform <- function(raw_data, platform) {
+  
+  if (length(raw_data) == 0) {
+    stop("No raw data files were provided.")
+  }
+  
+  file_extension <- tools::file_ext(raw_data)  # Identify the file extension and read the file accordingly
+  
+  if (file_extension == "xlsx") {
+    df <- suppressMessages(readxl::read_excel(raw_data, n_max = 5))
+  } else if (file_extension == "csv") {
+    df <- suppressMessages(readr::read_csv(raw_data, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE))
+  }
+  
+  # Extract the first two column names
+  col_names <- colnames(df)
+  if (all(grepl("^X\\d+$", col_names))) {
+    df <- suppressWarnings(df %>% row_to_names(row_number = 1))
+  }
+  first_two_cols <- colnames(df)[1:2]
+  
+  # Detect if the file is Magpix based on column names
+  is_magpix <- any(grepl("Program", first_two_cols, ignore.case = TRUE)) || 
+    any(grepl("xPonent", first_two_cols, ignore.case = TRUE))
+  
+  # User selected "magpix" but the file does not have "Program" or "xPonent"
+  if (platform == "magpix" && !is_magpix) {
+    stop(paste("Error: The file", file_name, "does not appear to be a 'magpix' file, but the platform was set to 'magpix'. Please check your selection."))
+  }
+  
+  # User selected "bioplex" but the file contains "Program" or "xPonent"
+  if (platform == "bioplex" && is_magpix) {          
+    stop(paste("Error: The file", file_name, "appears to be a 'magpix' file, but the platform was set to 'bioplex'. Please check your selection."))
+  }
+  
+  return(TRUE)
+  
+}
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 
 ##############################################################################
 # readSeroData function: Read Serological Data
@@ -63,6 +308,7 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     run       = NULL   # Placeholder for any run data combined
   )
   
+<<<<<<< HEAD
   check_platform <- function(raw_data, raw_data_filenames, platform) {
     
     if (length(raw_data) == 0) {
@@ -102,12 +348,18 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
     
   }
   
+=======
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   # Loop through each file and process accordingly
   for (i in seq_along(raw_data)) {
     file <- raw_data[i]
     file_name <- raw_data_filenames[i]
     
+<<<<<<< HEAD
     if (check_platform(file, file_name, platform) == TRUE) {
+=======
+    if (check_platform(file, platform) == TRUE) {
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
       message("PASS: File ", file_name, " successfully validated.")
     }
     
@@ -125,14 +377,21 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         count_row_number      <- which(df$xPONENT == "Count")
         endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
         
+<<<<<<< HEAD
         results <- readxl::read_excel(file, skip = median_row_number + 1)
         counts <- readxl::read_excel(file, skip = count_row_number + 1, n_max = endcount_row_number - count_row_number - 2, col_names = TRUE)
         run <- readxl::read_excel(file, n_max = median_row_number)
+=======
+        results <- suppressMessages(readxl::read_excel(file, skip = median_row_number + 1))
+        counts <- suppressMessages(readxl::read_excel(file, skip = count_row_number + 1, n_max = endcount_row_number - count_row_number - 2, col_names = TRUE))
+        run <- suppressMessages(readxl::read_excel(file, n_max = median_row_number))
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
         
       } else if (file_extension == "csv") {
         
         first_lines <- readLines(file, n = 5)           # Read the first few lines of the file
         
+<<<<<<< HEAD
         if (all(grepl(";", first_lines))) {
           # If semicolons are consistently found, use read.csv2
           full <- suppressMessages(readr::read_csv2(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE)) # Read in the data
@@ -167,6 +426,45 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
         rownames(run) <- NULL
         
+=======
+        if (any(grepl(";", first_lines))) { # If EUROPEAN CSV FORMAT 
+          
+          results <- suppressWarnings(euro_csv_read(file, "Median", "Net MFI"))
+          counts <- suppressWarnings(euro_csv_read(file, 'DataType:;\"\"Count', "Avg Net MFI"))
+          run <- suppressWarnings(euro_csv_read(file, "Program", "Results"))
+          data_raw <- run 
+          
+        } else { # IF CSV FORMAT 
+          full <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE)) # Read in the data
+          df <- suppressWarnings(as.data.frame(full) %>% janitor::row_to_names(row_number = 1))
+          data_raw <- df
+          
+          median_row_number     <- which(df$xPONENT == "Median")
+          endmedian_row_number  <- which(df$xPONENT == "Net MFI")
+          count_row_number      <- which(df$xPONENT == "Count")
+          endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
+          
+          results <- df[(median_row_number + 1):(endmedian_row_number - 1), ]
+          colnames(results) <- results[1, ]
+          results <- results[-1, ]
+          results <- results[, colSums(!is.na(results)) > 0] # remove NA columns
+          results <- results[rowSums(!is.na(results)) > 0, ] # remove NA rows
+          rownames(results) <- NULL
+          
+          counts <- df[(count_row_number + 1):(endcount_row_number - 1), ]
+          counts <- counts[, colSums(!is.na(counts)) > 0] # remove NA columns
+          counts <- counts[rowSums(!is.na(counts)) > 0, ] # remove NA rows
+          colnames(counts) <- counts[1, ]
+          counts <- counts[-1, ]
+          rownames(counts) <- NULL
+          
+          run <- df[1:median_row_number, ]
+          run <- run[, colSums(!is.na(run)) > 0] # remove NA columns
+          run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
+          rownames(run) <- NULL
+        }
+        
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
       } else {
         stop("Unsupported file format! Please use .csv or .xlsx")
       }
@@ -466,6 +764,7 @@ readPlateLayout <- function(plate_layout, antigen_output) {
 }
 
 ##############################################################################
+<<<<<<< HEAD
 #' process_counts(antigen_output)
 #' @description
 #' A helper function to process counts data. 
@@ -476,6 +775,23 @@ readPlateLayout <- function(plate_layout, antigen_output) {
 #' ≥ 15 == 0) for downstream wrangling.
 #' @export
 #' Author: Dionne Argyropoulos
+=======
+# process_counts function: Process Counts from Luminex file 
+# --------------------------
+#
+# Description: 
+# A helper function to process counts data. 
+#  
+# Usage: process_counts(antigen_output)
+# 
+# Arguments: 
+#   - antigen_output: Output from `readAntigens` (reactive).
+#
+# Output: Returns a long table of counts with "Warning" category (<15 == 1 and 
+# ≥ 15 == 0) for downstream wrangling.
+# 
+# Authors: Dionne Argyropoulos
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 ##############################################################################
 
 process_counts <- function(antigen_output){
@@ -495,12 +811,22 @@ process_counts <- function(antigen_output){
   
   return(counts_data)
 }
+<<<<<<< HEAD
 ##############################################################################
 # getCounts function: Get Count Data from Raw Median Fluescent Itensity
 # --------------------------
 #
 # Description: 
 # This function obtains the count data from the raw Median Fluescent Itensity
+=======
+
+##############################################################################
+# getCounts function: Get Count Data from Raw Median Fluorescent Intensity
+# --------------------------
+#
+# Description: 
+# This function obtains the count data from the raw Median Fluorescent Intensity
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 # (MFI). This is an interim function used for the plotCounts function.
 # This function relies on the `readAntigens` and `readSeroData` data processing
 # functions.
@@ -538,6 +864,7 @@ getCounts <- function(process_counts){
   return(counts)
 }
 
+<<<<<<< HEAD
 ##############################################################################
 #' getSampleID(counts_data, plate_list)
 #' @description
@@ -586,6 +913,93 @@ getSampleID <- function(counts_data, plate_list) {
 ##############################################################################
 
 getAntigenCounts <- function(process_counts, plate_list){ 
+=======
+
+##############################################################################
+# getSampleID function: Get SampleID from Plate Layout
+# --------------------------
+#
+# Description: 
+# A helper function to extract Sample ID based on plate name and row/col
+#  
+# Usage: getSampleID(process_counts, plate_list)
+# 
+# Arguments: 
+#   - process_counts: Output from `process_counts` (reactive).
+#   - plate_name: Plate name inside of the plate layout file. 
+#
+# Output:Returns the corresponding Sample ID for the correct row/column in 
+# the plate layout file. Henceforth "Sample ID" refers to the code in the 
+# plate layout file, while "Sample" is the code in the Luminex file. 
+# 
+# Authors: Dionne Argyropoulos
+##############################################################################
+
+getSampleID <- function(process_counts, plate_list) {
+  plate_layout_longer <- list()  
+  
+  for (plate_level in seq_along(plate_list)) {
+    
+    # Get plate name (or fallback to index)
+    plate_name <- names(plate_list)[plate_level]
+    if (is.null(plate_name) || plate_name == "") {
+      plate_name <- as.character(plate_level)
+    }
+    
+    # Read and wrangle Plate i
+    plate_layout <- plate_list[[plate_level]]
+    names(plate_layout)[1] <- "Row"
+    
+    plate_layout_level <- plate_layout %>% 
+      pivot_longer(cols = `1`:`12`, names_to = "Col", values_to = "SampleID") %>%
+      mutate(
+        Location = paste0(Row, Col),
+        Plate = plate_name  # Add Plate info here
+      )
+    
+    # Save to list
+    plate_layout_longer[[plate_level]] <- plate_layout_level
+  }
+  
+  # Combine all into a single data frame
+  plate_layout_longer_df <- bind_rows(plate_layout_longer) %>%
+    mutate(Plate = factor(Plate))  # Make Plate a factor
+  
+  # Join to antigen_specific_df 
+  final_table <- plate_layout_longer_df %>% 
+    dplyr::left_join(process_counts, by = c("Location", "Plate")) %>% 
+    dplyr::select(-c(Row, Col))
+  
+  return(final_table)
+  
+}
+
+##############################################################################
+# getAntigenCounts function: Get Count Data for each Antigen
+# from the Raw Median Fluorescent Intensity
+# --------------------------
+#
+# Description: 
+# This function obtains the count data from the raw Median Fluorescent Intensity
+# (MFI). This function relies on the `readAntigens` and `readSeroData` data
+# processing functions.
+#  
+# Usage: getAntigenCounts(process_counts, plate_list)
+# 
+# Arguments: 
+#   - process_counts: Output from `process_counts` (reactive).
+#   - plate_name: Plate name inside of the plate layout file. 
+#
+# Output: 
+#   - Data frame providing bead counts per antigen per well per plate.
+#   - Designates whether wells should be repeated if there are ≤ 15 beads 
+#     (repeat) or if they are sufficient with > 15 beads (sufficient beads).
+#
+# Authors: Dionne Argyropoulos
+##############################################################################
+
+getAntigenCounts <- function(process_counts, plate_list){
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   #############################################################################
   # Data Wrangling 
@@ -600,9 +1014,12 @@ getAntigenCounts <- function(process_counts, plate_list){
       Sum<1 ~ "sufficient beads"
     )) %>%
     dplyr::mutate(
+<<<<<<< HEAD
       Row = as.factor(substr(Location, 1, nchar(Location)-1)),
       Row = gsub("1", "", Row),
       Col = as.numeric(substr(Location, 2, nchar(Location))),
+=======
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
       Count = as.numeric(Count), 
       Repeat = factor(Repeat, levels = c("sufficient beads", "repeat")), 
       QC_antigen = ifelse(Repeat == "sufficient beads", "pass", "fail")
@@ -612,17 +1029,28 @@ getAntigenCounts <- function(process_counts, plate_list){
   # Create Table Output 
   #############################################################################
   
+<<<<<<< HEAD
   table <- getSampleID(antigen_specific_df, plate_list) %>% 
     ungroup() %>% 
     dplyr::select(SampleID = Sample, Location, Antigen, Plate, Repeat, Count)
   antigen_specific_df_final <- antigen_specific_df %>% 
     dplyr::left_join(table, by = c("Plate", "Count", "Repeat", "Antigen", "Location")) %>% 
     dplyr::select(-c(Row, Col, Sum)) %>% 
+=======
+  table <- getSampleID(process_counts, plate_list) %>% 
+    ungroup() %>% 
+    dplyr::select(SampleID, Location, Antigen, Plate, Count) %>% 
+    mutate(Count = as.numeric(Count))
+  antigen_specific_df_final <- antigen_specific_df %>% 
+    dplyr::left_join(table, by = c("Plate", "Count", "Antigen", "Location")) %>% 
+    dplyr::select(-Sum) %>% 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
     arrange(Location, Antigen, Plate)
   
   return(antigen_specific_df_final)
   
 }
+<<<<<<< HEAD
 ##############################################################################
 #' getCountsQC(antigen_counts_output, counts_output)
 #' @description
@@ -634,6 +1062,27 @@ getAntigenCounts <- function(process_counts, plate_list){
 #' @return x
 #' @export
 #' Author: Dionne Argyropoulos
+=======
+
+##############################################################################
+# getCountsQC function: Get All Counts Data 
+# --------------------------
+#
+# Description: 
+# This function obtains the count data from the raw Median Fluorescent Intensity
+# (MFI). This function relies on the output of the Antigen-specific counts 
+# (getAntigenCounts) and the Well or Sample-specific counts(getCounts). 
+#  
+# Usage: getCountsQC(antigen_counts_output, counts_output)
+# 
+# Arguments: 
+#   - antigen_counts_output: Output from `getAntigenCounts` (reactive).
+#   - counts_output: Output from `getCounts` (reactive).
+#
+# Output: Joined data frame for all count data.
+#
+# Authors: Dionne Argyropoulos
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 ##############################################################################
 
 getCountsQC <- function(antigen_counts_output, counts_output){
@@ -644,7 +1093,11 @@ getCountsQC <- function(antigen_counts_output, counts_output){
   
   # 1. Data Wrangling to store counts per antigen output
   antigen_counts_only <- antigen_counts_output %>% 
+<<<<<<< HEAD
     pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "Count") %>%
+=======
+    tidyr::pivot_wider(id_cols = c(SampleID, Location, Plate), names_from = "Antigen", values_from = "Count") %>% ungroup() %>%
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
     dplyr::select(Location, SampleID, Plate, everything()) %>% 
     dplyr::rename_with(~ paste0(., "_Count"), .cols = where(is.numeric))
   
@@ -726,13 +1179,18 @@ plotCounts <- function(counts_output, experiment_name){
 }
 
 ##############################################################################
+<<<<<<< HEAD
 # check_repeats: Check Beads to Repeat
+=======
+# getRepeats: Check Beads to Repeat
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 # --------------------------
 #
 # Description: 
 # This function gets the count data and outputs a table of the isolates to 
 # repeat or a statement to confirm that none need to be repeated.
 # 
+<<<<<<< HEAD
 # Usage: check_repeats(counts_output)
 #
 # Arguments: 
@@ -741,23 +1199,51 @@ plotCounts <- function(counts_output, experiment_name){
 # Output:
 #   - Data frame with wells to "repeat", OR
 #   - If no "repeats" found will return text "No repeats necessary".
+=======
+# Usage: getRepeats(counts_output, process_counts, plate_list)
+#
+# Arguments: 
+#   - counts_output: Output from `getCounts` (reactive).
+#   - process_counts Output from `process_counts`.
+#   - plate_list: 
+#
+# Output:
+#   - Data frame with wells to "fail", OR
+#   - If no "fail" found will return text "No repeats necessary".
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
 
+<<<<<<< HEAD
 getRepeats <- function(counts_output, plate_list) {
   
   # 1. Filter "Repeats" in Counts Output 
   repeats <- counts_output %>% dplyr::filter(Repeat == "repeat")
+=======
+getRepeats <- function(counts_output, process_counts, plate_list) {
+  
+  # 1. Filter "Repeats" in Counts Output 
+  repeats <- counts_output %>% dplyr::filter(QC_total == "fail")
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   # 2. If zero "Repeats" found, then write text. If "Repeats" found, then output table. 
   if (nrow(repeats) == 0) {
     return("No repeats necessary.")
   } else {
+<<<<<<< HEAD
     table <- getSampleID(counts_output, plate_list)
     table <- table %>% 
       dplyr::select(Sample, Location, Plate, Repeat) %>% 
       dplyr::filter(Repeat == "repeat")
+=======
+    table <- getSampleID(process_counts, plate_list) %>% dplyr::distinct(SampleID, Location, Plate)
+    table <- table %>% 
+      dplyr::left_join(repeats, by = c("Location", "Plate")) %>% 
+      drop_na() %>% 
+      dplyr::select(Location, SampleID, Plate, QC = QC_total)
+    
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
     return(table)
   }
 }
@@ -775,6 +1261,10 @@ getRepeats <- function(counts_output, plate_list) {
 # Arguments: 
 #   - antigen_output: Output from `readAntigens` (reactive).
 #   - experiment_name: User-input experiment name (reactive).
+<<<<<<< HEAD
+=======
+#   - plate_list: Output from `readPlateLayout` (reactive).
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 #
 # Output:
 #   - Bar plot showing whether MFI values for the blanks for each antigen per 
@@ -870,8 +1360,12 @@ plotStds <- function(antigen_output, location, experiment_name){
 # 
 # Arguments: 
 #   - antigen_output: Output from `readAntigens` (reactive).
+<<<<<<< HEAD
 #   - plate_layout_file: An ".xlsx" file with sheets labelled plate1, plate2... 
 #     etc. (reactive).
+=======
+#   - plate_list: Output from `readPlateLayout` (reactive).
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 #
 # Output: A list of three data frames:
 #   1. Data frame with  MFI data, converted RAU data and matched SampleID's.
@@ -1059,10 +1553,17 @@ MFItoRAU_PNG <- function(antigen_output, plate_list, counts_QC_output){
   
   counts_data <- counts_QC_output %>%
     ungroup() %>% 
+<<<<<<< HEAD
     dplyr::select(Location, Plate, QC_total)
   
   final_results <- dplyr::bind_rows(results_all) %>% 
     inner_join(counts_data, by = c("SampleID", "Plate"))
+=======
+    dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
+  
+  final_results <- dplyr::bind_rows(results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Plate", "Location.2"))
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
     inner_join(counts_data, by = c("SampleID", "Plate"))
@@ -1071,6 +1572,10 @@ MFItoRAU_PNG <- function(antigen_output, plate_list, counts_QC_output){
   return(list(final_results, final_MFI_RAU_results, model_results_all))
   
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 ##############################################################################
 # MFItoRAU_ETH function: 
 # --------------------------
@@ -1156,8 +1661,13 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
     ##########################################################################################################
     
     eth_qa_sc <- subset_data %>% 
+<<<<<<< HEAD
       dplyr::filter(type.letter == "S") %>% 
       tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+=======
+      filter(type.letter == "S") %>% 
+      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
       dplyr::mutate(dilution = 2 ^ (-as.numeric(gsub( # 2 = dilution factor 
         "\\D", "", .data$`Sample`
       )) + 1))  %>% 
@@ -1165,8 +1675,13 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
       tidyr::nest()
     
     eth_qa_mfi <- subset_data %>% 
+<<<<<<< HEAD
       dplyr::filter(type.letter == "U") %>% 
       tidyr::pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+=======
+      filter(type.letter == "U") %>% 
+      pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
       dplyr::group_by(.data$antigen) %>% 
       tidyr::nest()
     
@@ -1282,7 +1797,11 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
     #### Create output dataframes
     ##########################################################################################################
     # Save just MFI and RAU for downstream analyses
+<<<<<<< HEAD
     col_selection <- grepl("SampleID|Plate|_MFI|\\_Dilution$", colnames(eth_converted_wide))
+=======
+    col_selection <- grepl("SampleID|Location.2|Plate|_MFI|\\_Dilution$", colnames(eth_converted_wide))
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
     MFI_RAU_results <- eth_converted_wide[, col_selection]
     
     # Store results and models for current plate: `results_all` and `model_results_all` store all results and model plots for each plate.
@@ -1298,6 +1817,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   
   counts_data <- counts_QC_output %>%
     ungroup() %>% 
+<<<<<<< HEAD
     dplyr::select(SampleID, Plate, QC_total)
   
   final_results <- dplyr::bind_rows(results_all) %>% 
@@ -1306,6 +1826,15 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
     inner_join(counts_data, by = c("SampleID", "Plate"))
   
+=======
+    dplyr::select(SampleID, Location.2 = Location, Plate, QC_total)
+  
+  final_results <- dplyr::bind_rows(results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Location.2", "Plate"))
+  
+  final_MFI_RAU_results <- dplyr::bind_rows(MFI_RAU_results_all) %>% 
+    inner_join(counts_data, by = c("SampleID", "Location.2", "Plate"))
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   #############################################################################
   # Re-arrange data for final outputs
@@ -1335,6 +1864,10 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   
   return(list(final_results, final_MFI_RAU_results, model_results_all))
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 ##############################################################################
 # plotModel_PNG function: Plot the Median Fluorescent Intensity (MFI) to  
 # Relative Antibody Units (RAU) Results Data
@@ -1455,6 +1988,7 @@ plotModel_ETH <- function(mfi_to_rau_output, antigen_output){
   plots_model <- lapply(unique(combined_data$Plate), function(plate_name) {
     ggplot2::ggplot(data = subset(combined_data, Plate == plate_name), 
                     aes(x = dilution, y = mfi_pred, color = antigen)) +  # Use 'Antigen' to differentiate lines
+<<<<<<< HEAD
       ggplot2::geom_line() +
       ggplot2::scale_x_log10() +    
       ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
@@ -1465,6 +1999,18 @@ plotModel_ETH <- function(mfi_to_rau_output, antigen_output){
                     title = paste("Standard Curves for Plate:", plate_name)) +
       ggplot2::theme_bw() +
       ggplot2::facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
+=======
+    ggplot2::geom_line() +
+    ggplot2::scale_x_log10() +    
+    ggplot2::scale_y_log10(breaks = c(0, 10, 100, 1000, 10000)) +
+    ggplot2::geom_point(data = subset(combined_data, Plate == plate_name), aes(x = dilution, y = mfi, color = antigen)) +
+    ggplot2::labs(x = "Antibody Dilution",
+                  y = "Standard Curve (log(MFI))",
+                  fill = "Antigen",
+                  title = paste("Standard Curves for Plate:", plate_name)) +
+    ggplot2::theme_bw() +
+    ggplot2::facet_wrap(~ antigen, scales = "free_y")  # Create a separate plot for each Antigen
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   })
   
   # Assign names to the list of plots for clarity
@@ -1510,11 +2056,19 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   # Data wrangling
   #############################################################################
   
+<<<<<<< HEAD
   rau_data <- mfi_to_rau_output[[2]]
   rau_data <- rau_data %>%
     dplyr::select(SampleID, Plate, ends_with("_Dilution")) %>%
     mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
     rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
+=======
+  rau_data <- mfi_to_rau_output[[1]]
+  rau_data <- rau_data %>%
+    dplyr::select(SampleID, Plate, Location.2, ends_with("_Dilution")) %>%
+    dplyr::mutate(across(ends_with("_Dilution"), as.numeric)) %>%    # Convert only "_Dilution" columns to numeric
+    dplyr::rename_with(~ str_replace(., "_Dilution$", ""), ends_with("_Dilution")) # Remove the "_Dilution" suffix
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   #############################################################################
   # Model-specific functions
@@ -1564,6 +2118,7 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   class_preds <- predict(model, new_data = rau_data)
   prob_preds <- predict(model, new_data = rau_data, type = "prob")
   # Binds predictions to rau_data
+<<<<<<< HEAD
   results <- rau_data %>% bind_cols(class_preds, prob_preds)
   # Classify new (seropositive) / old (seronegative) based on selected threshold
   results <- results %>%
@@ -1573,15 +2128,33 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   final_results <- results %>%
     dplyr::select(-c(.pred_class, .pred_new, .pred_old)) %>%
     mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) 
+=======
+  results <- rau_data %>% dplyr::bind_cols(class_preds, prob_preds)
+  # Classify new (seropositive) / old (seronegative) based on selected threshold
+  results <- results %>%
+    dplyr::mutate(pred_class_max = ifelse(.pred_new > threshold, "new", "old"),
+                  pred_class_max = as.factor(pred_class_max))
+  # Final processing and renaming
+  final_results <- results %>%
+    dplyr::select(-c(.pred_class, .pred_new, .pred_old)) %>%
+    dplyr::mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative")) 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   #############################################################################
   # Return the table of prediction classes and QC pass/fail
   #############################################################################
   
   final_classification_qc <- counts_QC_output %>% 
+<<<<<<< HEAD
     ungroup() %>% 
     dplyr::select(SampleID, Plate, QC_total) %>% 
     inner_join(final_results, by = c("SampleID", "Plate"))
+=======
+    dplyr::ungroup() %>% 
+    dplyr::select(SampleID, Plate, Location.2 = Location, QC_total) %>% 
+    dplyr::inner_join(final_results, by = c("SampleID", "Plate", "Location.2")) %>% 
+    dplyr::select(-Location.2)
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   return(final_classification_qc)
 }
@@ -1613,7 +2186,11 @@ plotBoxPlotClassification <- function(all_classifications, selected_threshold){
   
   all_classifications %>% 
     dplyr::filter(Sens_Spec == selected_threshold) %>% 
+<<<<<<< HEAD
     tidyr::pivot_longer(-c(SampleID, Plate, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
+=======
+    tidyr::pivot_longer(-c(SampleID, Plate, QC_total, pred_class_max, Sens_Spec), names_to = "Antigen", values_to = "RAU") %>%
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
     dplyr::mutate(pred_class_max = factor(pred_class_max, levels = c("seronegative", "seropositive"))) %>%
     ggplot2::ggplot(aes(x = pred_class_max, y = RAU, fill = pred_class_max)) +
     ggplot2::geom_boxplot() +
@@ -1656,6 +2233,7 @@ plotMFI <- function(mfi_to_rau_output, location){
     dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
                   MFI = as.numeric(MFI)) 
   
+<<<<<<< HEAD
   if (location == "PNG"){
     
     df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
@@ -1684,6 +2262,20 @@ plotMFI <- function(mfi_to_rau_output, location){
       ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") 
     
   }
+=======
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_MFI.csv"))
+  
+  plot <- df_results %>% 
+    ggplot2::ggplot(aes(x= Antigen, y = MFI)) +
+    ggplot2::geom_boxplot(data = df_wehi, aes(x = Antigen, y = MFI), fill = "grey", colour = "darkgrey") + 
+    ggplot2::geom_boxplot(aes(fill = Antigen)) +
+    ggplot2::scale_y_log10(breaks = c(10, 100, 1000, 10000), limits = c(10, 10000), labels = c("10", "100", "1,000", "10,000")) +
+    ggplot2::scale_fill_brewer(palette = "Paired", type = "qual") +
+    ggplot2::labs(x = "Antigen", y = "Antibody log(MFI)") +
+    ggplot2::facet_wrap( ~ Plate) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") 
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   return(plot)
   
@@ -1718,6 +2310,7 @@ plotRAU <- function(mfi_to_rau_output, location){
     dplyr::mutate(Plate = factor(Plate, levels = unique(Plate[order(as.numeric(str_extract(Plate, "\\d+")))])), # Reorder by plate number 
                   RAU = as.numeric(RAU)) 
   
+<<<<<<< HEAD
   if (location == "PNG"){
     
     df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
@@ -1747,6 +2340,21 @@ plotRAU <- function(mfi_to_rau_output, location){
       ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
     
   }
+=======
+  df_wehi <- read.csv(here::here("data/wehi_compare_data/longitudinal_RAU.csv"))
+  
+  plot <- df_results %>%
+    ggplot2::ggplot(aes(x= Antigen, y = RAU, fill = Antigen)) +
+    ggplot2::geom_boxplot(data = df_wehi, aes(x = Antigen, y = RAU), fill = "grey", colour = "darkgrey") +
+    ggplot2::geom_boxplot() +
+    ggplot2::scale_y_log10(breaks = c(1e-5, 1e-4, 1e-3, 1e-2, 0.03),
+                           labels = c("0.00001", "0.0001", "0.001", "0.01", "0.03")) +
+    ggplot2::scale_fill_brewer(palette = "Paired", type = "qual") +
+    ggplot2::labs(x = "Antigen", y = "Antibody RAU") +
+    ggplot2::facet_wrap( ~ Plate) + 
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1))
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
   
   return(plot)
   
@@ -1772,10 +2380,15 @@ plotRAU <- function(mfi_to_rau_output, location){
 # 
 # Author: Dionne Argyropoulos
 ##############################################################################
+<<<<<<< HEAD
+=======
+
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 plotBeadCounts <- function(antigen_counts_output){
   
   antigen_counts_output$Plate <- factor(antigen_counts_output$Plate, levels = unique(antigen_counts_output$Plate[order(as.numeric(str_extract(antigen_counts_output$Plate, "\\d+")))])) # reorder by plate number 
   antigen_counts_output %>% 
+<<<<<<< HEAD
     ggplot(aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat, 
                text = paste("Sample:", SampleID, "<br>Bead Count:", Count, "<br>Location:", Location,"<br>Plate:", Plate))) + 
     geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
@@ -1791,4 +2404,159 @@ plotBeadCounts <- function(antigen_counts_output){
     guides(alpha = "none") + 
     guides(size = "none") 
   
+=======
+    ggplot2::ggplot(
+      aes(Plate, Count, colour = Repeat, alpha = Repeat, size = Repeat,
+          text = paste("Sample:", SampleID, "<br>Bead Count:", Count, "<br>Location:", Location,"<br>Plate:", Plate))) + 
+    ggplot2::geom_hline(yintercept = 15, linetype = "dashed", colour = "#861e18") +
+    ggplot2::geom_point() +
+    ggplot2::scale_y_continuous(breaks = c(0, 15, 50, 100, 150, 200)) +
+    ggplot2::scale_colour_manual(values = c("sufficient beads" = "#91bfdb", "repeat" = "#d73027"), drop=FALSE) +
+    ggplot2::scale_alpha_manual(values = c("sufficient beads" = 0.5, "repeat" = 1)) +
+    ggplot2::scale_size_manual(values = c("sufficient beads" = 1, "repeat" = 3)) + 
+    ggplot2::labs(x = "Plate", y = "Bead Counts", alpha = "", colour = "", size = "") +  # Add legend title
+    ggplot2::facet_grid(~ Antigen) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "right") + # Show legend
+    ggplot2::guides(alpha = "none") + 
+    ggplot2::guides(size = "none") 
+  
+}
+
+############################################################################################################################################################
+# Ethiopian standard curve functions
+# Author: Eamon Conway
+############################################################################################################################################################
+
+#' Convert between curves.
+#' @description
+#' Convert mfi on new plate to the dilution on the reference plate.
+#'
+#' @param mfi Known mfi of samples to be converted
+#' @param params_new Known parameters for five parameter logistic fit.
+#' @param params_ref_new Known parameters for five parameter logistic fit on reference plate
+#' @param params_ref_old Known parameters for five parameter logistic fit of the old beads on the sample plate.
+#' @return Returns the predicted dilution in comparison to the reference plate
+#' @export
+convert_between_curves <- function(mfi, params_new, params_ref_new, params_ref_old) {
+  dilution <- convert_mfi_to_dilution(mfi,params_new)
+  ref_mfi <- convert_dilution_to_mfi(dilution,params_ref_new)
+  convert_mfi_to_dilution(ref_mfi,params_ref_old)
+}
+
+#' Convert known dilution to mfi from fitted standard curve
+#' @description
+#' Convert dilution to predicted mfi using known standard curve fit.
+#'
+#' @param dilution Known dilution of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @return Returns the predicted mfi of a sample with known dilution.
+#' @export
+convert_dilution_to_mfi <- function(dilution, params) {
+  if (is.null(dilution) || is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  exp(log_logistic_5p(dilution, params[1], params[2], params[3], params[4], exp(params[5])))
+}
+
+#' Convert mfi to dilution using known standard curve fit.
+#' @description
+#' Convert mfi to dilution using known standard curve fit.
+#'
+#' @param mfi Known mfi of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1. 
+#' @return Returns the dilution of each sample in mfi.
+#' @export
+convert_mfi_to_dilution <- function(mfi, params, min_relative_dilution) {
+  if (is.null(mfi) | is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  y <- log(mfi)
+  result <- inverse_log_logistic_5p(
+    y,
+    params[1],
+    params[2],
+    params[3],
+    params[4],
+    exp(params[5])
+  )
+  result[y > (params[2] + params[3])] <- 1.0
+  result[y < params[2]] <- min_relative_dilution
+  result[y < params[6]] <- min_relative_dilution
+  result[y > params[7]] <- 1.0
+  # I dont think this will happen - Eamon (ask if needed)
+  result[result > 1.0] <- 1.0
+  return(result)
+}
+
+
+#' Convert mfi to dilution using known standard curve fit and no lower bound
+#' @description
+#' Convert mfi to dilution using known standard curve fit and no lower bound unless you are below the asymptote of the standard curve. 
+#' In this situation we set your value to min_relative_dilution. I dunno argue? 
+#' @param mfi Known mfi of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1. 
+#' @return Returns the dilution of each sample in mfi.
+#' @export
+convert_mfi_to_dilution_no_lower_bound <- function(mfi, params, min_relative_dilution) {
+  if (is.null(mfi) | is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  y <- log(mfi)
+  result <- inverse_log_logistic_5p(
+    y,
+    params[1],
+    params[2],
+    params[3],
+    params[4],
+    exp(params[5])
+  )
+  result[y > (params[2] + params[3])] <- 1.0
+  result[y < params[2]] <- min_relative_dilution
+  result[y > params[7]] <- 1.0
+  # I dont think this will happen - Eamon (ask if needed)
+  result[result > 1.0] <- 1.0
+  return(result)
+}
+
+#' Fit a standard curve to known mfi and dilution values.
+#' @description
+#' We wish to convert the standard curve samples to a five parameter logistic curve.
+#' This function takes those values and calls optim to determine the fit.
+#'
+#' @param mfi Known mfi of samples
+#' @param dilution Known dilution of samples
+#' @param init Initial guess for solution of fit.
+#' @param control Optional list of control parameters for the underlying call to optim.
+#' @export
+fit_standard_curve <- function(mfi, dilution, control = NULL) {
+  if (is.null(mfi) | is.null(dilution)) {
+    error("Require both mfi and dilution to run.")
+  }
+  
+  y1 <- log(mfi)
+  initial_solution <- c(-1.0, 0.0, max(y1), 0.0, 0.0)
+  
+  error_func <- function(x) {
+    f1 <- log_logistic_5p(dilution, x[1], x[2], x[3], x[4], exp(x[5]))
+    sum((y1 - f1)^2.0)
+  }
+  
+  solution <- optim(par = initial_solution, fn = error_func, control = control)
+  if (solution$convergence != 0) {
+    stop("Standard curve failed to converge. Look at data and possibly change control parameters from default.")
+  }
+  c(solution$par, min(y1), max(y1))
+}
+
+inverse_log_logistic_5p <- function(y,b,c,d,e,f){
+  A <- (d/(y-c))^(1/f)-1
+  return(exp(-e) *A^(1/b))
+}
+
+log_logistic_5p <- function(x, b, c, d, e, f) {
+  return(c + d / (1.0 + exp(b * (log(x) + e)))^f)
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 }

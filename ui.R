@@ -37,7 +37,10 @@ waiter_set_theme(html = spin_3(), color = transparent(.5))
 
 source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
+<<<<<<< HEAD
 source(here::here("code/stdcurves_functions.R"))
+=======
+>>>>>>> d15b2562b45868748206fef79cd14f008c06580b
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
