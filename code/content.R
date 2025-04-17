@@ -1117,6 +1117,7 @@ input_page <- function() {
 ###############################################################################
 check_page <- function() {
   fluentPage(
+    useWaiter(),
     useShinyjs(),
     Text(variant = "xxLarge", "Quality control"),
     Separator(),
@@ -1142,6 +1143,7 @@ check_page <- function() {
     p(),
     MessageBar("Click the buttons below to download the data and quality control report. The report and .zip file may take some time to load."),
     p(),
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     div(
       style = "display: flex; gap: 10px;",
       PrimaryButton.shinyInput(
@@ -1173,7 +1175,7 @@ check_page <- function() {
         text = "All Files (.ZIP)",
         iconProps = list(iconName = "Download")
       ),
-      div(style = "visibility: hidden;", downloadButton("download_zip", ""))
+      div(style = "visibility: hidden;", triggerWaiter(downloadButton("download_zip", "")))
     ), 
     Separator(),
     Pivot(
@@ -1227,6 +1229,7 @@ check_page <- function() {
 ###############################################################################
 model_page <- function() {
   fluentPage(
+    waiterOnBusy(html = spin_3(), color = transparent(.5)),
     Text(variant = "xxLarge", "Classify exposure"),
     Separator(),
     Text(variant = "medium", HTML("Using this tool, you can classify individuals as seropositive or seronegative for recent <em>Plasmodium vivax</em> exposure (i.e. within previous 9 months). 
