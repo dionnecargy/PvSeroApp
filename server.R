@@ -1254,58 +1254,110 @@ shinyServer(function(input, output, session){
   })
   
   # 5. Download zip file
-  output$download_zip <- downloadHandler(
-    filename = function() {
-      paste0(experiment_name_reactive(), "_", date_reactive(),  "_all_files.zip")
-    },
-    content = function(file) {
-      temp_dir <- file.path(tempdir(), "export_files")
-      if (dir.exists(temp_dir)) unlink(temp_dir, recursive = TRUE)
-      dir.create(temp_dir, showWarnings = FALSE)
-      
-      # Define file paths inside temp_dir
-      data_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_MFI_RAU.csv"))
-      stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv"))
-      # counts_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv"))
-      report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"))
-      
-      # Generate files
-      write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
-      write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
-      # write.csv(all_counts_qc_output(), counts_file, row.names = FALSE)
-      
-      # Render the report
-      tempReport <- file.path(tempdir(), "template.Rmd")
-      file.copy("template.Rmd", tempReport, overwrite = TRUE)
-      params <- list(
-        raw_data_filename_reactive = raw_data_filename_reactive(),
-        experiment_name_reactive = experiment_name_reactive(),
-        date_reactive = date_reactive(),
-        experiment_notes = experiment_notes(),
-        platform_reactive = platform_reactive(),
-        stdcurve_plot = stdcurve_plot(),
-        plateqc_plot = plateqc_plot(),
-        blanks_plot = blanks_plot(),
-        check_repeats_output = check_repeats_output(),
-        check_repats_table_pdf = check_repats_table_pdf(),
-        model_plot = model_plot(), 
-        operator_output = operator_output(),    
-        volume_output = volume_output(),   
-        calibration_output = calibration_output(),  
-        machine_output = machine_output(),
-        plate_list_output = plate_list_output()
+  observe({
+    if (standardcurveonly()=="Yes") {
+      output$download_zip <- downloadHandler(
+        filename = function() {
+          paste0(experiment_name_reactive(), "_", date_reactive(),  "_all_files.zip")
+        },
+        content = function(file) {
+          temp_dir <- file.path(tempdir(), "export_files")
+          if (dir.exists(temp_dir)) unlink(temp_dir, recursive = TRUE)
+          dir.create(temp_dir, showWarnings = FALSE)
+          
+          # Define file paths inside temp_dir
+          stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv"))
+          report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"))
+          
+          # Generate files
+          write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
+          
+          # Render the report
+          stdcurveReport <- file.path(tempdir(), "stdcurve.Rmd")
+          file.copy("stdcurve.Rmd", stdcurveReport, overwrite = TRUE)
+          params <- list(
+            raw_data_filename_reactive = raw_data_filename_reactive(),
+            experiment_name_reactive = experiment_name_reactive(),
+            date_reactive = date_reactive(),
+            experiment_notes = experiment_notes(),
+            platform_reactive = platform_reactive(),
+            stdcurve_plot = stdcurve_plot(),
+            plateqc_plot = plateqc_plot(),
+            blanks_plot = blanks_plot(),
+            check_repeats_output = check_repeats_output(),
+            check_repats_table_pdf = check_repats_table_pdf(),
+            operator_output = operator_output(),    
+            volume_output = volume_output(),   
+            calibration_output = calibration_output(),  
+            machine_output = machine_output(),
+            plate_list_output = plate_list_output()
+          )
+          callr::r(
+            render_report,
+            list(input = stdcurveReport, output = report_file, params = params)
+          )
+          
+          # Create ZIP with a clean structure
+          old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
+          zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
+          setwd(old_wd)  # Restore original working directory
+        }
       )
-      callr::r(
-        render_report,
-        list(input = tempReport, output = report_file, params = params)
+    } else {
+      output$download_zip <- downloadHandler(
+        filename = function() {
+          paste0(experiment_name_reactive(), "_", date_reactive(),  "_all_files.zip")
+        },
+        content = function(file) {
+          temp_dir <- file.path(tempdir(), "export_files")
+          if (dir.exists(temp_dir)) unlink(temp_dir, recursive = TRUE)
+          dir.create(temp_dir, showWarnings = FALSE)
+          
+          # Define file paths inside temp_dir
+          data_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_MFI_RAU.csv"))
+          stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv"))
+          # counts_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv"))
+          report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"))
+          
+          # Generate files
+          write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
+          write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
+          # write.csv(all_counts_qc_output(), counts_file, row.names = FALSE)
+          
+          # Render the report
+          tempReport <- file.path(tempdir(), "template.Rmd")
+          file.copy("template.Rmd", tempReport, overwrite = TRUE)
+          params <- list(
+            raw_data_filename_reactive = raw_data_filename_reactive(),
+            experiment_name_reactive = experiment_name_reactive(),
+            date_reactive = date_reactive(),
+            experiment_notes = experiment_notes(),
+            platform_reactive = platform_reactive(),
+            stdcurve_plot = stdcurve_plot(),
+            plateqc_plot = plateqc_plot(),
+            blanks_plot = blanks_plot(),
+            check_repeats_output = check_repeats_output(),
+            check_repats_table_pdf = check_repats_table_pdf(),
+            model_plot = model_plot(), 
+            operator_output = operator_output(),    
+            volume_output = volume_output(),   
+            calibration_output = calibration_output(),  
+            machine_output = machine_output(),
+            plate_list_output = plate_list_output()
+          )
+          callr::r(
+            render_report,
+            list(input = tempReport, output = report_file, params = params)
+          )
+          
+          # Create ZIP with a clean structure
+          old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
+          zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
+          setwd(old_wd)  # Restore original working directory
+        }
       )
-      
-      # Create ZIP with a clean structure
-      old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
-      zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
-      setwd(old_wd)  # Restore original working directory
     }
-  )
+  })
   
   ##############################################################################################################################################################
   # ------------ CLASSIFY EXPOSURE   ------------
