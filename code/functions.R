@@ -1355,8 +1355,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   refs <- read.csv(here::here("data/png_eth_stds.csv"))
   # MAGIC PARAMETERS FOR THIS SECTION
   s1_concentration <- 1/50
-  s10_relative_dilution <- 2^-9
-  current_min_relative_dilution <- s10_relative_dilution
+  current_min_relative_dilution <- 2.0^-10
   # END MAGIC PARAMETER DEFINITIONS
 
   control = list(maxit = 10000,
@@ -1432,9 +1431,9 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
           .keep = "none",
           mfi = .data$mfi,
           Sample = .data$Sample,
-          dilution = convert_mfi_to_dilution_no_lower_bound(mfi,new_fit, current_min_relative_dilution*2^-1), #This makes it s11 not s10 - Eamon
+          dilution = convert_mfi_to_dilution_no_lower_bound(mfi,new_fit, 0.0), # We do not want the initial conversion to be minimised (Eamon)
           ref_mfi = convert_dilution_to_mfi(dilution,eth_fit),
-          dilution = convert_mfi_to_dilution(ref_mfi,png_fit, s10_relative_dilution)
+          dilution = convert_mfi_to_dilution(ref_mfi,png_fit, current_min_relative_dilution)
         )
       )) %>%
       tidyr::unnest(cols = data)
