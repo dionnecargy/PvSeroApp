@@ -1359,8 +1359,8 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
   # END MAGIC PARAMETER DEFINITIONS
 
   control = list(maxit = 10000,
-                 abstol = 1e-10,
-                 reltol = 1e-8)
+                 abstol = 1e-8,
+                 reltol = 1e-6)
 
   initial_solution = c(-1.0, 0.0, 10, 0.0, 0.0)
 
