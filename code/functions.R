@@ -699,6 +699,7 @@ process_counts <- function(antigen_output){
   
   return(counts_data)
 }
+
 ##############################################################################
 # getCounts function: Get Count Data from Raw Median Fluorescent Intensity
 # --------------------------
@@ -1412,7 +1413,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
       tidyr::nest()
     
     eth_qa_mfi <- subset_data %>% 
-      filter(type.letter == "U") %>% 
+      filter(type.letter == "U" | type.letter == "X") %>% 
       pivot_longer(-c(Sample, Location, Plate, type.letter), names_to = "antigen", values_to = "mfi") %>% 
       dplyr::group_by(.data$antigen) %>% 
       tidyr::nest()
