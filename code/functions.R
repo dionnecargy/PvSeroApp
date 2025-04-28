@@ -1431,7 +1431,7 @@ MFItoRAU_ETH <- function(antigen_output, plate_list, counts_QC_output){
           .keep = "none",
           mfi = .data$mfi,
           Sample = .data$Sample,
-          dilution = convert_mfi_to_dilution_no_lower_bound(mfi,new_fit, 0.0), # We do not want the initial conversion to be minimised (Eamon)
+          dilution = convert_mfi_to_dilution_no_bounds(mfi,new_fit, 0.0), # We do not want the initial conversion to have any bounds. There are some required due to asymptotes in the function however. (Eamon)
           ref_mfi = convert_dilution_to_mfi(dilution,eth_fit),
           dilution = convert_mfi_to_dilution(ref_mfi,png_fit, current_min_relative_dilution)
         )
@@ -2061,6 +2061,32 @@ convert_mfi_to_dilution <- function(mfi, params, min_relative_dilution) {
   return(result)
 }
 
+#' Convert mfi to dilution using known standard curve fit and no bounds
+#' @description
+#' Convert mfi to dilution using known standard curve fit and no bounds unless you are below the asymptote of the standard curve.
+#' In this situation we set your value to min_relative_dilution. I dunno argue?
+#' @param mfi Known mfi of samples
+#' @param params Known parameters for five parameter logistic fit.
+#' @param min_relative_dilution Known minimum value of dilution in the standard curve. Relative means setting S1 to a dilution/RAU/concentration of 1.
+#' @return Returns the dilution of each sample in mfi.
+#' @export
+convert_mfi_to_dilution_no_bounds <- function(mfi, params, min_relative_dilution) {
+  if (is.null(mfi) | is.null(params)) {
+    error("Require both mfi and params to run.")
+  }
+  y <- log(mfi)
+  result <- inverse_log_logistic_5p(
+    y,
+    params[1],
+    params[2],
+    params[3],
+    params[4],
+    exp(params[5])
+  )
+  result[y > (params[2] + params[3])] <- 1.0
+  result[y < params[2]] <- min_relative_dilution
+  return(result)
+}
 
 #' Convert mfi to dilution using known standard curve fit and no lower bound
 #' @description
