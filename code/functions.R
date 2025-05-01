@@ -2075,7 +2075,7 @@ convert_mfi_to_dilution_no_bounds <- function(mfi, params, min_relative_dilution
     error("Require both mfi and params to run.")
   }
   y <- log(mfi)
-  y[y > (params[2] + params[3])] <- 0.999*(params[2] + params[3])
+  y[y >= (params[2] + params[3])] <- 0.999*(params[2] + params[3])
   result <- inverse_log_logistic_5p(
     y,
     params[1],
