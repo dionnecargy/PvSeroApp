@@ -51,8 +51,8 @@ shinyUI(
     useShinyjs(),
     autoWaiter(),
     tags$head(
-      if (file.exists("google_analytics.html")) {
-        includeHTML("google_analytics.html")
+      if (file.exists("www/google_analytics.html")) {
+        includeHTML("www/google_analytics.html")
       }
     ),
     tags$head(
