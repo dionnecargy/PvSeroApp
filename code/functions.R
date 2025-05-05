@@ -245,10 +245,11 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
         data_raw <- df
         
         median_row_number     <- which(df$xPONENT == "Median")
+        endmedian_row_number  <- which(df$xPONENT == "Net MFI")
         count_row_number      <- which(df$xPONENT == "Count")
         endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
         
-        results <- suppressMessages(readxl::read_excel(file, skip = median_row_number + 1))
+        results <- suppressMessages(readxl::read_excel(file, skip = median_row_number + 1, n_max = endmedian_row_number - median_row_number - 2))
         counts <- suppressMessages(readxl::read_excel(file, skip = count_row_number + 1, n_max = endcount_row_number - count_row_number - 2, col_names = TRUE))
         run <- suppressMessages(readxl::read_excel(file, n_max = median_row_number))
         
