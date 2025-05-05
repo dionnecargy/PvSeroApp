@@ -308,8 +308,8 @@ shinyServer(function(input, output, session){
   output$methods3 <- render_gt({
     table3 <- data.frame(
       Prediction = c("new", "old"), 
-      new = c("366", "414"), 
-      old = c("86", "1,769")
+      new = c("366", "86"), 
+      old = c("414", "1,769")
     )
     table3 %>% 
       gt() %>% 
