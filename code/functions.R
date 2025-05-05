@@ -128,80 +128,7 @@ makeCard <- function(title, id, content, size = 12, style = "") {
 ############################################################################################################################################################
 
 ##############################################################################
-# euro_csv_read: Custom Read European CSV
-# --------------------------
-#
-# Description:
-# This function reads European CSV format where the deliminter is ";" and
-# decimal points are ",". This is a helper function inside `readSeroData`.
-#
-# Usage: euro_csv_read(raw_data, filter_start, platform)
-#
-# Arguments:
-#   - raw_data: String with the raw data path (reactive).
-#   - filter_start: String to filter the df as the start row.
-#   - filter_stop: String to filter the df as the final row.
-#
-# Output:
-#   - df: Rows that correspond to the MFI, counts or raw data.
-#
-# Author: Dionne Argyropoulos
-##############################################################################
-
-euro_csv_read <- function(raw_data, filter_start, filter_stop) {
-
-  # Read lines from the raw input
-  lines <- readLines(raw_data, encoding = "UTF-8")
-
-  # Find start and end positions
-  start_line <- grep(filter_start, lines)
-  end_line <- grep(filter_stop, lines)
-  if (length(end_line) == 0) end_line <- length(lines) + 1
-
-  # Extract relevant lines between start and stop
-  if(filter_start == "Program"){
-    data_lines <- lines[(start_line):(end_line - 1)]
-  } else {
-    data_lines <- lines[(start_line + 1):(end_line - 1)]
-  }
-  data_lines <- data_lines[nzchar(data_lines)]  # remove empty lines
-
-  # Split each line by semicolon, clean quotes, convert comma decimals
-  clean_lines <- lapply(
-    str_split(data_lines, ";"),
-    function(row) {
-      row <- str_replace_all(row, '"', "")
-      row <- str_replace_all(row, "^(\\d+),(\\d+)$", "\\1.\\2")
-      row
-    }
-  )
-
-  # Extract headers and pad data rows
-  headers <- clean_lines[[1]]
-  data_rows <- clean_lines[-1]
-  max_cols <- length(headers)
-  data_rows <- lapply(data_rows, function(row) {
-    length(row) <- max_cols
-    row
-  })
-
-  # Build the data frame
-  df <- as.data.frame(do.call(rbind, data_rows), stringsAsFactors = FALSE)
-  colnames(df) <- headers
-
-  # Replace junk string with NA and drop fully NA rows
-  df[df == ",,,,,,,,,,"] <- NA
-  df <- df[rowSums(is.na(df)) < ncol(df), ]
-  colnames(df) <- sub(",+$", "", colnames(df)) # Remove trailing commas from column names
-  df[] <- lapply(df, function(col) {
-    col <- str_remove(col, ",+$")  # Removes trailing commas using stringr
-    col
-  })
-  return(df)
-}
-
-##############################################################################
-# check_platform function: Check Platform
+# check_platform function: Check Platform 
 # --------------------------
 #
 # Description:
@@ -328,54 +255,52 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       } else if (file_extension == "csv") {
 
         first_lines <- readLines(file, n = 5)           # Read the first few lines of the file
-
-        if (any(grepl(";", first_lines))) { # If EUROPEAN CSV FORMAT
-
-          results <- suppressWarnings(euro_csv_read(file, "Median", "Net MFI"))
-          counts <- suppressWarnings(euro_csv_read(file, 'DataType:;\"\"Count', "Avg Net MFI"))
-          run <- suppressWarnings(euro_csv_read(file, "Program", "Results"))
-          data_raw <- run
-
-        } else { # IF CSV FORMAT
-          full <- suppressMessages(readr::read_csv(file, col_names = FALSE, na = c("", "NA"), show_col_types = FALSE)) # Read in the data
-          df <- suppressWarnings(as.data.frame(full) %>% janitor::row_to_names(row_number = 1))
-          data_raw <- df
-
-          median_row_number     <- which(df$xPONENT == "Median")
-          endmedian_row_number  <- which(df$xPONENT == "Net MFI")
-          count_row_number      <- which(df$xPONENT == "Count")
-          endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
-
-          results <- df[(median_row_number + 1):(endmedian_row_number - 1), ]
-          colnames(results) <- results[1, ]
-          results <- results[-1, ]
-          results <- results[, colSums(!is.na(results)) > 0] # remove NA columns
-          results <- results[rowSums(!is.na(results)) > 0, ] # remove NA rows
-          rownames(results) <- NULL
-
-          counts <- df[(count_row_number + 1):(endcount_row_number - 1), ]
-          counts <- counts[, colSums(!is.na(counts)) > 0] # remove NA columns
-          counts <- counts[rowSums(!is.na(counts)) > 0, ] # remove NA rows
-          colnames(counts) <- counts[1, ]
-          counts <- counts[-1, ]
-          rownames(counts) <- NULL
-
-          run <- df[1:median_row_number, ]
-          run <- run[, colSums(!is.na(run)) > 0] # remove NA columns
-          run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
-          rownames(run) <- NULL
+        
+        if (any(grepl(";", first_lines))) {
+          # IF EUROPEAN CSV WITH ; DELLIMITER 
+          csv <- suppressWarnings(meltr::melt_csv2(file)) 
+        } else { 
+          # IF CONVENTIONAL CSV WITH , DELLIMITER 
+          csv <-  suppressMessages(meltr::melt_csv(file))
         }
-
+        
+        full <- csv %>% 
+          dplyr::select(-data_type) %>% 
+          tidyr::pivot_wider(id_cols = row, names_from = col, values_from = value) %>% 
+          dplyr::select(-row) 
+        full <- filter(full, rowSums(is.na(full)) != ncol(full)) 
+        
+        df <- suppressWarnings(as.data.frame(full) %>% janitor::row_to_names(row_number = 1)) 
+        data_raw <- df
+        
+        median_row_number     <- which(df$xPONENT == "Median")
+        endmedian_row_number  <- which(df$xPONENT == "Net MFI")
+        count_row_number      <- which(df$xPONENT == "Count")
+        endcount_row_number   <- which(df$xPONENT == "Avg Net MFI")
+        
+        results <- df[(median_row_number + 1):(endmedian_row_number - 1), ]
+        colnames(results) <- results[1, ]
+        results <- results[-1, ]
+        results <- results[, colSums(!is.na(results)) > 0] # remove NA columns
+        results <- results[rowSums(!is.na(results)) > 0, ] # remove NA rows
+        rownames(results) <- NULL
+        
+        counts <- df[(count_row_number + 1):(endcount_row_number - 1), ]
+        counts <- counts[, colSums(!is.na(counts)) > 0] # remove NA columns
+        counts <- counts[rowSums(!is.na(counts)) > 0, ] # remove NA rows
+        colnames(counts) <- counts[1, ]
+        counts <- counts[-1, ]
+        rownames(counts) <- NULL
+        
+        run <- df[1:median_row_number, ]
+        run <- run[, colSums(!is.na(run)) > 0] # remove NA columns
+        run <- run[rowSums(!is.na(run)) > 0, ] # remove NA rows
+        rownames(run) <- NULL
+        
       } else {
         stop("Unsupported file format! Please use .csv or .xlsx")
       }
-
-      # Remove blank rows and preprocess results
-      blank_row_number <- which(rowSums(is.na(results)) == length(names(results)))[1] # Handle blank rows
-      if (!is.na(blank_row_number)) {
-        results <- results[1:(blank_row_number - 1), ]
-      }
-
+     
       # 2. Create results
       results <- results %>%
         dplyr::select(-dplyr::any_of("Total Events")) %>%
@@ -428,10 +353,9 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
       master_list$blanks   <- dplyr::bind_rows(master_list$blanks, blanks)       # Combine blanks
       master_list$stds     <- dplyr::bind_rows(master_list$stds, stds)           # Combine stds
       master_list$run      <- dplyr::bind_rows(master_list$run, run_info)        # Combine run
-
-
-    } else if (platform == "bioplex") {
-
+      
+    } else if (platform == "bioplex") { 
+      
       file_extension <- tools::file_ext(file)     # Identify the file extension and read the file accordingly
 
       if (file_extension == "xlsx") {
@@ -441,17 +365,18 @@ readSeroData <- function(raw_data, raw_data_filenames, platform){
 
       } else if (file_extension == "csv") {
 
-        # Check for the delimiter
-        first_lines <- readLines(file, n = 5)
-
-        if (all(grepl(";", first_lines))) {
-          full <- suppressMessages(utils::read.csv2(file))
-          df <- as.data.frame(full)
-        } else {
-          full <- suppressMessages(utils::read.csv(file))
-          df <- as.data.frame(full)
+        first_lines <- readLines(file, n = 5)           # Read the first few lines of the file
+        
+        if (any(grepl(";", first_lines))) {
+          # IF EUROPEAN CSV WITH ; DELLIMITER 
+          csv <- suppressWarnings(meltr::melt_csv2(file)) 
+        } else { 
+          # IF CONVENTIONAL CSV WITH , DELLIMITER 
+          csv <-  suppressMessages(meltr::melt_csv(file))
         }
-
+        
+        df <- as.data.frame(full)
+        
       } else {
         stop("Unsupported file format! Please use .csv or .xlsx")
       }
