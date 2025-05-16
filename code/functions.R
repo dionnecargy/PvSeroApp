@@ -1731,21 +1731,18 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
   #############################################################################
   # Model outputs
   #############################################################################
-
-  # Classify rau_data using the specified model
-  class_preds <- predict(model, new_data = rau_data)
-  prob_preds <- predict(model, new_data = rau_data, type = "prob")
-  # Binds predictions to rau_data
-  results <- rau_data %>% dplyr::bind_cols(class_preds, prob_preds)
-  # Classify new (seropositive) / old (seronegative) based on selected threshold
-  results <- results %>%
-    dplyr::mutate(pred_class_max = ifelse(.pred_new > threshold, "new", "old"),
-                  pred_class_max = as.factor(pred_class_max))
-  # Final processing and renaming
-  final_results <- results %>%
-    dplyr::select(-c(.pred_class, .pred_new, .pred_old)) %>%
-    dplyr::mutate(pred_class_max = recode(pred_class_max, "new" = "seropositive", "old" = "seronegative"))
-
+  
+  # Classify rau_data using the specified model and determine seropositive / seronegative based on selected threshold
+  sero_status <- predict(model, new_data = rau_data, type = "prob") |>
+    dplyr::mutate(
+      .keep = "none",
+      pred_class_max = ifelse(.pred_new > threshold, "seropositive", "seronegative"),
+      pred_class_max = as.factor(pred_class_max)
+    )
+  
+  final_results <- rau_data %>%
+    dplyr::bind_cols(sero_status)
+  
   #############################################################################
   # Return the table of prediction classes and QC pass/fail
   #############################################################################
@@ -1755,7 +1752,7 @@ classify_final_results <- function(mfi_to_rau_output, algorithm_type, Sens_Spec,
     dplyr::select(SampleID, Plate, Location.2 = Location, QC_total) %>%
     dplyr::inner_join(final_results, by = c("SampleID", "Plate", "Location.2")) %>%
     dplyr::select(-Location.2)
-
+  
   return(final_classification_qc)
 }
 
