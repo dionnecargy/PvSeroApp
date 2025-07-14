@@ -27,43 +27,23 @@ require(rsconnect)
 require(httr)
 require(jsonlite)
 require(ranger)
-require(rlang) # used in the classify_final_results
+require(rlang) # used in the classifyResults
 require(spsComps) # shinyCatch function
 require(waiter)
 
-# require(devtools)
-# devtools::install_github("dionnecargy/PvSeroAppFns")
-# require(PvSeroAppFns)
+require(devtools)
+devtools::install_github("dionnecargy/pvsero")
+require(pvsero)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
-source(here::here("code/functions.R"))
+# source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016 <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap <- read.csv(here::here("data/platemap.csv"))
-
-render_report <- function(input, output, params) {
-  rmarkdown::render(input,
-                    output_file = output,
-                    params = params,
-                    envir = new.env(parent = globalenv())
-  )
-}
-
-get_github_release <- function(repo_owner, repo_name) {
-  url <- paste0("https://api.github.com/repos/", repo_owner, "/", repo_name, "/releases/latest")
-  response <- httr::GET(url)
-  
-  if (status_code(response) == 200) {
-    release_info <- fromJSON(content(response, "text"))
-    return(release_info$tag_name)  # Extracts the tag name (release version)
-  } else {
-    return(NULL)
-  }
-}
 
 ###############################################################################
 ###### Server
@@ -78,7 +58,7 @@ shinyServer(function(input, output, session){
   })
   
   # Get release version dynamically
-  release_version <- get_github_release("dionnecargy", "pvseroapp")
+  release_version <- getGithubRelease("dionnecargy", "pvseroapp")
   
   # Define footer content
   version <- reactive({
@@ -644,12 +624,12 @@ shinyServer(function(input, output, session){
   })
   
   # Create reactive expressions to access the data
-  experiment_name_reactive <- reactive({ app_data$experiment_name })
-  date_reactive <- reactive({ app_data$date })
-  raw_data_reactive <- reactive({ app_data$raw_data })
-  raw_data_filename_reactive <- reactive({ app_data$raw_data_filename })
-  platform_reactive <- reactive({ app_data$platform })
-  plate_layout_reactive <- reactive({ app_data$plate_layout })
+  experiment_name_reactive        <- reactive({ app_data$experiment_name })
+  date_reactive                   <- reactive({ app_data$date })
+  raw_data_reactive               <- reactive({ app_data$raw_data })
+  raw_data_filename_reactive      <- reactive({ app_data$raw_data_filename })
+  platform_reactive               <- reactive({ app_data$platform })
+  plate_layout_reactive           <- reactive({ app_data$plate_layout })
   
   ###############################################################################
   ## ----- Run functions only once ----- 
@@ -779,33 +759,33 @@ shinyServer(function(input, output, session){
   ###############################################################################
   
   # Data Processing: Process Counts 
-  process_counts_output <- reactive({
+  processCounts_output <- reactive({
     req(antigen_output())
-    process_counts(antigen_output())
+    processCounts(antigen_output())
   })
   
   # Data Processing: Get Counts data
-  counts_output <- reactive({
-    req(process_counts_output())
-    getCounts(process_counts_output())
+  getCounts_output <- reactive({
+    req(processCounts_output())
+    getCounts(processCounts_output())
   })
   
   # Data Processing: Get Sample ID data
   sampleid_output <- reactive({
-    req(process_counts_output(), plate_list())
-    getSampleID(process_counts_output(), plate_list())
+    req(processCounts_output(), plate_list())
+    getSampleID(processCounts_output(), plate_list())
   })
   
   # Data Processing: Get Antigen Counts
-  antigens_counts_output <- reactive({
-    req(process_counts_output(), plate_list())
-    getAntigenCounts(process_counts_output(), plate_list())
+  getAntigenCounts_output <- reactive({
+    req(processCounts_output(), plate_list())
+    getAntigenCounts(processCounts_output(), plate_list())
   })
   
   # Data Processing: Get Counts QC Output
-  all_counts_qc_output <- reactive({
-    req(antigens_counts_output(), counts_output())
-    getCountsQC(antigens_counts_output(), counts_output())
+  getCountsQC_output <- reactive({
+    req(getAntigenCounts_output(), getCounts_output())
+    getCountsQC(getAntigenCounts_output(), getCounts_output())
   })
   
   ###############################################################################
@@ -825,20 +805,20 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Creating plate QC plot
   num_facets_qc <- reactive({
-    req(counts_output())
-    length(levels(factor(counts_output()$Plate)))
+    req(getCounts_output())
+    length(levels(factor(getCounts_output()$Plate)))
   })
   
   # APP RESPONSE: Create plate QC plot
   plateqc_plot <- reactive({
-    req(counts_output(), experiment_name())
-    plotCounts(counts_output(), experiment_name()) 
+    req(getCounts_output(), experiment_name())
+    plotCounts(getCounts_output(), experiment_name()) 
   })
   
   # APP RESPONSE: Create Repeats Check
   check_repeats_output <- reactive({
-    req(process_counts_output())
-    getRepeats(counts_output(), process_counts_output(), plate_list())
+    req(processCounts_output())
+    getRepeats(getCounts_output(), processCounts_output(), plate_list())
   })
   
   # APP RESPONSE: Create blanks plot
@@ -849,15 +829,15 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Run MFI to RAU 
   mfi_to_rau_output <- reactive({
-    req(antigen_output(), plate_list(), location(), all_counts_qc_output())
+    req(antigen_output(), plate_list(), location(), getCountsQC_output())
     if(location() == "PNG"){
       MFItoRAU_PNG(antigen_output = antigen_output(), 
                    plate_list = plate_list(), 
-                   counts_QC_output = all_counts_qc_output())
+                   counts_QC_output = getCountsQC_output())
     } else if (location() == "ETH"){
       MFItoRAU_ETH(antigen_output = antigen_output(), 
                    plate_list = plate_list(), 
-                   counts_QC_output = all_counts_qc_output())
+                   counts_QC_output = getCountsQC_output())
     }
   })
   
@@ -1143,7 +1123,7 @@ shinyServer(function(input, output, session){
   #     paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv")
   #   },
   #   content = function(file){
-  #     write.csv(all_counts_qc_output(), file, row.names = FALSE)
+  #     write.csv(getCountsQC_output(), file, row.names = FALSE)
   #   }
   # )
   
@@ -1175,7 +1155,7 @@ shinyServer(function(input, output, session){
   #     )
   #     
   #     callr::r(
-  #       render_report,
+  #       renderReport,
   #       list(input = tempReport, output = file, params = params)
   #     )
   #     
@@ -1211,7 +1191,7 @@ shinyServer(function(input, output, session){
           )
           
           callr::r(
-            render_report,
+            renderReport,
             list(input = stdcurveReport, output = file, params = params)
           )
         }
@@ -1245,7 +1225,7 @@ shinyServer(function(input, output, session){
           )
           
           callr::r(
-            render_report,
+            renderReport,
             list(input = tempReport, output = file, params = params)
           )
         }
@@ -1293,7 +1273,7 @@ shinyServer(function(input, output, session){
             plate_list_output = plate_list_output()
           )
           callr::r(
-            render_report,
+            renderReport,
             list(input = stdcurveReport, output = report_file, params = params)
           )
           
@@ -1322,7 +1302,7 @@ shinyServer(function(input, output, session){
           # Generate files
           write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
           write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
-          # write.csv(all_counts_qc_output(), counts_file, row.names = FALSE)
+          # write.csv(getCountsQC_output(), counts_file, row.names = FALSE)
           
           # Render the report
           tempReport <- file.path(tempdir(), "template.Rmd")
@@ -1346,7 +1326,7 @@ shinyServer(function(input, output, session){
             plate_list_output = plate_list_output()
           )
           callr::r(
-            render_report,
+            renderReport,
             list(input = tempReport, output = report_file, params = params)
           )
           
@@ -1385,16 +1365,16 @@ shinyServer(function(input, output, session){
   
   # Run Classification 
   classified_data <- reactive({
-    req(mfi_to_rau_output(), algorithm(), sens_spec(), all_counts_qc_output())
-    results_of_classification <- classify_final_results(
+    req(mfi_to_rau_output(), algorithm(), sens_spec(), getCountsQC_output())
+    results_of_classification <- classifyResults(
       # Step 1: specify data to classify.
       mfi_to_rau_output = mfi_to_rau_output(),
       # Step 2: Select which model you want to run. This needs to be a character string.
       algorithm_type = algorithm(),
       # Step 3: Select sensitivity/specificity of interest. 
-      Sens_Spec = sens_spec(), 
+      sens_spec = sens_spec(), 
       # Step 4: Add the final QC Counts Output dataset.
-      counts_QC_output = all_counts_qc_output())
+      counts_QC_output = getCountsQC_output())
     
     #############################################################################
     # Rename pred_class_max to the threshold chosen
@@ -1486,19 +1466,19 @@ shinyServer(function(input, output, session){
   
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
-    req(mfi_to_rau_output(), algorithm(),  all_counts_qc_output())
+    req(mfi_to_rau_output(), algorithm(),  getCountsQC_output())
     sens_spec_all <- c("maximised", "85% sensitivity", "90% sensitivity", "95% sensitivity", 
                        "85% specificity", "90% specificity", "95% specificity")
     
     all_classifications <- purrr::map_dfr(sens_spec_all, ~{
-      classify_final_results(
+      classifyResults(
         mfi_to_rau_output = mfi_to_rau_output(),
         algorithm_type = algorithm(),
-        Sens_Spec = .x,
-        counts_QC_output = all_counts_qc_output()
+        sens_spec = .x,
+        counts_QC_output = getCountsQC_output()
       ) %>%
         as.data.frame() %>%  # Ensure it's a data frame
-        mutate(Sens_Spec = .x)  # Add the Sens_Spec column
+        mutate(sens_spec = .x)  # Add the sens_spec column
     })
     
     all_classifications # Return the combined data frame
@@ -1509,10 +1489,10 @@ shinyServer(function(input, output, session){
     req(classified_data_all())
     
     classified_data_all() %>% 
-      group_by(Sens_Spec, pred_class_max) %>% 
+      group_by(sens_spec, pred_class_max) %>% 
       summarise(n = n()) %>% 
       pivot_wider(names_from = pred_class_max, values_from = n) %>% 
-      dplyr::select(`Sensitivity/Specificity` = Sens_Spec, 
+      dplyr::select(`Sensitivity/Specificity` = sens_spec, 
                     Seropositive = seropositive, 
                     Seronegative = seronegative)
     
@@ -1607,8 +1587,8 @@ shinyServer(function(input, output, session){
   })
   
   output$bead_count_plotly <- renderPlotly({
-    req(antigens_counts_output())
-    plotly_bead_count <- plotBeadCounts(antigens_counts_output())
+    req(getAntigenCounts_output())
+    plotly_bead_count <- plotBeadCounts(getAntigenCounts_output())
     plotly_bead_count_1 <- ggplotly(plotly_bead_count, tooltip = "text") %>%
       layout(
         showlegend = TRUE, 
