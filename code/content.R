@@ -53,7 +53,7 @@ home_page <- function() {
 
 tutorial_page <- function() {
   fluentPage(
-    Text(variant = "xxLarge", "Tutorial: How to Use The PvSeroTaT App"),
+    Text(variant = "xxLarge", "Tutorial: How to Use The PvSeroApp"),
     Separator(),
     Stack(
       horizontal = TRUE, tokens = list(childrenGap = 20), horizontalAlign = "start",
@@ -159,7 +159,7 @@ tutorial_page <- function() {
                     headerText = "2.3.2. Bio-Plex",
                     Text(variant = "large", "Raw Data from Bio-Plex Machines"),
                     p(),
-                    Text(variant = "medium", "Isolate names will tend to be written as 'X1', 'X2', 'X3'... and saved as an .xlsx file. Specifics on Bio-Plex machines will be added shortly."),
+                    Text(variant = "medium", "Isolate names will tend to be written as 'X1', 'X2', 'X3'... and saved as an .xlsx file. Specifics on Bio-Plex machines will be added upon request"),
                     p(),
                     Image(src = "2_tutorial/2.3.2_bioplex_raw.png", width = 800, height = 200, imageFit = "container")
                   )
@@ -256,6 +256,8 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", "4. Then you will select the platform which your luminex assay was run: Currently there are two options: MAGPIX or BioPlex Machine.
                          This will effect how the data is processed as the raw data outputs differ significantly."), 
+                        p(), 
+                        Text(variant = "medium", "5. OPTIONAL: You can select for only a standard curve to be printed. This is if you are only performing quality control runs and do not have any isolate samples."), 
                         p(), 
                         MessageBar(messageBarType = 3, HTML(r"(If you cannot see your data correctly in the "Check Raw Data" or "Check Run Info" tabs, it is likely you have not chosen the correct platform option for your data!)"))
                       ), 
@@ -1404,7 +1406,34 @@ apphistory_page <- function() {
     Text(variant = "medium", "Key updates made to the tutorial, inputs more flexible, data visualisation options and export data. The standard curve conversion factor for Ethiopian pools to the Papua New Guinea pool has been added. Same classification model as v0.1.0 and v0.2.0."),
     p(),
     Text(variant = "large", HTML("<b>v1.1.0</b>")),
-    Text(variant = "medium", "Update to the Ethiopian standard curve conversion function `MFItoRAU_ETH` to account for the relative minimum dilution. The app now has loading spinners and notifications for troubleshooting.")
+    Text(variant = "medium", "Update to the Ethiopian standard curve conversion function `MFItoRAU_ETH` to account for the relative minimum dilution. The app now has loading spinners and notifications for troubleshooting."),
+    p(),
+    Text(variant = "large", HTML("<b>v1.2.0</b>")),
+    Text(variant = "medium", 
+         HTML(r"(Large update:<ul>
+              <li>Added QC pass/fail column in classification output</li>
+              <li>Added QC pass/fail column in MFI to RAU output</li>
+              <li>Rename column name in classification output to threshold chosen</li>
+              <li>Add "ETH" or "PNG" pool name to output</li>
+              <li>Add "Repeat" to input file name</li>
+              <li>Cleaned functions to reduce redundancy</li>
+              <li>Added spinners to download buttons</li>
+              <li>Added European CSV compatibility</li>
+              <li> Checked PNG and ETH pool MFI to RAU conversions</li>
+              </ul> )")),
+    p(),
+    Text(variant = "large", HTML("<b>v1.3.0</b>")),
+    Text(variant = "medium", 
+         HTML(r"(This new release includes:<ul>
+              <li>Fixed bioplex compatibility in the MFItoRAU_ETH function (see pull request #5)</li>
+              <li>Fixed melt_csv for .csv upload (see pull request #6)</li>
+              <li>Conversion between RAU using the Ethiopian pool and RAU using the PNG pool (see pull request #7)</li>
+              <li>Fixed readSeroData for .xlsx magpix (see pull request #8)</li>
+              </ul>
+         )")),
+    p(),
+    Text(variant = "large", HTML("<b>v1.3.1.</b>")),
+    Text(variant = "medium", "Bug Fixes as described in pull request #9 and removed warning for check_platforms function.")
   )
 }
 
