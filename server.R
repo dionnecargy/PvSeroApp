@@ -323,7 +323,7 @@ shinyServer(function(input, output, session){
     ),
     list(
       headline = "Step 4: Choose the platform",
-      content = "Did you run your experiment on a MAGPIX or BioPlex machine? Please choose the platform here!"
+      content = "Did you run your experiment on a MAGPIX, BioPlex or Intelliflex machine? Please choose the platform here!"
     ),
     list(
       headline = "Step 5: Uploading your files",
@@ -972,7 +972,7 @@ shinyServer(function(input, output, session){
   # Operator: Who ran the plate
   operator_output <- reactive({
     req(raw_data_info_saved(), platform_reactive())
-    if(platform_reactive() == "magpix") {
+    if(platform_reactive() == "magpix" | platform_reactive() == "intelliflex") {
       
       operator <- raw_data_info_saved() %>% filter(Program == "Operator") %>% dplyr::select(Plate, Operator = xPONENT)
       paste(paste0(operator$Plate, ": ", operator$Operator), collapse = ", ")
@@ -992,13 +992,19 @@ shinyServer(function(input, output, session){
       
     } else if (platform_reactive() == "bioplex") {
       print("Information not available for bioplex machine run.")
+    
+    } else if(platform_reactive() == "intelliflex") {
+      volume <- raw_data_info_saved() %>% 
+        dplyr::filter(Program == "MaxSampleUptakeVolume") %>% 
+        dplyr::select(Plate, `Acquisition Volume` = xPONENT)
+      paste(paste0(volume$Plate, ": ", volume$`Acquisition Volume`), collapse = ", ")
     }
   })
   
   # Recent Calibration and Verification results
   calibration_output <- reactive({
     req(raw_data_info_saved(), platform_reactive())
-    if(platform_reactive() == "magpix"){
+    if(platform_reactive() == "magpix") {
       
       calibration <- raw_data_info_saved() %>%
         filter(Program == "Last CAL Calibration" |
@@ -1009,6 +1015,15 @@ shinyServer(function(input, output, session){
       
     } else if (platform_reactive() == "bioplex") {
       print("Information not available for bioplex machine run.")
+    } else if(platform_reactive() == "intelliflex") {
+      
+      calibration <- raw_data_info_saved() %>%
+        filter(Program == "Last Calibration" |
+                 Program == "Last Verification" |
+                 Program == "Last Fluidics Test") %>%
+        dplyr::select(Plate, `Recent Calibration and Verification results` = Program, Result = xPONENT)
+      paste(paste0(calibration$Plate, ": ", calibration$`Recent Calibration and Verification results`, ": ", calibration$`Result`), collapse = ", ")
+      
     }
     
   })
@@ -1042,6 +1057,12 @@ shinyServer(function(input, output, session){
       machine <- raw_data_info_saved() %>% filter(str_detect(Run, "Reader Serial Number")) %>% mutate(Run = gsub("Reader Serial Number: ", "", Run)) %>% dplyr::select(Run)
       machine_levels <- unique(raw_data_info_saved()$Plate)
       paste(paste0(machine_levels, ": ", machine$Run), collapse = ", ")
+      
+    } else if(platform_reactive() == "intelliflex"){
+      machine <- raw_data_info_saved() %>% 
+        dplyr::filter(Program == "SN") %>% 
+        dplyr::select(Plate, `Machine Serial Number` = xPONENT)
+      paste(paste0(machine$Plate, ": ", machine$`Machine Serial Number`), collapse = ", ")
     }
     
   })
