@@ -50,7 +50,7 @@ renderDetailsList <- function(df) {
 }
 
 ###############################################################################
-# fluent_two_cols function
+# renderTwoCols function
 # --------------------------
 #
 # This function creates two columns in the Fluent UI format.
@@ -65,7 +65,7 @@ renderDetailsList <- function(df) {
 #   - Two columns
 ###############################################################################
 
-fluent_two_cols <- function(
+renderTwoCols <- function(
     first_col,
     second_col,
     first_width = "50%",

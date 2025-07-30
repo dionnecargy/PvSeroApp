@@ -32,8 +32,8 @@ require(spsComps) # shinyCatch function
 require(waiter)
 
 require(devtools)
-devtools::install_github("dionnecargy/pvsero")
-require(pvsero)
+devtools::install_github("dionnecargy/SeroTrackR")
+require(SeroTrackR)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 

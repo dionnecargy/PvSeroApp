@@ -89,7 +89,7 @@ tutorial_page <- function() {
               title = "2.1. Antigen Label Requirements", 
               content = list(
                 MessageBar(messageBarType = 3, "Make sure you label your antigens the same way in all plate runs!"),
-                fluent_two_cols(
+                renderTwoCols(
                   first_col = Text(variant = "medium", HTML(r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSeroTaT Luminex Assay</b>.
                          For the purposes of data processing, it is important that the antigens are named with the convention listed here.<br><br>
                          The data processing in this app will be able to decipher any of these options, differing capitalisations, and any "Pv" prefixes.<br><br>
@@ -243,7 +243,7 @@ tutorial_page <- function() {
                     headerText = "Step 1: Input Data Interface",
                     MessageBar(HTML(r"(The app is designed so that each "Step" is numbered in order so you can easily follow along. The necessary steps are asterixed in red.)")),
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", "This is how the input data interface should look like when you open the app."), 
@@ -272,7 +272,7 @@ tutorial_page <- function() {
                     headerText = "Step 2: Uploading Raw and Plate Layouts",
                     MessageBar(messageBarType = 3, HTML("All data uploaded must be de-identified and not re-identifiable (see<a href='https://posit.co/about/posit-service-terms-of-use/' class='_blank'>Posit Service Terms of Use</a>)")), 
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML("One or multiple <b>Raw Data</b> files can be uploaded each time. Please ensure that the file types are all the same (i.e., all .csv or .xlsx) for consistency.")), 
@@ -289,7 +289,7 @@ tutorial_page <- function() {
                     headerText = "Step 3: Save Inputs",
                     MessageBar("If you get an error when uploading your files, make sure that you have correctly highlighted which machine you used for your raw data (MAGPIX or BioPlex) and plate layout file is in .xlsx format."),   
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML(r"(When you are ready to begin data processing, press "<b>Save Inputs</b>".)")),
@@ -303,7 +303,7 @@ tutorial_page <- function() {
                     headerText = "Step 4: Example",
                     MessageBar("To corroborate your understanding, please follow this example!"),
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML(r"(1. Let's change the experiment name to "tutorial_example", enter today's date, the experiment notes to "This is an example of the QC and processing of the example data for the PvSeroTaT tutorial".)")),
@@ -317,7 +317,7 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", "And you will also receive a message at the bottom left hand corner of your screen indicating whether the raw data and plate layouts are read correctly."),
                         p(),
-                        fluent_two_cols(
+                        renderTwoCols(
                           first_col = Image(src = "2_tutorial/4.1_input_data_6.png", width = "200px", height = "auto"), 
                           second_col = Image(src = "2_tutorial/4.1_input_data_7.png", width = "200px", height = "auto")
                         ),
@@ -340,7 +340,7 @@ tutorial_page <- function() {
                     headerText = "Step 1: Checking the Raw Data", 
                     MessageBar("We first want to cross-check that our raw data file/s were correctly uploaded."),
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML(r"(You will notice that the "Check the raw data" tab has populated with a preview of your raw data file (see below). You can quickly check here whether it looks as expected.)")),
@@ -356,7 +356,7 @@ tutorial_page <- function() {
                     headerText = "Step 2: Checking the Run Information", 
                     MessageBar(),
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML(r"(The "Check Run Info" tab can also be used to only look at run specifications and check that they are expected.)")), 
@@ -377,7 +377,7 @@ tutorial_page <- function() {
                     MessageBar(HTML(r"(You can use the example "Plate Layout Template" provided in our example data. Ensure the word "Plate" is included in the first column so that the app can determine the position of 
                                 each sample and match it to the raw data outputs.)")),
                     p(),
-                    fluent_two_cols(
+                    renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
                         Text(variant = "medium", HTML(r"(You can click on the "Check Plate Layout" tab to make sure the plate layout looks as expected. It is very important to make sure your samples are labeled
@@ -435,7 +435,7 @@ tutorial_page <- function() {
                 PivotItem(
                   headerText = "Step 1: Standard Curves",
                   p(),
-                  fluent_two_cols(
+                  renderTwoCols(
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", "The standard curve plots are generated from the antibody data from the standards you indicated in your plate layout (e.g. S1-S10) and Median Fluorescent Intensity (MFI) units are displayed in log10-scale."),
@@ -458,7 +458,7 @@ tutorial_page <- function() {
                 PivotItem(
                   headerText = "Step 2: Plate Quality Control",
                   p(),
-                  fluent_two_cols(
+                  renderTwoCols(
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium","A summary of the bead counts for each plate well are displayed, with blue indicating there are sufficient beads (≥15) or red when there are not enough."), 
@@ -473,7 +473,7 @@ tutorial_page <- function() {
                 PivotItem(
                   headerText = "Step 3: Blank Samples",
                   p(),
-                  fluent_two_cols(
+                  renderTwoCols(
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML( r"(The Median Fluorescent Intensity (MFI) units for each antigen is displayed for your blank samples.
@@ -487,7 +487,7 @@ tutorial_page <- function() {
                 PivotItem(
                   headerText = "Step 4: Model Results",
                   p(),
-                  fluent_two_cols(
+                  renderTwoCols(
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML(r"(The automated data processing in this app allows you to convert your Median Fluorescent Intensity (MFI) data into Relative Antibody Units (RAU) by fitting a 5-parameter
@@ -503,7 +503,7 @@ tutorial_page <- function() {
                 PivotItem(
                   headerText = "Step 5: Sample Results",
                   p(),
-                  fluent_two_cols(
+                  renderTwoCols(
                     first_width = "30%", second_width = "70%",
                     first_col = list(
                       Text(variant = "medium", HTML(r"(The results from the data processing are displayed in an interactive table that can be explored directly within the app and/or the data can also be downloaded in .csv format
@@ -557,7 +557,7 @@ tutorial_page <- function() {
               id = "tutorial/classify/select", 
               title = "6.1. Select The Appropriate Algorithm", 
               content = list(
-                fluent_two_cols(
+                renderTwoCols(
                   first_col = list(
                     Text(variant = "medium", HTML("We have developed two algorithms that were trained on different datasets that included different sample sets from individuals with PCR-confirmed SARS-CoV-2 positive results.<br><br>
                                           <ul>
@@ -587,7 +587,7 @@ tutorial_page <- function() {
                   adjacent <a href='#tutorial/download_classification' class-`link`>Download Data</a> tab. The exposure status (positive/negative) is displayed for each sample and for all classifiers.
                   Navigate to different pages using the numbers to view the data for all samples.")),
                 p(),
-                fluent_two_cols(
+                renderTwoCols(
                   first_col = list(
                     MessageBar(HTML(r"(Make sure that your data was processed using the correct algorithm by cross-checking the "Algorithm Choice" and "Threshold" which will display the algorithm and threshold that was applied.)")),
                     p(),
@@ -676,7 +676,7 @@ tutorial_page <- function() {
                 Text(variant = "medium", "By hovering over the dots you will be able to see the Sample ID (e.g., Blank2 [left] or ABC141 [right]), the Bead Count, Location on the plate (e.g., A2 [left], E9 [right]) and which plate this sample was on. 
                      The red dotted line indicates an arbitrary low threshold of 15 beads."),
                 p(),
-                fluent_two_cols(
+                renderTwoCols(
                   first_col = Image(src = "2_tutorial/7.4_datavis_tute_7.png", width = "400px", height = "auto"), 
                   second_col = Image(src = "2_tutorial/7.4_datavis_tute_8.png", width = "400px", height = "auto")
                 )
@@ -693,7 +693,7 @@ tutorial_page <- function() {
             Separator(Text(variant = "xxLarge", "8. Output From This Tutorial"), alignContent = "start"),
             Text(variant = "medium", "If you followed along in this tutorial and downloaded your processed data, QC report and classification data, you can compare your files to the expected output from this tutorial."),
             Text(variant = "medium", HTML("Click here to download an example of the output from this tutorial <a href='https://github.com/dionnecargy/PvSeroApp/blob/main/data/example_output.zip' class='link'>here</a>.")),
-            fluent_two_cols(
+            renderTwoCols(
               first_width = "80%", second_width = "20%", 
               first_col = Text(variant = "medium", HTML("If you have any <a href='#feature' class='link'>Requests for Features</a> or would like to <a href='#bug' class='link'>Report A Bug</a> please see the sections in the left-hand menu bar. 
                                           Alternatively there is a shortcut to these links at the top menu bar of the PvSeroApp with the GitHub Logo where you can publish your issues directly with the developer [see image to the right].")),
@@ -817,7 +817,7 @@ algorithm_page <- function() {
       id = "algorithm/antigens_in_model",
       title = "2. Antigens Used In the Model", 
       content = list(
-        fluent_two_cols(
+        renderTwoCols(
           first_col = list(
             Text(variant = "medium", HTML("This work develops a sero-diagnostic test to balance the selection of serological exposure markers that are associated with high classification performance, with the selection of proteins that are easier
                                   to manufacture and are more stable.")),
@@ -895,7 +895,7 @@ algorithm_page <- function() {
                                       a <span style="color:#107C10; font-weight: bold">much greater**</span> resolution to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                     </ul>)")), 
         Text(variant = "medium", "* = Than the sensitivity in the maximised threshold; ** = Than the specificity in the maximised threshold"), 
-        fluent_two_cols(
+        renderTwoCols(
           first_col = list(
             Image(src = "3_algorithm/roc_longitudinal.png", width = "auto", height = "auto"), 
             Text(variant = "small", HTML(r"(Figure 1. Receiver Operating Characteristic (ROC) curves for the random forest classification algorithm thrained on the Thailand, Solomon Islands, Brazil and Australia serological data. The Area under the ROC (AUC) is 0.874. 
@@ -909,7 +909,7 @@ algorithm_page <- function() {
         ),
         p(),
         Text(variant = "large", "4.3. Classification Performance: The Confusion Matrix"), 
-        fluent_two_cols(
+        renderTwoCols(
           first_col = list(
             Text(variant = "medium", HTML(r"(The confusion matrix provides a measure of the classifier's accuracy and is a 2x2 table of the "Truth" from our longitudinal dataset (columns) and the models's "Prediction" when we classify these data (rows)
                                       based on our trained model. The Top Left are the <span style="color:#9373C0; font-weight: bold">True Positives</span> and the Bottom Right are the <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>. )")),
@@ -993,7 +993,7 @@ input_page <- function() {
       Pivot(
         PivotItem(
           headerText = "Import Your Data",
-          fluent_two_cols(
+          renderTwoCols(
             first_width = 400, second_width = 250,
             first_col = list(
               div(
