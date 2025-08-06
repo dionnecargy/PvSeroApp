@@ -1026,7 +1026,7 @@ input_page <- function() {
                     radioButtons(
                       "platform",
                       label = NULL,
-                      choices = list("Magpix" = "magpix", "Bioplex" = "bioplex"),
+                      choices = list("Magpix" = "magpix", "Bioplex" = "bioplex", "Intelliflex" = "intelliflex"),
                       selected = "magpix"),
                     style = "margin-top: 10px;"
                   ),                  
