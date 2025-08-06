@@ -1030,7 +1030,7 @@ input_page <- function() {
                       selected = "magpix"),
                     style = "margin-top: 10px;"
                   ),                  
-                  Label(HTML("5. Are you only looking at the standard curve?: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("5. Are you only looking at the standard curve? <span style='color:#a4262c;'>*</span>")),
                   div(
                     radioButtons(
                       "standardcurveonly",
@@ -1050,6 +1050,15 @@ input_page <- function() {
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
+                  # Label(HTML("Do you have one master plate layout or multiple files? <span style='color:#a4262c;'>*</span>")),
+                  # div(
+                  #   radioButtons(
+                  #     "getplatelayout",
+                  #     label = NULL,
+                  #     choices = list("One master file" = "No", "Multiple files" = "Yes"),
+                  #     selected = "No"),
+                  #   style = "margin-top: 10px;"
+                  # ),                
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
                   fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message

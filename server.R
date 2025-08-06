@@ -597,6 +597,12 @@ shinyServer(function(input, output, session){
     input$standardcurveonly
   })
   
+  # # USER INPUT 10: getPlateLayout Option 
+  # getplatelayout <- reactive({
+  #   req(input$getplatelayout)
+  #   input$getplatelayout
+  # })
+  
   ###############################################################################
   ## ----- Reactive values to store user inputs ----- 
   ###############################################################################
@@ -635,20 +641,30 @@ shinyServer(function(input, output, session){
   ## ----- Run functions only once ----- 
   ###############################################################################
   
-  serodata_output <- reactive({
-    req(raw_data_reactive(), raw_data_filename_reactive())
+  readSeroData_output <- reactive({
+    req(raw_data_reactive())
     file_paths <- raw_data_reactive()$datapath
-    master_list <- readSeroData(file_paths, raw_data_filename_reactive(), platform_reactive())
+    readSeroData(file_paths, platform_reactive())
   })
   
-  antigen_output <- reactive({
-    req(serodata_output()) 
-    readAntigens(serodata_output())
+  readAntigens_output <- reactive({
+    req(readSeroData_output()) 
+    readAntigens(readSeroData_output())
   })
   
-  plate_list <- reactive({
-    plate_file_path <- plate_layout_reactive()$datapath
-    readPlateLayout(plate_layout = plate_file_path, antigen_output = antigen_output())
+  readPlateLayout_output <- reactive({
+    req(plate_layout_reactive(), getplatelayout())
+    # 
+    # if(getplatelayout() == "Yes"){
+    #   plate_file_master <- getPlateLayout(plate_layout_reactive()$datapath, )
+    #   # Write to temp file
+    #   plate_file_path <- tempfile(fileext = ".xlsx")
+    #   write.csv(plate_file_master, plate_file_path, row.names = FALSE)
+    # } else if(getplatelayout() == "No"){
+    #   plate_file_path <- plate_layout_reactive()$datapath
+    # }
+    #
+    readPlateLayout(plate_layout = plate_file_path, antigen_output = readAntigens_output())
   })
   
   ###############################################################################
@@ -667,8 +683,8 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Render the raw data table based on the imported file
   output$alldata <- renderUI({
-    req(serodata_output())
-    data_raw <- serodata_output()$data_raw
+    req(readSeroData_output())
+    data_raw <- readSeroData_output()$data_raw
     
     # Convert the dataframe to a list of lists
     items <- apply(data_raw, 1, as.list)
@@ -692,8 +708,8 @@ shinyServer(function(input, output, session){
   })
   
   output$runinfo <- renderUI({
-    req(serodata_output())
-    run <- serodata_output()$run
+    req(readSeroData_output())
+    run <- readSeroData_output()$run
     
     div(
       style = "max-height: 600px; overflow: auto; width: 100%;",
@@ -713,7 +729,7 @@ shinyServer(function(input, output, session){
   current_plate <- reactiveVal(1)
   # Step 2: Get the total number of plates
   total_plates <- reactive({
-    length(plate_list())
+    length(readPlateLayout_output())
   })
   # Step 3A: Next button
   observeEvent(input$inc_plate, {
@@ -731,12 +747,12 @@ shinyServer(function(input, output, session){
   })
   # Step 4: Render the selected plate
   output$individual_plate <- renderUI({
-    req(plate_list()) 
-    if (length(plate_list()) == 0) {
+    req(readPlateLayout_output()) 
+    if (length(readPlateLayout_output()) == 0) {
       return(MessageBar(messageBarType = 3, "No valid plate layout found."))
     }
     DetailsList(
-      items = plate_list()[[current_plate()]],
+      items = readPlateLayout_output()[[current_plate()]],
       columns = lapply(c("Plate", 1:12), function(col) {
         list(
           name = as.character(col),      # Display name of the column
@@ -760,8 +776,8 @@ shinyServer(function(input, output, session){
   
   # Data Processing: Process Counts 
   processCounts_output <- reactive({
-    req(antigen_output())
-    processCounts(antigen_output())
+    req(readAntigens_output())
+    processCounts(readAntigens_output())
   })
   
   # Data Processing: Get Counts data
@@ -772,14 +788,14 @@ shinyServer(function(input, output, session){
   
   # Data Processing: Get Sample ID data
   sampleid_output <- reactive({
-    req(processCounts_output(), plate_list())
-    getSampleID(processCounts_output(), plate_list())
+    req(processCounts_output(), readPlateLayout_output())
+    getSampleID(processCounts_output(), readPlateLayout_output())
   })
   
   # Data Processing: Get Antigen Counts
   getAntigenCounts_output <- reactive({
-    req(processCounts_output(), plate_list())
-    getAntigenCounts(processCounts_output(), plate_list())
+    req(processCounts_output(), readPlateLayout_output())
+    getAntigenCounts(processCounts_output(), readPlateLayout_output())
   })
   
   # Data Processing: Get Counts QC Output
@@ -799,8 +815,8 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Create standard curves plot
   stdcurve_plot <- reactive({
-    req(antigen_output(), location(), experiment_name()) 
-    plotStds(antigen_output(), location(), experiment_name())
+    req(readAntigens_output(), location(), experiment_name()) 
+    plotStds(readAntigens_output(), location(), experiment_name())
   })
   
   # APP RESPONSE: Creating plate QC plot
@@ -818,36 +834,36 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Create Repeats Check
   check_repeats_output <- reactive({
     req(processCounts_output())
-    getRepeats(getCounts_output(), processCounts_output(), plate_list())
+    getRepeats(getCounts_output(), processCounts_output(), readPlateLayout_output())
   })
   
   # APP RESPONSE: Create blanks plot
   blanks_plot <- reactive({
-    req(antigen_output(), experiment_name())
-    plotBlanks(antigen_output(), experiment_name())
+    req(readAntigens_output(), experiment_name())
+    plotBlanks(readAntigens_output(), experiment_name())
   })
   
   # APP RESPONSE: Run MFI to RAU 
   mfi_to_rau_output <- reactive({
-    req(antigen_output(), plate_list(), location(), getCountsQC_output())
+    req(readAntigens_output(), readPlateLayout_output(), location(), getCountsQC_output())
     if(location() == "PNG"){
-      MFItoRAU_PNG(antigen_output = antigen_output(), 
-                   plate_list = plate_list(), 
+      MFItoRAU_PNG(antigen_output = readAntigens_output(), 
+                   plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     } else if (location() == "ETH"){
-      MFItoRAU_ETH(antigen_output = antigen_output(), 
-                   plate_list = plate_list(), 
+      MFItoRAU_ETH(antigen_output = readAntigens_output(), 
+                   plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     }
   })
   
   # APP RESPONSE: Create QC model plot
   model_plot <- reactive({
-    req(mfi_to_rau_output(), antigen_output(), location())
+    req(mfi_to_rau_output(), readAntigens_output(), location())
     if(location() == "PNG"){
-      plotModel_PNG(mfi_to_rau_output(), antigen_output())
+      plotModel_PNG(mfi_to_rau_output(), readAntigens_output())
     } else if (location() == "ETH"){
-      plotModel_ETH(mfi_to_rau_output(), antigen_output())
+      plotModel_ETH(mfi_to_rau_output(), readAntigens_output())
     }
   })
   
@@ -966,7 +982,7 @@ shinyServer(function(input, output, session){
   
   # Save raw data information
   raw_data_info_saved <- reactive({
-    antigen_output()$data_raw
+    readAntigens_output()$data_raw
   })
   
   # Operator: Who ran the plate
@@ -1068,7 +1084,7 @@ shinyServer(function(input, output, session){
   })
   
   plate_list_output <- reactive({
-    plate_layouts <- plate_list()
+    plate_layouts <- readPlateLayout_output()
     # Create a list to store the LaTeX formatted tables
     tables_output <- lapply(seq_along(plate_layouts), function(i) {
       table_header <- paste0("##### Plate: ", i, "\n\n")
@@ -1110,8 +1126,8 @@ shinyServer(function(input, output, session){
   })
   
   stdcurve_blanks_output <- reactive({
-    std_output_1 <- antigen_output()$stds
-    std_output_2 <- antigen_output()$blanks
+    std_output_1 <- readAntigens_output()$stds
+    std_output_2 <- readAntigens_output()$blanks
     std_output_all <- 
       dplyr::bind_rows(std_output_1 %>% dplyr::mutate(Std = "StandardCurve"), 
                        std_output_2 %>% dplyr::mutate(Std = "Blanks")) %>% 
@@ -1641,7 +1657,7 @@ shinyServer(function(input, output, session){
     
     shinyCatch(
       expr = readPlateLayout(plate_layout = plate_layout_reactive()$datapath, 
-                             antigen_output = antigen_output()),
+                             antigen_output = readAntigens_output()),
       blocking_level = "error"
     )
   })
