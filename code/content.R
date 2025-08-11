@@ -1050,17 +1050,8 @@ input_page <- function() {
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
-                  # Label(HTML("Do you have one master plate layout or multiple files? <span style='color:#a4262c;'>*</span>")),
-                  # div(
-                  #   radioButtons(
-                  #     "getplatelayout",
-                  #     label = NULL,
-                  #     choices = list("One master file" = "No", "Multiple files" = "Yes"),
-                  #     selected = "No"),
-                  #   style = "margin-top: 10px;"
-                  # ),                
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
-                  fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
+                  fileInput("plate_layout", label = NULL, multiple = TRUE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
                   Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(

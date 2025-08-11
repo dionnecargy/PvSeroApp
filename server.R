@@ -597,12 +597,6 @@ shinyServer(function(input, output, session){
     input$standardcurveonly
   })
   
-  # # USER INPUT 10: getPlateLayout Option 
-  # getplatelayout <- reactive({
-  #   req(input$getplatelayout)
-  #   input$getplatelayout
-  # })
-  
   ###############################################################################
   ## ----- Reactive values to store user inputs ----- 
   ###############################################################################
@@ -641,10 +635,15 @@ shinyServer(function(input, output, session){
   ## ----- Run functions only once ----- 
   ###############################################################################
   
+  # Issue arising due to raw data names integrating into plate name for row -- 
+  
   readSeroData_output <- reactive({
-    req(raw_data_reactive())
+    req(raw_data_reactive(), raw_data_filename_reactive())
     file_paths <- raw_data_reactive()$datapath
-    readSeroData(file_paths, platform_reactive())
+    readSeroData(
+      raw_data = file_paths, 
+      raw_data_filenames = raw_data_filename_reactive(),
+      platform = platform_reactive())
   })
   
   readAntigens_output <- reactive({
@@ -653,18 +652,47 @@ shinyServer(function(input, output, session){
   })
   
   readPlateLayout_output <- reactive({
-    req(plate_layout_reactive(), getplatelayout())
-    # 
-    # if(getplatelayout() == "Yes"){
-    #   plate_file_master <- getPlateLayout(plate_layout_reactive()$datapath, )
-    #   # Write to temp file
-    #   plate_file_path <- tempfile(fileext = ".xlsx")
-    #   write.csv(plate_file_master, plate_file_path, row.names = FALSE)
-    # } else if(getplatelayout() == "No"){
-    #   plate_file_path <- plate_layout_reactive()$datapath
-    # }
-    #
-    readPlateLayout(plate_layout = plate_file_path, antigen_output = readAntigens_output())
+    req(plate_layout_reactive(), readAntigens_output())
+    
+    # Ensure we have just the file paths as a character vector
+    plate_file_path <- plate_layout_reactive()$datapath
+    
+    # Number of files uploaded
+    n_files <- length(plate_file_path)
+    
+    if (n_files == 1) {
+      # --- Case 1: Single master layout file ---
+      readPlateLayout(
+        plate_layout = plate_file_path,
+        antigen_output = readAntigens_output()
+      )
+      
+    } else if (n_files > 1) {
+      # --- Case 2: Multiple plate layouts ---
+      plate_file_master <- getPlateLayout(plate_file_path)
+      plate_list <- plate_file_master$data
+      
+      # Validate against Antigen output
+      sheet_names <- names(plate_list)
+      antigen_output_results <- readAntigens_output()$results
+      
+      if (!"Plate" %in% colnames(antigen_output_results)) {
+        stop("ERROR: 'Plate' column is missing from readAntigens_output$results.")
+      }
+      
+      antigen_output_levels <- levels(as.factor(antigen_output_results$Plate))
+      
+      if (all(antigen_output_levels %in% sheet_names)) {
+        message("Plate layouts correctly identified!")
+      } else {
+        stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
+      }
+      
+      return(plate_list)
+      
+    } else {
+      stop("No files were uploaded.")
+    }
   })
   
   ###############################################################################
@@ -678,7 +706,7 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Print plate layout file name
   output$plate_layout_filename <- renderText({
-    paste0("Plate layout filename: ", plate_layout_filename())
+    paste0("Plate layout filename: ", paste(plate_layout_filename(), collapse = ", "))
   })
   
   # APP RESPONSE: Render the raw data table based on the imported file
@@ -782,7 +810,7 @@ shinyServer(function(input, output, session){
   
   # Data Processing: Get Counts data
   getCounts_output <- reactive({
-    req(processCounts_output())
+    req(processCounts_output()) 
     getCounts(processCounts_output())
   })
   
@@ -798,9 +826,9 @@ shinyServer(function(input, output, session){
     getAntigenCounts(processCounts_output(), readPlateLayout_output())
   })
   
-  # Data Processing: Get Counts QC Output
+  # Data Processing: Get Counts QC Output -- something with multiple plate layouts renders this to give multiple rows with same values...???
   getCountsQC_output <- reactive({
-    req(getAntigenCounts_output(), getCounts_output())
+    req(getAntigenCounts_output(), getCounts_output()) 
     getCountsQC(getAntigenCounts_output(), getCounts_output())
   })
   
@@ -1115,9 +1143,6 @@ shinyServer(function(input, output, session){
   observeEvent(input$downloadButtonStds, {
     click("downloadStds") 
   })
-  # observeEvent(input$downloadButtonCounts, {
-  #   click("downloadCounts")
-  # })
   observeEvent(input$downloadButtonReport, {
     click("report")
   })
@@ -1154,51 +1179,6 @@ shinyServer(function(input, output, session){
       write.csv(stdcurve_blanks_output(), file, row.names = FALSE)
     }
   )
-  # # 3. Downloadable csv of counts
-  # output$downloadCounts <- downloadHandler(
-  #   filename = function(){
-  #     paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv")
-  #   },
-  #   content = function(file){
-  #     write.csv(getCountsQC_output(), file, row.names = FALSE)
-  #   }
-  # )
-  
-  # 4. Downloadable pdf of QC report
-  # output$report <- downloadHandler(
-  #   filename = paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"),
-  #   content = function(file) {
-  #     tempReport <- file.path(tempdir(), "template.Rmd")
-  #     file.copy("template.Rmd", tempReport, overwrite = TRUE)
-  #     
-  #     # Set up parameters to pass to Rmd document
-  #     params <- list(
-  #       raw_data_filename_reactive = raw_data_filename_reactive(),
-  #       experiment_name_reactive = experiment_name_reactive(),
-  #       date_reactive = date_reactive(),
-  #       experiment_notes = experiment_notes(),
-  #       platform_reactive = platform_reactive(),
-  #       stdcurve_plot = stdcurve_plot(),
-  #       plateqc_plot = plateqc_plot(),
-  #       blanks_plot = blanks_plot(),
-  #       check_repeats_output = check_repeats_output(),
-  #       check_repats_table_pdf = check_repats_table_pdf(),
-  #       model_plot = model_plot(), 
-  #       operator_output = operator_output(),    
-  #       volume_output = volume_output(),   
-  #       calibration_output = calibration_output(),  
-  #       machine_output = machine_output(),
-  #       plate_list_output = plate_list_output()
-  #     )
-  #     
-  #     callr::r(
-  #       renderReport,
-  #       list(input = tempReport, output = file, params = params)
-  #     )
-  #     
-  #   }
-  # )
-  
   observe({
     if (standardcurveonly()=="Yes") {
       output$report <- downloadHandler(
@@ -1642,24 +1622,49 @@ shinyServer(function(input, output, session){
   # Author: Dionne Argyropoulos
   ##############################################################################################################################################################
   
-  # observe({
-  #   req(raw_data_reactive(), raw_data_filename_reactive(), platform_reactive())  # Ensure inputs are available
-  # 
-  #   shinyCatch(
-  #     expr = readSeroData(raw_data_reactive()$datapath, raw_data_filename_reactive(), platform_reactive()),
-  #     blocking_level = "error"
-  #   )
-  # })
-  
   observe({
-    req(plate_layout_reactive())  # Ensure plate_layout is available
-    req(plate_layout_reactive()$datapath)  # Ensure a file is uploaded
+    req(plate_layout_reactive())  
+    req(plate_layout_reactive()$datapath)  
     
     shinyCatch(
-      expr = readPlateLayout(plate_layout = plate_layout_reactive()$datapath, 
-                             antigen_output = readAntigens_output()),
+      expr = {
+        plate_file_path <- plate_layout_reactive()$datapath
+        n_files <- length(plate_file_path)
+        
+        if (n_files == 1) {
+          # Single master layout
+          readPlateLayout(
+            plate_layout = plate_file_path, 
+            antigen_output = readAntigens_output()
+          )
+        } else if (n_files > 1) {
+          # Multiple plate layouts
+          plate_file_master <- getPlateLayout(plate_file_path)
+          
+          # Validation
+          sheet_names <- names(plate_file_master$data)
+          antigen_output_results <- readAntigens_output()$results
+          
+          if (!"Plate" %in% colnames(antigen_output_results)) {
+            stop("ERROR: 'Plate' column is missing from readAntigens_output$results.")
+          }
+          
+          antigen_output_levels <- levels(as.factor(antigen_output_results$Plate))
+          
+          if (all(antigen_output_levels %in% sheet_names)) {
+            message("Plate layouts correctly identified!")
+          } else {
+            stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
+          }
+          
+          plate_file_master
+        } else {
+          stop("No files were uploaded.")
+        }
+      },
       blocking_level = "error"
     )
   })
+  
   
 })
