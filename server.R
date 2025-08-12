@@ -37,7 +37,6 @@ require(SeroTrackR)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
-# source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
