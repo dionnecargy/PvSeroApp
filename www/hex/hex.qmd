@@ -1,0 +1,28 @@
+---
+title: "PvSeroApp Hex"
+author: "Dionne Argyropoulos"
+format: html
+---
+
+```{r}
+# Load the package
+library(hexSticker)
+
+# Generate hex sticker
+sticker(
+  subplot = "PvSeroApp_image.png",   # your image
+  package = "PvSeroApp",             # your package name
+  p_size = 30,                       # Font size
+  p_color = "#004C6D",               # Deep blue for text
+  p_family = "Aller",                # Optional: use a readable font
+  s_x = 1,                           # X position of image
+  s_y = 0.8,                         # Y position of image
+  s_width = 0.6,                     # Width scaling
+  s_height = 0.6,                    # Height scaling
+  h_fill = "#D9F0D3",                # Light green background
+  h_color = "#1B7837",               # Darker green border
+  dpi = 600,                         # High resolution
+  filename = "PvSeroApp_sticker.png" # Output file
+)
+
+```
