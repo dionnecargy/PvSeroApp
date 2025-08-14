@@ -7,3 +7,5 @@ www/google_analytics.html
 rsconnect/
 .DS_Store
 .DS_Store
+/hex/
+code/testing.qmd

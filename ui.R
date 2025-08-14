@@ -31,11 +31,10 @@ require(waiter)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
-# require(devtools)
-# devtools::install_github("dionnecargy/PvSeroAppFns")
-# require(PvSeroAppFns)
+require(devtools)
+devtools::install_github("dionnecargy/SeroTrackR")
+require(SeroTrackR)
 
-source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
@@ -140,7 +139,7 @@ shinyUI(
     "))
     ),
     tags$head(tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css")),
-    tags$head(tags$link(rel = "shortcut icon", href = "PvSeroApp.ico")),
+    tags$head(tags$link(rel = "shortcut icon", href = "hex/PvSeroApp_sticker.ico")), #############################################################
     div(
       style = "display: flex; flex-direction: column; height: 100vh;",
       
@@ -152,7 +151,7 @@ shinyUI(
         # Left Section (Icon + Text)
         div(
           style = "display: flex; align-items: center;",
-          img(src = "logo.png", style = "height: 35px"),
+          img(src = "hex/PvSeroApp_image.png", style = "height: 35px"),
           Separator(vertical = TRUE),
           Text(variant = "xLarge", "PvSeroApp: Sero-surveillance Tool", style = list(root = list(color = "var(--fluent-primary-text-color)"),
                                                                                      marginLeft = "15px"))
@@ -201,7 +200,7 @@ shinyUI(
         # Left navigation panel with Nav component
         div(
           class = "nav-panel",
-          div(img(src = "PvSeroApp.png", style = "align-items: center; height: 200px; margin-left: 25px")),
+          div(img(src = "hex/PvSeroApp_sticker.png", style = "align-items: center; height: 200px; margin-left: 25px")),
           Nav(
             ariaLabel = "Introduction",
             groups = list(
