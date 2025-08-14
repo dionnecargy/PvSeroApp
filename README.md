@@ -1,4 +1,4 @@
-# <img src="https://github.com/dionnecargy/pvseroapp/blob/main/www/PvSeroApp.png" width="25%" height="25%" align="left"/> PvSeroApp
+# <img src="https://github.com/dionnecargy/pvseroapp/blob/main/www/hex/PvSeroApp_sticker.png" width="25%" height="25%" align="left"/> PvSeroApp
 The source code for the PvSeroApp Shiny web application, which streamlines the data processing of the multi-antigen Luminex-based <em>Plasmodium vivax</em> serological data and applies the machine learning classification algorithm to identify individuals with recent exposure to <em>P. vivax</em>.
 
 # FAQs
