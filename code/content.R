@@ -128,7 +128,9 @@ tutorial_page <- function() {
                 ),
                 Text(variant = "medium", HTML("If you have multiple plates that you are running through this application, all of the plate layouts can be added in one <b>excel (.xlsx)</b> file.")),
                 MessageBar(HTML(r"(Please label each <b>tab or sheet</b> in the excel (.xlsx) file as "plate1", "plate2", "plate3" etc. corresponding to your <b>raw data</b> input file names 
-                            discussed in the section below.)"))
+                            discussed in the section below.)")),
+                Text(variant = "medium", "Due to popular demand, you can now add multiple plate layouts to the PvSeroApp. However for security reasons the app does not allow you to add multiple files 
+                    from different folders. For ease, please create a new folder with all of the files you would like to upload to the PvSeroApp so that you can add the files at once.")
               )
             ), 
             makeCard(
@@ -465,7 +467,7 @@ tutorial_page <- function() {
                       p(), 
                       Text(variant = "medium", " If any of the wells are red, they should be double-checked manually and re-run on a new plate if required."),
                       p(),
-                      Text(variant = "medium", HTML(r"(The app will inform you whether there are "No repeats necessary" or provide a list of samples to be re-run. In the example data, the beads in plate 2 wells <b>A1</b> and <b>A2</b> will need to be repeated)"))
+                      Text(variant = "medium", HTML(r"(The app will inform you whether there are "No repeats necessary" or provide a list of samples to be re-run. In the example data, the beads in plate 2 wells <b>A1</b> and <b>A2</b> will need to be repeated.)"))
                     ), 
                     second_col = Image(src = "2_tutorial/5.2_qc_tute_5.png", width = "auto", height = "auto")
                   )
@@ -559,12 +561,12 @@ tutorial_page <- function() {
               content = list(
                 renderTwoCols(
                   first_col = list(
-                    Text(variant = "medium", HTML("We have developed two algorithms that were trained on different datasets that included different sample sets from individuals with PCR-confirmed SARS-CoV-2 positive results.<br><br>
+                    Text(variant = "medium", HTML("We have developed two algorithms that were trained on the same datasets but have silghtly different antigen profiles.<br><br>
                                           <ul>
-                                            <li><b>PvSeroTaT Algorithm</b>: The PvSeroTaT Model contains all top 8 antigens as described in the<a href='#algorithm' class-'link'>Algorithm Section</a>.</li>
-                                            <li><b>PvSeroTaT without LF016</b>: As the name suggests, this model contains the antigens in PvSeroTaT except for LF016.</li>
+                                            <li><b>PvSeroApp Algorithm</b>: The PvSeroApp Model contains all top 8 antigens as described in the<a href='#algorithm' class-'link'>Algorithm Section</a>.</li>
+                                            <li><b>PvSeroApp without LF016</b>: As the name suggests, this model contains the antigens in PvSeroApp except for LF016.</li>
                                           <ul>")), 
-                    Text(variant = "medium", HTML("For specific details about the PvSeroTaT algorithms, click on the <a href='#algorithm' class-'link'>Algorithm</a> Section in the navigation menu.")),
+                    Text(variant = "medium", HTML("For specific details about the PvSeroApp algorithms, click on the <a href='#algorithm' class-'link'>Algorithm</a> Section in the navigation menu.")),
                     p()
                   ), 
                   second_col = Image(src = "2_tutorial/6.1_classify_tute_1.png", width = "auto", height = "auto")
@@ -576,7 +578,7 @@ tutorial_page <- function() {
               title = "6.2. Perform Classification", 
               content = list(
                 Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see above). The example data was generated using the PvSeroTaT assay with all eight antigens 
-                 and therefore you should select the "PvSeroTaT Algorithm" for this tutorial.)"))
+                 and therefore you should select the "PvSeroApp Algorithm" for this tutorial.)"))
               )
             ), 
             makeCard(
@@ -801,7 +803,7 @@ algorithm_page <- function() {
       title = "1. Samples Used In the Model", 
       content = list(
         Text(variant = "medium", HTML("Plasma samples from year-long observational cohort studies conducted in malaria-endemic regions in Thailand (Kanchanaburi and Ratchaburi provinces), Brazil (Manaus) and Solomon Islands (Ngella) were 
-                                  measured for antigen-specific IgG antibody resposes toward a panel of eight antigens using the method outlined in <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al 2020</a>.")),
+                                  measured for antigen-specific IgG antibody responses toward a panel of eight antigens using the method outlined in <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al 2020</a>.")),
         p(),
         Text(variant = "medium", HTML("Enrolled individuals in the year-long cohort studies provided a blood sample every month. Light microscopy and qPCR targeting the blood-stages of <em>P. vivax</em> were performed to 
                                       detect which individuals were infected and at which time point during these studies. IgG antibody responses towards a panel of <em>P. vivax</em> antigens were measured at the last visit of the 
@@ -929,14 +931,6 @@ algorithm_page <- function() {
   )
 }
 
-# Text(variant = "medium", HTML(r"(You can check that the <span style="color:#C50F1F; font-weight: bold">Batch</span>, <span style="color:#4C3867; font-weight: bold">ProtocolName</span> and
-#                                                   <span style="color:#2C72A8; font-weight: bold">Sample Volume</span> are correct and labeled as you expect them to be.)")),
-# p(),
-# Text(variant = "medium", HTML(r"(In the case of the example data, the <span style="color:#C50F1F; font-weight: bold">Batch</span> should be labeled
-#                                                   <span style="color:#C50F1F; font-weight: bold">"Example Plate"</span>, the <span style="color:#4C3867; font-weight: bold">Protocol</span> should be labeled 
-#                                                   <span style="color:#4C3867; font-weight: bold">"PvSeroTaT_v1.0"</span>, and the <span style="color:#2C72A8; font-weight: bold">Sample Volume</span> should be 
-#                                                   <span style="color:#2C72A8; font-weight: bold">"50uL"</span> as we can see in the right hand side image here. )"))
-
 ###############################################################################
 # --------------------------- Inputs Page ---------------------------
 ###############################################################################
@@ -959,7 +953,8 @@ input_page <- function() {
     MessageBar(messageBarType = 3, HTML("All data uploaded must be de-identified and not re-identifiable (see<a href='https://posit.co/about/posit-service-terms-of-use/' class='_blank'>Posit Service Terms of Use</a>)")),
     p(),
     MessageBar(messageBarType = 3, HTML(r"(You can label your raw data files using "luminexfile_plate1.csv" or if it is a <b>repeat</b> plate then you can use the convention "luminexfile_repeatplate1.csv". See the
-                                        <a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more details.)")),
+                                        <a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more details. For security reasons the app does not allow you to add multiple files 
+                                        from different folders. For ease, please create a new folder with all of the files you would like to upload to the PvSeroApp so that you can add the files at once.)")),
     p(),
     useShinyjs(),
     Stack(
@@ -1163,12 +1158,6 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
-      # PrimaryButton.shinyInput(
-      #   "downloadButtonCounts",
-      #   text = "Counts Data (.CSV)",
-      #   iconProps = list(iconName = "Download")
-      # ),
-      # div(style = "visibility: hidden;", downloadButton("downloadCounts","")),
       PrimaryButton.shinyInput(
         "downloadButtonReport",
         text = "Quality Control Report (.PDF)",
@@ -1326,7 +1315,6 @@ model_page <- function() {
     Label(HTML("Classification results:")),
     Separator(),
     textOutput("result"),
-    # withSpinner(tableOutput("classification_summary"), type = 8), # add spinner,
     tableOutput("classification_summary"),
     PrimaryButton.shinyInput(
       "downloadButtonClassify",
@@ -1364,14 +1352,14 @@ datavis_page <- function() {
     Label(HTML("<b>Median Fluorescent Intensity (MFI) Per Antigen</b>")),
     p(),
     Text(variant = "medium", "The box plots allow you to take a look at the converted Median Fluorescent Intensity (MFI) for each of the antigens in the panel. 
-         This plot is interactive and you can hover your mouse over each antigen box plot to see the min, median, max MFI and IQR values. "),
+         This plot is interactive and you can click on the antigen names on the right hand side to see the difference with the grey background (our training dataset)."),
     p(),
     plotlyOutput("mfi_plotly"),
     p(),
     Label(HTML("<b>Relative Antibody Units (RAU) Per Antigen</b>")), 
     p(),
     Text(variant = "medium", "The box plots allow you to take a look at the converted Relative Antibody Units (RAU) for each of the antigens in the panel. 
-         This plot is interactive and you can hover your mouse over each antigen box plot to see the min, median, max MFI and IQR values."),
+         This plot is interactive and you can click on the antigen names on the right hand side to see the difference with the grey background (our training dataset)."),
     p(),
     plotlyOutput("rau_plotly"),
     p(),
@@ -1433,7 +1421,17 @@ apphistory_page <- function() {
          )")),
     p(),
     Text(variant = "large", HTML("<b>v1.3.1.</b>")),
-    Text(variant = "medium", "Bug Fixes as described in pull request #9 and removed warning for check_platforms function.")
+    Text(variant = "medium", "Bug Fixes as described in pull request #9 and removed warning for check_platforms function."),
+    p(),
+    Text(variant = "large", HTML("<b>v1.4.0.</b>")),
+    Text(variant = "medium", 
+         HTML(r"(This new release includes:<ul>
+              <li>Added intelliflex compatibility to the entire application</li>
+              <li>Fixed typos throughout the application</li>
+              <li>Added multiple plate layout capability inputs (see pull request #9)</li>
+              <li>All functions are now solely from the SeroTrackR R package</li>
+              </ul>
+         )"))
   )
 }
 
