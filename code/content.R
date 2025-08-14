@@ -1030,7 +1030,7 @@ input_page <- function() {
                       selected = "magpix"),
                     style = "margin-top: 10px;"
                   ),                  
-                  Label(HTML("5. Are you only looking at the standard curve?: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("5. Are you only looking at the standard curve? <span style='color:#a4262c;'>*</span>")),
                   div(
                     radioButtons(
                       "standardcurveonly",
@@ -1051,7 +1051,7 @@ input_page <- function() {
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
-                  fileInput("plate_layout", label = NULL, multiple = FALSE, accept = ".xlsx", buttonLabel = NULL),
+                  fileInput("plate_layout", label = NULL, multiple = TRUE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
                   Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(

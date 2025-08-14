@@ -27,7 +27,125 @@ require(glue)
 require(drc)
 require(gt)
 library(meltr)
-# require(ggalt)
+library(SeroTrackR)
 
-source(here::here("code/functions.R"))
+#################### Testing the multiple plate layout function and troubleshooting why it doesn't work in shiny #################### 
+raw_data <- c(
+  "/Users/argyropoulos.d/Downloads/testing/03062025_PvseroTAT_MDA_plate1.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/31052025_PvseroTAT_MDA_plate2.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/03062025_PvseroTAT_MDA_plate3.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/04062025_PvseroTAT_MDA_plate4.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/19062025_PvseroTAT_MDA_plate5.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/19062025_PvseroTAT_HSD_plate6.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/04072025_PvseroTAT_MDA_plate7.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/03072025_PvseroTAT_HSD_plate8.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/08072025_PvseroTAT_HSD_plate9.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/08072025_PvseroTAT_HSD_plate10.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/09072025_PvseroTAT_HSD_plate11.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/09072025_PvseroTAT_HSD_plate12.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/09072025_PvseroTAT_HSD_plate13.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/09072025_PvseroTAT_HSD_plate14.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/10072025_PvseroTAT_HSD_plate15.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/10072025_PvseroTAT_HSD_plate16.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/15072025_PvseroTAT_HSD_plate17.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/15072025_PvseroTAT_HSD_plate18.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/17072025_PvseroTAT_HSD_plate19.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/11072025_PvseroTAT_HSD_plate20.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/17072025_PvseroTAT_HSD_plate21.xlsx"
+)
+plate_layouts <- c(
+  "/Users/argyropoulos.d/Downloads/testing/serotatmondulkiri_plate123456_platelayout.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/serotatmondulkiri_plate78910_platelayout.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/serotatmondulkiri_plate17181921_platelayout.xlsx",
+  "/Users/argyropoulos.d/Downloads/testing/serotatmondulkiri_plate11121314151620_platelayout.xlsx"
+)
+
+#############################################################
+# Step 1: Reading in Raw Data
+#############################################################
+serodataOutput            <- readSeroData(raw_data, "bioplex")
+antigenOutput             <- readAntigens(serodataOutput)
+plate_layout              <- getPlateLayout(plate_layouts)
+platelayoutOutput         <- readPlateLayout(plate_layout$path, antigenOutput)
 ```
+
+```{r}
+getPlateLayout <- function(folder_path = getwd(), output_file = NULL) {
+
+  # Case 1: folder_path is length == 1 and is a folder
+  if (length(folder_path) == 1 && dir.exists(folder_path)) {
+    layout_files <- list.files(
+      path = folder_path,
+      pattern = "layout.*\\.xlsx$",
+      recursive = TRUE,
+      full.names = TRUE,
+      ignore.case = TRUE
+    )
+    if (length(layout_files) == 0) {
+      stop("No layout Excel files found in the specified folder.")
+    }
+  } else {
+    layout_files <- folder_path
+  }
+
+  # Case 2: folder_path is length > 1 and contains file names
+  plate_list_all <- list()
+
+  for (file in layout_files) {
+    sheet_names <- openxlsx::getSheetNames(file)
+
+    for (sheet in sheet_names) {
+      df <- openxlsx::read.xlsx(file, sheet = sheet)
+
+      # Instead of renaming duplicates, enforce identical names to Antigen data
+      if (sheet %in% names(plate_list_all)) {
+        stop(sprintf(
+          "Duplicate plate name detected: '%s' in file '%s'.
+           Please rename sheets so each plate name is unique across all files.",
+          sheet, file
+        ))
+      }
+
+      plate_list_all[[sheet]] <- df
+    }
+  }
+
+  if (is.null(output_file)) {
+    output_file <- tempfile(fileext = ".xlsx")
+  }
+
+  openxlsx::write.xlsx(plate_list_all, file = output_file, colNames = TRUE)
+
+  final_plate_list <- list(
+    path = output_file,
+    data = plate_list_all
+  )
+
+  return(final_plate_list)
+}
+
+
+```
+
+```{r}
+
+#############################################################
+# Step 2: Quality Control and MFI to RAU
+#############################################################
+processCounts_output      <- processCounts(antigenOutput)
+getCounts_output          <- getCounts(processCounts_output)
+sampleid_output           <- getSampleID(processCounts_output, platelayoutOutput)
+getAntigenCounts_output   <- getAntigenCounts(processCounts_output, platelayoutOutput)
+getCountsQC_output        <- getCountsQC(getAntigenCounts_output, getCounts_output) #######################
+mfi_to_rau_output         <- MFItoRAU_ETH(antigenOutput, platelayoutOutput, getCountsQC_output)
+
+#############################################################
+# Step 3: Plotting 
+#############################################################
+stdcurve_plot             <- plotStds(antigenOutput, "ETH", "experiment1")
+plateqc_plot              <- plotCounts(getCounts_output, "experiment1")
+check_repeats_output      <- getRepeats(getCounts_output, processCounts_output, platelayoutOutput)
+blanks_plot               <- plotBlanks(antigenOutput, "experiment1")
+model_plot                <- plotModel_ETH(mfi_to_rau_output, antigenOutput)
+```
+

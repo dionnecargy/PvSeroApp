@@ -37,7 +37,6 @@ require(SeroTrackR)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
-# source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 
 options(repos = c(CRAN = "https://cloud.r-project.org/"))
@@ -635,20 +634,53 @@ shinyServer(function(input, output, session){
   ## ----- Run functions only once ----- 
   ###############################################################################
   
-  serodata_output <- reactive({
+  # Issue arising due to raw data names integrating into plate name for row -- 
+  
+  readSeroData_output <- reactive({
     req(raw_data_reactive(), raw_data_filename_reactive())
     file_paths <- raw_data_reactive()$datapath
-    master_list <- readSeroData(file_paths, raw_data_filename_reactive(), platform_reactive())
+    readSeroData(
+      raw_data = file_paths, 
+      raw_data_filenames = raw_data_filename_reactive(),
+      platform = platform_reactive())
   })
   
-  antigen_output <- reactive({
-    req(serodata_output()) 
-    readAntigens(serodata_output())
+  readAntigens_output <- reactive({
+    req(readSeroData_output()) 
+    readAntigens(readSeroData_output())
   })
   
-  plate_list <- reactive({
+  readPlateLayout_output <- reactive({
+    req(plate_layout_reactive(), readAntigens_output())
+    
+    # Ensure we have just the file paths as a character vector
     plate_file_path <- plate_layout_reactive()$datapath
-    readPlateLayout(plate_layout = plate_file_path, antigen_output = antigen_output())
+    
+    # Number of files uploaded
+    n_files <- length(plate_file_path)
+    
+    if (n_files == 1) {
+      # --- Case 1: Single master layout file ---
+      final_plate_layout <- readPlateLayout(
+        plate_layout = plate_file_path,
+        antigen_output = readAntigens_output()
+      )
+      
+    } else if (n_files > 1) {
+      # --- Case 2: Multiple plate layouts ---
+      plate_file_master <- getPlateLayout(plate_file_path)
+      plate_list_path <- plate_file_master$path
+      
+      final_plate_layout <-  readPlateLayout(
+        plate_layout = plate_list_path,
+        antigen_output = readAntigens_output()
+      )
+      
+      return(final_plate_layout)
+      
+    } else {
+      stop("No files were uploaded.")
+    }
   })
   
   ###############################################################################
@@ -662,13 +694,13 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Print plate layout file name
   output$plate_layout_filename <- renderText({
-    paste0("Plate layout filename: ", plate_layout_filename())
+    paste0("Plate layout filename: ", paste(plate_layout_filename(), collapse = ", "))
   })
   
   # APP RESPONSE: Render the raw data table based on the imported file
   output$alldata <- renderUI({
-    req(serodata_output())
-    data_raw <- serodata_output()$data_raw
+    req(readSeroData_output())
+    data_raw <- readSeroData_output()$data_raw
     
     # Convert the dataframe to a list of lists
     items <- apply(data_raw, 1, as.list)
@@ -692,8 +724,8 @@ shinyServer(function(input, output, session){
   })
   
   output$runinfo <- renderUI({
-    req(serodata_output())
-    run <- serodata_output()$run
+    req(readSeroData_output())
+    run <- readSeroData_output()$run
     
     div(
       style = "max-height: 600px; overflow: auto; width: 100%;",
@@ -713,7 +745,7 @@ shinyServer(function(input, output, session){
   current_plate <- reactiveVal(1)
   # Step 2: Get the total number of plates
   total_plates <- reactive({
-    length(plate_list())
+    length(readPlateLayout_output())
   })
   # Step 3A: Next button
   observeEvent(input$inc_plate, {
@@ -731,12 +763,12 @@ shinyServer(function(input, output, session){
   })
   # Step 4: Render the selected plate
   output$individual_plate <- renderUI({
-    req(plate_list()) 
-    if (length(plate_list()) == 0) {
+    req(readPlateLayout_output()) 
+    if (length(readPlateLayout_output()) == 0) {
       return(MessageBar(messageBarType = 3, "No valid plate layout found."))
     }
     DetailsList(
-      items = plate_list()[[current_plate()]],
+      items = readPlateLayout_output()[[current_plate()]],
       columns = lapply(c("Plate", 1:12), function(col) {
         list(
           name = as.character(col),      # Display name of the column
@@ -760,31 +792,31 @@ shinyServer(function(input, output, session){
   
   # Data Processing: Process Counts 
   processCounts_output <- reactive({
-    req(antigen_output())
-    processCounts(antigen_output())
+    req(readAntigens_output())
+    processCounts(readAntigens_output())
   })
   
   # Data Processing: Get Counts data
   getCounts_output <- reactive({
-    req(processCounts_output())
+    req(processCounts_output()) 
     getCounts(processCounts_output())
   })
   
   # Data Processing: Get Sample ID data
   sampleid_output <- reactive({
-    req(processCounts_output(), plate_list())
-    getSampleID(processCounts_output(), plate_list())
+    req(processCounts_output(), readPlateLayout_output())
+    getSampleID(processCounts_output(), readPlateLayout_output())
   })
   
   # Data Processing: Get Antigen Counts
   getAntigenCounts_output <- reactive({
-    req(processCounts_output(), plate_list())
-    getAntigenCounts(processCounts_output(), plate_list())
+    req(processCounts_output(), readPlateLayout_output())
+    getAntigenCounts(processCounts_output(), readPlateLayout_output())
   })
   
-  # Data Processing: Get Counts QC Output
+  # Data Processing: Get Counts QC Output -- something with multiple plate layouts renders this to give multiple rows with same values...???
   getCountsQC_output <- reactive({
-    req(getAntigenCounts_output(), getCounts_output())
+    req(getAntigenCounts_output(), getCounts_output()) 
     getCountsQC(getAntigenCounts_output(), getCounts_output())
   })
   
@@ -799,8 +831,8 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Create standard curves plot
   stdcurve_plot <- reactive({
-    req(antigen_output(), location(), experiment_name()) 
-    plotStds(antigen_output(), location(), experiment_name())
+    req(readAntigens_output(), location(), experiment_name()) 
+    plotStds(readAntigens_output(), location(), experiment_name())
   })
   
   # APP RESPONSE: Creating plate QC plot
@@ -818,36 +850,36 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Create Repeats Check
   check_repeats_output <- reactive({
     req(processCounts_output())
-    getRepeats(getCounts_output(), processCounts_output(), plate_list())
+    getRepeats(getCounts_output(), processCounts_output(), readPlateLayout_output())
   })
   
   # APP RESPONSE: Create blanks plot
   blanks_plot <- reactive({
-    req(antigen_output(), experiment_name())
-    plotBlanks(antigen_output(), experiment_name())
+    req(readAntigens_output(), experiment_name())
+    plotBlanks(readAntigens_output(), experiment_name())
   })
   
   # APP RESPONSE: Run MFI to RAU 
   mfi_to_rau_output <- reactive({
-    req(antigen_output(), plate_list(), location(), getCountsQC_output())
+    req(readAntigens_output(), readPlateLayout_output(), location(), getCountsQC_output())
     if(location() == "PNG"){
-      MFItoRAU_PNG(antigen_output = antigen_output(), 
-                   plate_list = plate_list(), 
+      MFItoRAU_PNG(antigen_output = readAntigens_output(), 
+                   plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     } else if (location() == "ETH"){
-      MFItoRAU_ETH(antigen_output = antigen_output(), 
-                   plate_list = plate_list(), 
+      MFItoRAU_ETH(antigen_output = readAntigens_output(), 
+                   plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     }
   })
   
   # APP RESPONSE: Create QC model plot
   model_plot <- reactive({
-    req(mfi_to_rau_output(), antigen_output(), location())
+    req(mfi_to_rau_output(), readAntigens_output(), location())
     if(location() == "PNG"){
-      plotModel_PNG(mfi_to_rau_output(), antigen_output())
+      plotModel_PNG(mfi_to_rau_output(), readAntigens_output())
     } else if (location() == "ETH"){
-      plotModel_ETH(mfi_to_rau_output(), antigen_output())
+      plotModel_ETH(mfi_to_rau_output(), readAntigens_output())
     }
   })
   
@@ -966,7 +998,7 @@ shinyServer(function(input, output, session){
   
   # Save raw data information
   raw_data_info_saved <- reactive({
-    antigen_output()$data_raw
+    readAntigens_output()$data_raw
   })
   
   # Operator: Who ran the plate
@@ -1068,7 +1100,7 @@ shinyServer(function(input, output, session){
   })
   
   plate_list_output <- reactive({
-    plate_layouts <- plate_list()
+    plate_layouts <- readPlateLayout_output()
     # Create a list to store the LaTeX formatted tables
     tables_output <- lapply(seq_along(plate_layouts), function(i) {
       table_header <- paste0("##### Plate: ", i, "\n\n")
@@ -1099,9 +1131,6 @@ shinyServer(function(input, output, session){
   observeEvent(input$downloadButtonStds, {
     click("downloadStds") 
   })
-  # observeEvent(input$downloadButtonCounts, {
-  #   click("downloadCounts")
-  # })
   observeEvent(input$downloadButtonReport, {
     click("report")
   })
@@ -1110,8 +1139,8 @@ shinyServer(function(input, output, session){
   })
   
   stdcurve_blanks_output <- reactive({
-    std_output_1 <- antigen_output()$stds
-    std_output_2 <- antigen_output()$blanks
+    std_output_1 <- readAntigens_output()$stds
+    std_output_2 <- readAntigens_output()$blanks
     std_output_all <- 
       dplyr::bind_rows(std_output_1 %>% dplyr::mutate(Std = "StandardCurve"), 
                        std_output_2 %>% dplyr::mutate(Std = "Blanks")) %>% 
@@ -1138,51 +1167,6 @@ shinyServer(function(input, output, session){
       write.csv(stdcurve_blanks_output(), file, row.names = FALSE)
     }
   )
-  # # 3. Downloadable csv of counts
-  # output$downloadCounts <- downloadHandler(
-  #   filename = function(){
-  #     paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv")
-  #   },
-  #   content = function(file){
-  #     write.csv(getCountsQC_output(), file, row.names = FALSE)
-  #   }
-  # )
-  
-  # 4. Downloadable pdf of QC report
-  # output$report <- downloadHandler(
-  #   filename = paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"),
-  #   content = function(file) {
-  #     tempReport <- file.path(tempdir(), "template.Rmd")
-  #     file.copy("template.Rmd", tempReport, overwrite = TRUE)
-  #     
-  #     # Set up parameters to pass to Rmd document
-  #     params <- list(
-  #       raw_data_filename_reactive = raw_data_filename_reactive(),
-  #       experiment_name_reactive = experiment_name_reactive(),
-  #       date_reactive = date_reactive(),
-  #       experiment_notes = experiment_notes(),
-  #       platform_reactive = platform_reactive(),
-  #       stdcurve_plot = stdcurve_plot(),
-  #       plateqc_plot = plateqc_plot(),
-  #       blanks_plot = blanks_plot(),
-  #       check_repeats_output = check_repeats_output(),
-  #       check_repats_table_pdf = check_repats_table_pdf(),
-  #       model_plot = model_plot(), 
-  #       operator_output = operator_output(),    
-  #       volume_output = volume_output(),   
-  #       calibration_output = calibration_output(),  
-  #       machine_output = machine_output(),
-  #       plate_list_output = plate_list_output()
-  #     )
-  #     
-  #     callr::r(
-  #       renderReport,
-  #       list(input = tempReport, output = file, params = params)
-  #     )
-  #     
-  #   }
-  # )
-  
   observe({
     if (standardcurveonly()=="Yes") {
       output$report <- downloadHandler(
@@ -1626,24 +1610,49 @@ shinyServer(function(input, output, session){
   # Author: Dionne Argyropoulos
   ##############################################################################################################################################################
   
-  # observe({
-  #   req(raw_data_reactive(), raw_data_filename_reactive(), platform_reactive())  # Ensure inputs are available
-  # 
-  #   shinyCatch(
-  #     expr = readSeroData(raw_data_reactive()$datapath, raw_data_filename_reactive(), platform_reactive()),
-  #     blocking_level = "error"
-  #   )
-  # })
-  
   observe({
-    req(plate_layout_reactive())  # Ensure plate_layout is available
-    req(plate_layout_reactive()$datapath)  # Ensure a file is uploaded
+    req(plate_layout_reactive())  
+    req(plate_layout_reactive()$datapath)  
     
     shinyCatch(
-      expr = readPlateLayout(plate_layout = plate_layout_reactive()$datapath, 
-                             antigen_output = antigen_output()),
+      expr = {
+        plate_file_path <- plate_layout_reactive()$datapath
+        n_files <- length(plate_file_path)
+        
+        if (n_files == 1) {
+          # Single master layout
+          readPlateLayout(
+            plate_layout = plate_file_path, 
+            antigen_output = readAntigens_output()
+          )
+        } else if (n_files > 1) {
+          # Multiple plate layouts
+          plate_file_master <- getPlateLayout(plate_file_path)
+          
+          # Validation
+          sheet_names <- names(plate_file_master$data)
+          antigen_output_results <- readAntigens_output()$results
+          
+          if (!"Plate" %in% colnames(antigen_output_results)) {
+            stop("ERROR: 'Plate' column is missing from readAntigens_output$results.")
+          }
+          
+          antigen_output_levels <- levels(as.factor(antigen_output_results$Plate))
+          
+          if (all(antigen_output_levels %in% sheet_names)) {
+            message("Plate layouts correctly identified!")
+          } else {
+            stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
+          }
+          
+          plate_file_master
+        } else {
+          stop("No files were uploaded.")
+        }
+      },
       blocking_level = "error"
     )
   })
+  
   
 })
