@@ -32,7 +32,7 @@ require(waiter)
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
 require(devtools)
-devtools::install_github("dionnecargy/SeroTrackR")
+# devtools::install_github("dionnecargy/SeroTrackR")
 require(SeroTrackR)
 
 source(here::here("code/content.R"))
