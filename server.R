@@ -661,7 +661,7 @@ shinyServer(function(input, output, session){
     
     if (n_files == 1) {
       # --- Case 1: Single master layout file ---
-      readPlateLayout(
+      final_plate_layout <- readPlateLayout(
         plate_layout = plate_file_path,
         antigen_output = readAntigens_output()
       )
@@ -669,25 +669,14 @@ shinyServer(function(input, output, session){
     } else if (n_files > 1) {
       # --- Case 2: Multiple plate layouts ---
       plate_file_master <- getPlateLayout(plate_file_path)
-      plate_list <- plate_file_master$data
+      plate_list_path <- plate_file_master$path
       
-      # Validate against Antigen output
-      sheet_names <- names(plate_list)
-      antigen_output_results <- readAntigens_output()$results
+      final_plate_layout <-  readPlateLayout(
+        plate_layout = plate_list_path,
+        antigen_output = readAntigens_output()
+      )
       
-      if (!"Plate" %in% colnames(antigen_output_results)) {
-        stop("ERROR: 'Plate' column is missing from readAntigens_output$results.")
-      }
-      
-      antigen_output_levels <- levels(as.factor(antigen_output_results$Plate))
-      
-      if (all(antigen_output_levels %in% sheet_names)) {
-        message("Plate layouts correctly identified!")
-      } else {
-        stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
-      }
-      
-      return(plate_list)
+      return(final_plate_layout)
       
     } else {
       stop("No files were uploaded.")
