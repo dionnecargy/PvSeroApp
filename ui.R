@@ -31,11 +31,7 @@ require(waiter)
 
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
-require(devtools)
-devtools::install_github("dionnecargy/pvsero")
-require(pvsero)
-
-# source(here::here("code/functions.R"))
+source(here::here("code/functions.R"))
 source(here::here("code/content.R"))
 
 antibody_model <- readRDS(here::here("model/PvSeroTaTmodel.rds"))

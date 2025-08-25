@@ -31,10 +31,6 @@ require(rlang) # used in the classify_final_results
 require(spsComps) # shinyCatch function
 require(waiter)
 
-# require(devtools)
-# devtools::install_github("dionnecargy/PvSeroAppFns")
-# require(PvSeroAppFns)
-
 waiter_set_theme(html = spin_3(), color = transparent(.5))
 
 source(here::here("code/functions.R"))
@@ -78,7 +74,7 @@ shinyServer(function(input, output, session){
   })
   
   # Get release version dynamically
-  release_version <- get_github_release("dionnecargy", "pvseroapp")
+  release_version <- "v1.3.1"
   
   # Define footer content
   version <- reactive({
