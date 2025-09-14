@@ -1161,12 +1161,6 @@ check_page <- function() {
         iconProps = list(iconName = "Download")
       ),
       div(style = "visibility: hidden;", downloadButton("downloadStds","")),
-      # PrimaryButton.shinyInput(
-      #   "downloadButtonCounts",
-      #   text = "Counts Data (.CSV)",
-      #   iconProps = list(iconName = "Download")
-      # ),
-      # div(style = "visibility: hidden;", downloadButton("downloadCounts","")),
       PrimaryButton.shinyInput(
         "downloadButtonReport",
         text = "Quality Control Report (.PDF)",

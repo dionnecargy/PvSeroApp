@@ -1094,9 +1094,6 @@ shinyServer(function(input, output, session){
   observeEvent(input$downloadButtonStds, {
     click("downloadStds") 
   })
-  # observeEvent(input$downloadButtonCounts, {
-  #   click("downloadCounts")
-  # })
   observeEvent(input$downloadButtonReport, {
     click("report")
   })
@@ -1133,51 +1130,6 @@ shinyServer(function(input, output, session){
       write.csv(stdcurve_blanks_output(), file, row.names = FALSE)
     }
   )
-  # # 3. Downloadable csv of counts
-  # output$downloadCounts <- downloadHandler(
-  #   filename = function(){
-  #     paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv")
-  #   },
-  #   content = function(file){
-  #     write.csv(all_counts_qc_output(), file, row.names = FALSE)
-  #   }
-  # )
-  
-  # 4. Downloadable pdf of QC report
-  # output$report <- downloadHandler(
-  #   filename = paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"),
-  #   content = function(file) {
-  #     tempReport <- file.path(tempdir(), "template.Rmd")
-  #     file.copy("template.Rmd", tempReport, overwrite = TRUE)
-  #     
-  #     # Set up parameters to pass to Rmd document
-  #     params <- list(
-  #       raw_data_filename_reactive = raw_data_filename_reactive(),
-  #       experiment_name_reactive = experiment_name_reactive(),
-  #       date_reactive = date_reactive(),
-  #       experiment_notes = experiment_notes(),
-  #       platform_reactive = platform_reactive(),
-  #       stdcurve_plot = stdcurve_plot(),
-  #       plateqc_plot = plateqc_plot(),
-  #       blanks_plot = blanks_plot(),
-  #       check_repeats_output = check_repeats_output(),
-  #       check_repats_table_pdf = check_repats_table_pdf(),
-  #       model_plot = model_plot(), 
-  #       operator_output = operator_output(),    
-  #       volume_output = volume_output(),   
-  #       calibration_output = calibration_output(),  
-  #       machine_output = machine_output(),
-  #       plate_list_output = plate_list_output()
-  #     )
-  #     
-  #     callr::r(
-  #       render_report,
-  #       list(input = tempReport, output = file, params = params)
-  #     )
-  #     
-  #   }
-  # )
-  
   observe({
     if (standardcurveonly()=="Yes") {
       output$report <- downloadHandler(
@@ -1318,7 +1270,7 @@ shinyServer(function(input, output, session){
           # Generate files
           write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
           write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
-          # write.csv(all_counts_qc_output(), counts_file, row.names = FALSE)
+          # write.csv(getCountsQC_output(), counts_file, row.names = FALSE)
           
           # Render the report
           tempReport <- file.path(tempdir(), "template.Rmd")
