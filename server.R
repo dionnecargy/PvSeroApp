@@ -596,6 +596,12 @@ shinyServer(function(input, output, session){
     input$standardcurveonly
   })
   
+  # USER INPUT 10: Standard Curve Type (5-point or 10-point)
+  std_point <- reactive({
+    req(input$std_point)
+    input$std_point
+  })
+  
   ###############################################################################
   ## ----- Reactive values to store user inputs ----- 
   ###############################################################################
