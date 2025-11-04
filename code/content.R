@@ -1436,7 +1436,7 @@ apphistory_page <- function() {
          HTML(r"(This new release includes:<ul>
               <li>Added intelliflex compatibility to the entire application</li>
               <li>Fixed typos throughout the application</li>
-              <li>Added multiple plate layout capability inputs (see pull request #9)</li>
+              <li>Added multiple plate layout capability inputs (see pull request #10)</li>
               <li>All functions are now solely from the SeroTrackR R package</li>
               </ul>
          )"))

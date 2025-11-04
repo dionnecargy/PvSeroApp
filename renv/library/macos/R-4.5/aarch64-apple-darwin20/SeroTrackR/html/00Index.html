@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head><title>R: Functions for the Sero Analysis</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+<link rel="stylesheet" type="text/css" href="R.css" />
+</head><body><div class="container">
+<h1> Functions for the Sero Analysis
+<img class="toplogo" src="../../../doc/html/Rlogo.svg" alt="[R logo]" />
+</h1>
+<hr/>
+<div style="text-align: center;">
+<a href="../../../doc/html/packages.html"><img class="arrow" src="../../../doc/html/left.jpg" alt="[Up]" /></a>
+<a href="../../../doc/html/index.html"><img class="arrow" src="../../../doc/html/up.jpg" alt="[Top]" /></a>
+</div><h2>Documentation for package &lsquo;SeroTrackR&rsquo; version 0.5.0</h2>
+
+<ul><li><a href="../DESCRIPTION" type="text/plain; charset=utf-8">DESCRIPTION file</a>.</li>
+</ul>
+
+<h2>Help Pages</h2>
+
+
+<table style="width: 100%;">
+<tr><td style="width: 25%;"><a href="dot-runPlasmoSero10point.html">.runPlasmoSero10point</a></td>
+<td>ARCHIVE: Read Serological Data and 10-point Standard Curve</td></tr>
+<tr><td style="width: 25%;"><a href="dot-runPlasmoSero5point.html">.runPlasmoSero5point</a></td>
+<td>ARCHIVE: Read Serological Data and 5-point Standard Curve</td></tr>
+<tr><td style="width: 25%;"><a href="all_stds_MFI_csv.html">all_stds_MFI_csv</a></td>
+<td>Example Serological Dataset</td></tr>
+<tr><td style="width: 25%;"><a href="checkPlatform.html">checkPlatform</a></td>
+<td>Check Platform</td></tr>
+<tr><td style="width: 25%;"><a href="classifyResults.html">classifyResults</a></td>
+<td>Random Forest Classification</td></tr>
+<tr><td style="width: 25%;"><a href="convert_dilution_to_mfi.html">convert_dilution_to_mfi</a></td>
+<td>Convert known dilution to mfi from fitted standard curve</td></tr>
+<tr><td style="width: 25%;"><a href="convert_mfi_to_dilution.html">convert_mfi_to_dilution</a></td>
+<td>Convert mfi to dilution using known standard curve fit.</td></tr>
+<tr><td style="width: 25%;"><a href="convert_mfi_to_dilution_no_bounds.html">convert_mfi_to_dilution_no_bounds</a></td>
+<td>Convert mfi to dilution using known standard curve fit and no bounds</td></tr>
+<tr><td style="width: 25%;"><a href="convert_mfi_to_dilution_no_lower_bound.html">convert_mfi_to_dilution_no_lower_bound</a></td>
+<td>Convert mfi to dilution using known standard curve fit and no lower bound</td></tr>
+<tr><td style="width: 25%;"><a href="example_BioPlex_plate1_csv.html">example_BioPlex_plate1_csv</a></td>
+<td>Example Serological Dataset: Bioplex Plate 1</td></tr>
+<tr><td style="width: 25%;"><a href="example_BioPlex_plate2_csv.html">example_BioPlex_plate2_csv</a></td>
+<td>Example Serological Dataset: Bioplex Plate 2</td></tr>
+<tr><td style="width: 25%;"><a href="example_BioPlex_plate3_csv.html">example_BioPlex_plate3_csv</a></td>
+<td>Example Serological Dataset: Bioplex Plate 3</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_pk_10std_plate1_csv.html">example_MAGPIX_pk_10std_plate1_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 1 Pk Analysis 10-Point Standard Curve A dataset containing raw MFI values and metadata from a sample plate run (MAGPIX).</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_pk_10std_plate2_csv.html">example_MAGPIX_pk_10std_plate2_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 2 Pk Analysis 10-Point Standard Curve</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_pk_5std_plate1_csv.html">example_MAGPIX_pk_5std_plate1_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 1 Pk Analysis 5-Point Standard Curve A dataset containing raw MFI values and metadata from a sample plate run (MAGPIX).</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_pk_5std_plate2_csv.html">example_MAGPIX_pk_5std_plate2_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 2 Pk Analysis 5-Point Standard Curve</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_plate1_csv.html">example_MAGPIX_plate1_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 1 A dataset containing raw MFI values and metadata from a sample plate run (MAGPIX).</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_plate2_csv.html">example_MAGPIX_plate2_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 2</td></tr>
+<tr><td style="width: 25%;"><a href="example_MAGPIX_plate3_csv.html">example_MAGPIX_plate3_csv</a></td>
+<td>Example Serological Dataset: MAGPIX Plate 3</td></tr>
+<tr><td style="width: 25%;"><a href="example_platelayout_1_xlsx.html">example_platelayout_1_xlsx</a></td>
+<td>96 Well Plate Example Layout</td></tr>
+<tr><td style="width: 25%;"><a href="example_platelayout_pk_10std_xlsx.html">example_platelayout_pk_10std_xlsx</a></td>
+<td>10-Point Standard Curve Example Plate Layout</td></tr>
+<tr><td style="width: 25%;"><a href="example_platelayout_pk_5std_xlsx.html">example_platelayout_pk_5std_xlsx</a></td>
+<td>5-Point Standard Curve Example Plate Layout</td></tr>
+<tr><td style="width: 25%;"><a href="excluding_LF016_threshold_values_csv.html">excluding_LF016_threshold_values_csv</a></td>
+<td>Random Forest Threshold Values for PvSeroTaT Model w/o LF016</td></tr>
+<tr><td style="width: 25%;"><a href="fit_standard_curve.html">fit_standard_curve</a></td>
+<td>Fit a standard curve to known mfi and dilution values.</td></tr>
+<tr><td style="width: 25%;"><a href="getAntigenCounts.html">getAntigenCounts</a></td>
+<td>Get Count Data for each Antigen from the Raw Median Fluorescent Intensity</td></tr>
+<tr><td style="width: 25%;"><a href="getCounts.html">getCounts</a></td>
+<td>Get Count Data from Raw Median Fluorescent Intensity</td></tr>
+<tr><td style="width: 25%;"><a href="getCountsQC.html">getCountsQC</a></td>
+<td>Get All Counts Data</td></tr>
+<tr><td style="width: 25%;"><a href="getGithubRelease.html">getGithubRelease</a></td>
+<td>Get GitHub Version</td></tr>
+<tr><td style="width: 25%;"><a href="getPlateLayout.html">getPlateLayout</a></td>
+<td>Find and create a master plate layout file</td></tr>
+<tr><td style="width: 25%;"><a href="getRepeats.html">getRepeats</a></td>
+<td>Check Beads to Repeat</td></tr>
+<tr><td style="width: 25%;"><a href="getSampleID.html">getSampleID</a></td>
+<td>Get SampleID from Plate Layout</td></tr>
+<tr><td style="width: 25%;"><a href="longitudinal_MFI_csv.html">longitudinal_MFI_csv</a></td>
+<td>Training Data Median Fluorescent Intensity (MFI)</td></tr>
+<tr><td style="width: 25%;"><a href="longitudinal_RAU_csv.html">longitudinal_RAU_csv</a></td>
+<td>Training Data Relative Antibody Units (RAU)</td></tr>
+<tr><td style="width: 25%;"><a href="makeCard.html">makeCard</a></td>
+<td>Make Card in Fluent UI</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_ETH.html">MFItoRAU_ETH</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion based on ETH standard</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_LDH.html">MFItoRAU_LDH</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion for LDH</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_PfPv.html">MFItoRAU_PfPv</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion for either PNG or ETH standard</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_Pk.html">MFItoRAU_Pk</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion for Pk proteins</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_Plasmo.html">MFItoRAU_Plasmo</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion for Pk/Pf/Pv Master Function</td></tr>
+<tr><td style="width: 25%;"><a href="MFItoRAU_PNG.html">MFItoRAU_PNG</a></td>
+<td>Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) conversion based on PNG standard</td></tr>
+<tr><td style="width: 25%;"><a href="PkPfPv_Panel_1.html">PkPfPv_Panel_1</a></td>
+<td>Pk/Pf/Pv Panel Antigens and Species List</td></tr>
+<tr><td style="width: 25%;"><a href="platemap_csv.html">platemap_csv</a></td>
+<td>96 Well Plate Map</td></tr>
+<tr><td style="width: 25%;"><a href="plotBeadCounts.html">plotBeadCounts</a></td>
+<td>Plot Bead Counts per Plate per Antigen</td></tr>
+<tr><td style="width: 25%;"><a href="plotBlanks.html">plotBlanks</a></td>
+<td>Plot Raw Median Fluorescent Intensity Blanks Data</td></tr>
+<tr><td style="width: 25%;"><a href="plotBoxPlotClassification.html">plotBoxPlotClassification</a></td>
+<td>Plot Classification</td></tr>
+<tr><td style="width: 25%;"><a href="plotCounts.html">plotCounts</a></td>
+<td>Plot Bead Count Data</td></tr>
+<tr><td style="width: 25%;"><a href="plotManyStdCurves.html">plotManyStdCurves</a></td>
+<td>Standard Curve for multiple plates</td></tr>
+<tr><td style="width: 25%;"><a href="plotMFI.html">plotMFI</a></td>
+<td>Median Fluorescent Intensity (MFI) Box Plots</td></tr>
+<tr><td style="width: 25%;"><a href="plotModel_ETH.html">plotModel_ETH</a></td>
+<td>Plot the Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) Results Data based on ETH standard</td></tr>
+<tr><td style="width: 25%;"><a href="plotModel_PNG.html">plotModel_PNG</a></td>
+<td>Plot the Median Fluorescent Intensity (MFI) to Relative Antibody Units (RAU) Results Data based on PNG standard</td></tr>
+<tr><td style="width: 25%;"><a href="plotOneStdCurve.html">plotOneStdCurve</a></td>
+<td>Standard Curve for one plate</td></tr>
+<tr><td style="width: 25%;"><a href="plotRAU.html">plotRAU</a></td>
+<td>Relative Antibody Unit (RAU) Box Plots</td></tr>
+<tr><td style="width: 25%;"><a href="plotStds.html">plotStds</a></td>
+<td>Plot Raw Median Fluorescent Intensity of Standard Curve Data</td></tr>
+<tr><td style="width: 25%;"><a href="plotStds_all.html">plotStds_all</a></td>
+<td>Plot Raw Median Fluorescent Intensity of Standard Curve Data</td></tr>
+<tr><td style="width: 25%;"><a href="plotStds_PkPfPv.html">plotStds_PkPfPv</a></td>
+<td>Plot Raw Median Fluorescent Intensity of Pk/Pf/Pv Standard Curve Data</td></tr>
+<tr><td style="width: 25%;"><a href="png_eth_stds_csv.html">png_eth_stds_csv</a></td>
+<td>Plate Metadata</td></tr>
+<tr><td style="width: 25%;"><a href="processCounts.html">processCounts</a></td>
+<td>Process Counts from Raw Serological Data file</td></tr>
+<tr><td style="width: 25%;"><a href="processPkPfPv.html">processPkPfPv</a></td>
+<td>Processing Serological Data for Pk/Pf/Pv MFI to RAU conversion</td></tr>
+<tr><td style="width: 25%;"><a href="PvSeroTaTmodel_rds.html">PvSeroTaTmodel_rds</a></td>
+<td>Eight-Antigen Random Forest Classification Model</td></tr>
+<tr><td style="width: 25%;"><a href="random_forest_excludingLF016_rds.html">random_forest_excludingLF016_rds</a></td>
+<td>Seven-Antigen Random Forest Classification Model w/o LF016</td></tr>
+<tr><td style="width: 25%;"><a href="readAntigens.html">readAntigens</a></td>
+<td>Standardise Antigen Names</td></tr>
+<tr><td style="width: 25%;"><a href="readPlateLayout.html">readPlateLayout</a></td>
+<td>Read Plate Layout/s</td></tr>
+<tr><td style="width: 25%;"><a href="readSeroData.html">readSeroData</a></td>
+<td>Read Raw Serological Data</td></tr>
+<tr><td style="width: 25%;"><a href="renderClassificationTable.html">renderClassificationTable</a></td>
+<td>All Classification Data</td></tr>
+<tr><td style="width: 25%;"><a href="renderDetailsList.html">renderDetailsList</a></td>
+<td>Create a Fluent UI Table</td></tr>
+<tr><td style="width: 25%;"><a href="renderQCReport.html">renderQCReport</a></td>
+<td>Generate QC PDF Report</td></tr>
+<tr><td style="width: 25%;"><a href="renderReport.html">renderReport</a></td>
+<td>Render Markdown report</td></tr>
+<tr><td style="width: 25%;"><a href="renderTwoCols.html">renderTwoCols</a></td>
+<td>Create two columns in Fluent UI</td></tr>
+<tr><td style="width: 25%;"><a href="runLDHPipeline.html">runLDHPipeline</a></td>
+<td>Run LDH Pipeline from Start to End</td></tr>
+<tr><td style="width: 25%;"><a href="runPlasmoPipeline.html">runPlasmoPipeline</a></td>
+<td>Run Pk/Pf/Pv Data Analysis Pipeline from Start to End</td></tr>
+<tr><td style="width: 25%;"><a href="runPvSeroPipeline.html">runPvSeroPipeline</a></td>
+<td>Run PvSero Pipeline from Start to End</td></tr>
+<tr><td style="width: 25%;"><a href="threshold_values_csv.html">threshold_values_csv</a></td>
+<td>Random Forest Threshold Values for PvSeroTaT Model</td></tr>
+</table>
+</div></body></html>

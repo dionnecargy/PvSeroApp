@@ -1,0 +1,39 @@
+Package: SeroTrackR
+Type: Package
+Title: Functions for the Sero Analysis
+Version: 0.5.0
+Authors@R: c(
+    person(
+      "Dionne", "Argyropoulos",
+      email = "argyropoulos.d@wehi.edu.au",
+      role = c("aut", "cre")
+    )
+  )
+Description: Data wrangling and cleaning, quality control checks and 
+  implementation of machine learning classification algorithm. 
+License: CC BY 4.0
+Encoding: UTF-8
+RoxygenNote: 7.3.2
+Depends: R (>= 4.1.0)
+Imports: dplyr, drc, ggplot2, here, httr, janitor, jsonlite, magrittr,
+        meltr, openxlsx, parsnip, plyr, purrr, readxl, rmarkdown,
+        shiny.fluent, stats, stringr, tidyr, utils, workflows, zoo
+URL: https://github.com/dionnecargy/SeroTrackR
+BugReports: https://github.com/dionnecargy/SeroTrackR/issues
+Suggests: knitr, tidyverse
+VignetteBuilder: knitr
+RemoteType: github
+RemoteHost: api.github.com
+RemoteRepo: SeroTrackR
+RemoteUsername: dionnecargy
+RemoteRef: HEAD
+RemoteSha: a932295fdc0f82694f4cb2bfcb9fc4e8ca086fc7
+GithubRepo: SeroTrackR
+GithubUsername: dionnecargy
+GithubRef: HEAD
+GithubSHA1: a932295fdc0f82694f4cb2bfcb9fc4e8ca086fc7
+NeedsCompilation: no
+Packaged: 2025-09-14 22:36:52 UTC; argyropoulos.d
+Author: Dionne Argyropoulos [aut, cre]
+Maintainer: Dionne Argyropoulos <argyropoulos.d@wehi.edu.au>
+Built: R 4.5.1; ; 2025-09-14 22:36:56 UTC; unix
