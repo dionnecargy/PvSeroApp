@@ -951,7 +951,7 @@ input_page <- function() {
     p(),
     MessageBar(messageBarType = 3, HTML("All data uploaded must be de-identified and not re-identifiable (see<a href='https://posit.co/about/posit-service-terms-of-use/' class='_blank'>Posit Service Terms of Use</a>)")),
     p(),
-    MessageBar(messageBarType = 3, HTML(r"(You can label your raw data files using "luminexfile_plate1.csv" or if it is a <b>repeat</b> plate then you can use the convention "luminexfile_repeatplate1.csv". See the
+    MessageBar(messageBarType = 0, HTML(r"(You can label your raw data files using "luminexfile_plate1.csv" or if it is a <b>repeat</b> plate then you can use the convention "luminexfile_repeatplate1.csv". See the
                                         <a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more details. For security reasons the app does not allow you to add multiple files 
                                         from different folders. For ease, please create a new folder with all of the files you would like to upload to the PvSeroApp so that you can add the files at once.)")),
     p(),
@@ -1032,16 +1032,16 @@ input_page <- function() {
                       choices = list("Yes", "No"),
                       selected = "No"),
                     style = "margin-top: 10px;"
-                  ),
-                  Label(HTML("6. What type of standard curve are you using? <span style='color:#a4262c;'>*</span>")),
-                  div(
-                    radioButtons(
-                      "std_point",
-                      label = NULL,
-                      choices = list("5-point" = 5, "10-point" = 10),
-                      selected = "No"),
-                    style = "margin-top: 10px;"
-                  )
+                  )#,
+                  # Label(HTML("6. What type of standard curve are you using? <span style='color:#a4262c;'>*</span>")),
+                  # div(
+                  #   radioButtons(
+                  #     "std_point",
+                  #     label = NULL,
+                  #     choices = list("5-point" = 5, "10-point" = 10),
+                  #     selected = "No"),
+                  #   style = "margin-top: 10px;"
+                  # )
                 )
               )
             ), 
@@ -1049,14 +1049,14 @@ input_page <- function() {
               div(
                 tokens = list(childrenGap = 15),
                 children = list(
-                  Label(HTML("7. Upload Files: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("6. Upload Files: <span style='color:#a4262c;'>*</span>")),
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
                   fileInput("plate_layout", label = NULL, multiple = TRUE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
-                  Label(HTML("8. Save Inputs: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(
                     style = "margin-bottom: 10px;",  # Space for the text above the button
                     PrimaryButton.shinyInput(
