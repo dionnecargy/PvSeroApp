@@ -1,43 +1,31 @@
-name: Deploy Shiny App to shinyapps.io
+name: Deploy PvSeroApp to shinyapps.io
 
-# Trigger deployment on push to main branch
 on:
+  # Run on any push
   push:
-    branches:
-      - main
+  # Also allow manual trigger in Actions tab
+  workflow_dispatch:
 
 jobs:
   deploy:
-    name: Deploy to shinyapps.io
+    name: Deploy to ShinyApps.io
+
+    # Skip deployment if commit message contains '[automated]' or '[no-deploy]'
+    if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-deploy]')"
     runs-on: ubuntu-latest
 
     steps:
       # 1️⃣ Checkout the repo
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
-      # 2️⃣ Setup R
-      - name: Setup R
-        uses: r-lib/actions/setup-r@v2
-
-      # 3️⃣ Install required R packages
-      - name: Install R packages
-        run: |
-          install.packages(c(
-            "shiny",
-            "dplyr",
-            "ggplot2",
-            "tidyr",
-            "readr"
-          ))
-
-      # 4️⃣ Deploy to ShinyApps.io
-      - name: Deploy to ShinyApps.io
-        uses: rstudio/shinyapps-deploy@v1
+      # 2️⃣ Deploy to ShinyApps.io
+      - name: Deploy
+        uses: BDSI-Utwente/shinyapps-deploy-github-action@v1
         with:
-          shinyapps_username: ${{ secrets.SHINY_USERNAME }}
-          shinyapps_token: ${{ secrets.TOKEN }}
-          shinyapps_secret: ${{ secrets.SECRET }}
-          app_name: 'PvSeroApp'
-          app_dir: ''  # or folder name if ui.R/server.R are in a subfolder
-      
+          # Your app URL will be: https://<accountName>.shinyapps.io/<appName>/
+          appName: 'PvSeroApp'             # your app name
+          accountName: 'dionnecargy'       # your shinyapps.io username
+
+          # GitHub secrets for authentication
+          accountToken: ${{ secrets.TOKEN }}
+          accountSecret: ${{ secrets.SECRET }}
