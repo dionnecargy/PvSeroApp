@@ -33,10 +33,10 @@ jobs:
 
       # 4️⃣ Deploy to ShinyApps.io
       - name: Deploy to shinyapps.io
-        uses: qwert666/shinyapps-actions@main
-        env:
-          SHINY_USERNAME: 'dionnecargy'           # your ShinyApps.io username
-          SHINY_TOKEN: ${{ secrets.TOKEN }}       # shinyapps.io token
-          SHINY_SECRET: ${{ secrets.SECRET }}     # shinyapps.io secret
-          APP_NAME: 'PvSeroApp'                   # the name for your app URL
-          APP_DIR: ''                             # leave empty if app.R is in repo root
+        uses: shinyapps-deploy@v1
+        with:
+          shinyapps_username: 'dionnecargy'           # your ShinyApps.io username
+          shinyapps_token: ${{ secrets.TOKEN }}       # shinyapps.io token
+          shinyapps_secret: ${{ secrets.SECRET }}     # shinyapps.io secret
+          app_name: 'PvSeroApp'                       # the name for your app URL
+          app_dir: ''                                 # leave empty if app.R is in repo root
