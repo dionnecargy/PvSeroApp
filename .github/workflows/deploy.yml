@@ -27,7 +27,9 @@ jobs:
             libgfortran5 \
             libcurl4-openssl-dev \
             libssl-dev \
-            libxml2-dev
+            libxml2-dev \
+            libfreetype6-dev \
+            libfontconfig1-dev
             
       # 3. Setup R
       - uses: r-lib/actions/setup-r@v2
