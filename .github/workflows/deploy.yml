@@ -19,23 +19,25 @@ jobs:
       - uses: actions/checkout@v2
       
       # 2. Install system dependencies needed by some R packages
-      - name: Install system dependencies
+      - name: Install system libraries for font/text/cairo/magick packages
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gfortran \
-            libgfortran5 \
             libcurl4-openssl-dev \
             libssl-dev \
             libxml2-dev \
+            libcairo2-dev \
             libfreetype6-dev \
-            libfontconfig1-dev \
             libharfbuzz-dev \
             libfribidi-dev \
+            libfontconfig1-dev \
             libpng-dev \
             libtiff5-dev \
             libjpeg-dev \
-            libcairo2-dev
+            libmagick++-dev \
+            libicu-dev \
+            pkg-config \
+            build-essential
             
       # 3. Setup R
       - uses: r-lib/actions/setup-r@v2
