@@ -29,7 +29,12 @@ jobs:
             libssl-dev \
             libxml2-dev \
             libfreetype6-dev \
-            libfontconfig1-dev
+            libfontconfig1-dev \
+            libharfbuzz-dev \
+            libfribidi-dev \
+            libpng-dev \
+            libtiff5-dev \
+            libjpeg-dev
             
       # 3. Setup R
       - uses: r-lib/actions/setup-r@v2
