@@ -32,11 +32,12 @@ jobs:
           ))
 
       # 4️⃣ Deploy to ShinyApps.io
-      - name: Deploy to shinyapps.io
-        uses: shinyapps-deploy@v1
+      - name: Deploy to ShinyApps.io
+        uses: rstudio/shinyapps-deploy@v1
         with:
-          shinyapps_username: 'dionnecargy'           # your ShinyApps.io username
-          shinyapps_token: ${{ secrets.TOKEN }}       # shinyapps.io token
-          shinyapps_secret: ${{ secrets.SECRET }}     # shinyapps.io secret
-          app_name: 'PvSeroApp'                       # the name for your app URL
-          app_dir: ''                                 # leave empty if app.R is in repo root
+          shinyapps_username: ${{ secrets.SHINY_USERNAME }}
+          shinyapps_token: ${{ secrets.TOKEN }}
+          shinyapps_secret: ${{ secrets.SECRET }}
+          app_name: 'PvSeroApp'
+          app_dir: ''  # or folder name if ui.R/server.R are in a subfolder
+      
