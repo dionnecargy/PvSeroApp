@@ -1,25 +1,21 @@
 name: Deploy PvSeroApp to shinyapps.io
 
 on:
-  # Run on any push
   push:
-  # Also allow manual trigger in Actions tab
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy to ShinyApps.io
 
-    # Skip deployment if commit message contains '[automated]' or '[no-deploy]'
     if: "!contains(github.event.head_commit.message, '[automated]') && !contains(github.event.head_commit.message, '[no-deploy]')"
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repo
       - uses: actions/checkout@v2
-      
-      # 2. Install system dependencies needed by some R packages
-      - name: Install system libraries for font/text/cairo/magick packages
+
+      # 1. Install system libraries required for {systemfonts}, {textshaping}, {gdtools}, {magick}, {nloptr}
+      - name: Install system libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -36,31 +32,31 @@ jobs:
             libjpeg-dev \
             libmagick++-dev \
             libicu-dev \
+            libnlopt-dev \
             pkg-config \
             build-essential
-            
-      # 3. Setup R
+
+      # 2. Setup R
       - uses: r-lib/actions/setup-r@v2
-      
-      # 3️⃣ (Optional) Cache R packages for faster builds
+
+      # 3. Cache packages so you *don't* wait 45 min every time
       - uses: actions/cache@v3
         with:
           path: ~/.cache/R
           key: ${{ runner.os }}-R-${{ hashFiles('**/renv.lock') }}
           restore-keys: ${{ runner.os }}-R-
-          
-      # 4. Restore R packages via renv
-      - name: Restore renv packages
-        run: R -e "renv::restore(prompt = FALSE)"
-        
-      # 3. Deploy to ShinyApps.io
-      - name: Deploy
+
+      # 4. Restore R package library via renv
+      - name: Restore renv packages (using Posit binaries)
+        run: |
+          Rscript -e 'install.packages("renv")'
+          Rscript -e 'options(renv.download.method = "curl", renv.config.install.staged = FALSE, repos = c(CRAN="https://packagemanager.posit.co/cran/__linux__/jammy/latest")); renv::restore(prompt = FALSE)'
+
+      # 5. Deploy
+      - name: Deploy to shinyapps.io
         uses: BDSI-Utwente/shinyapps-deploy-github-action@v1
         with:
-          # Your app URL will be: https://<accountName>.shinyapps.io/<appName>/
-          appName: 'PvSeroApp'             # your app name
-          accountName: 'dionnecargy'       # your shinyapps.io username
-
-          # GitHub secrets for authentication
+          appName: 'PvSeroApp'       # your shinyapps.io app name
+          accountName: 'dionnecargy' # your shinyapps.io username
           accountToken: ${{ secrets.TOKEN }}
           accountSecret: ${{ secrets.SECRET }}
