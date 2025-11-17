@@ -1102,6 +1102,7 @@ shinyServer(function(input, output, session){
   
   plate_list_output <- reactive({
     plate_layouts <- readPlateLayout_output()
+    
     # Create a list to store the LaTeX formatted tables
     tables_output <- lapply(seq_along(plate_layouts), function(i) {
       table_header <- paste0("##### Plate: ", i, "\n\n")
@@ -1110,15 +1111,24 @@ shinyServer(function(input, output, session){
     })
     # Combine all tables into a single LaTeX string
     final_output <- paste(tables_output, collapse = "\n\n")
-    # Use `asis_output` to ensure raw LaTeX is treated properly in R Markdown
-    knitr::asis_output(final_output)
+    # # Use `asis_output` to ensure raw LaTeX is treated properly in R Markdown
+    # knitr::asis_output(final_output)
+    # Return character string instead of knit_asis
+    final_output
   })
   
   check_repats_table_pdf <- reactive({
     req(check_repeats_output())
-    if (is.data.frame(check_repeats_output())) {
-      check_repeats_output()
+    x <- check_repeats_output()
+    
+    if (is.data.frame(x)) {
+      return(x)
     }
+    
+    data.frame(
+      Message = "No repeat issues detected.",
+      stringsAsFactors = FALSE
+    )
   })
   
   ###############################################################################
@@ -1196,15 +1206,9 @@ shinyServer(function(input, output, session){
             plate_list_output = plate_list_output()
           )
           
-          # callr::r(
-          #   renderReport,
-          #   list(input = stdcurveReport, output = file, params = params)
-          # )
-          rmarkdown::render(
-            input = stdcurveReport,
-            output_file = file,
-            clean = FALSE,
-            envir = new.env()
+          callr::r(
+            renderReport,
+            list(input = stdcurveReport, output = file, params = params)
           )
         }
       )
@@ -1235,17 +1239,12 @@ shinyServer(function(input, output, session){
             machine_output = machine_output(),
             plate_list_output = plate_list_output()
           )
-          
-          # callr::r(
-          #   renderReport,
-          #   list(input = tempReport, output = file, params = params)
-          # )
-          rmarkdown::render(
-            input = tempReport,
-            output_file = file,
-            clean = FALSE,
-            envir = new.env()
+        
+          callr::r(
+            renderReport,
+            list(input = tempReport, output = file, params = params)
           )
+          
         }
       )
     }
@@ -1290,15 +1289,10 @@ shinyServer(function(input, output, session){
             machine_output = machine_output(),
             plate_list_output = plate_list_output()
           )
-          # callr::r(
-          #   renderReport,
-          #   list(input = stdcurveReport, output = report_file, params = params)
-          # )
-          rmarkdown::render(
-            input = stdcurveReport,
-            output_file = report_file,
-            clean = FALSE,
-            envir = new.env()
+          str(params)
+          callr::r(
+            renderReport,
+            list(input = stdcurveReport, output = report_file, params = params)
           )
           # Create ZIP with a clean structure
           old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
@@ -1348,15 +1342,10 @@ shinyServer(function(input, output, session){
             machine_output = machine_output(),
             plate_list_output = plate_list_output()
           )
-          # callr::r(
-          #   renderReport,
-          #   list(input = tempReport, output = report_file, params = params)
-          # )
-          rmarkdown::render(
-            input = tempReport,
-            output_file = report_file,
-            clean = FALSE,
-            envir = new.env()
+          
+          callr::r(
+            renderReport,
+            list(input = tempReport, output = report_file, params = params)
           )
           # Create ZIP with a clean structure
           old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
