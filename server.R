@@ -1196,9 +1196,15 @@ shinyServer(function(input, output, session){
             plate_list_output = plate_list_output()
           )
           
-          callr::r(
-            renderReport,
-            list(input = stdcurveReport, output = file, params = params)
+          # callr::r(
+          #   renderReport,
+          #   list(input = stdcurveReport, output = file, params = params)
+          # )
+          rmarkdown::render(
+            input = stdcurveReport,
+            output_file = file,
+            clean = FALSE,
+            envir = new.env()
           )
         }
       )
@@ -1230,9 +1236,15 @@ shinyServer(function(input, output, session){
             plate_list_output = plate_list_output()
           )
           
-          callr::r(
-            renderReport,
-            list(input = tempReport, output = file, params = params)
+          # callr::r(
+          #   renderReport,
+          #   list(input = tempReport, output = file, params = params)
+          # )
+          rmarkdown::render(
+            input = tempReport,
+            output_file = file,
+            clean = FALSE,
+            envir = new.env()
           )
         }
       )
@@ -1278,9 +1290,15 @@ shinyServer(function(input, output, session){
             machine_output = machine_output(),
             plate_list_output = plate_list_output()
           )
-          callr::r(
-            renderReport,
-            list(input = stdcurveReport, output = report_file, params = params)
+          # callr::r(
+          #   renderReport,
+          #   list(input = stdcurveReport, output = report_file, params = params)
+          # )
+          rmarkdown::render(
+            input = stdcurveReport,
+            output_file = report_file,
+            clean = FALSE,
+            envir = new.env()
           )
           # Create ZIP with a clean structure
           old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
@@ -1330,9 +1348,15 @@ shinyServer(function(input, output, session){
             machine_output = machine_output(),
             plate_list_output = plate_list_output()
           )
-          callr::r(
-            renderReport,
-            list(input = tempReport, output = report_file, params = params)
+          # callr::r(
+          #   renderReport,
+          #   list(input = tempReport, output = report_file, params = params)
+          # )
+          rmarkdown::render(
+            input = tempReport,
+            output_file = report_file,
+            clean = FALSE,
+            envir = new.env()
           )
           # Create ZIP with a clean structure
           old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders

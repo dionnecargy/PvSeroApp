@@ -6,7 +6,9 @@ header-includes:
    - \usepackage[T1]{fontenc}
 mainfont: SourceSansPro
 output: 
-  pdf_document: default
+  # pdf_document: default
+  pdf_document:
+    keep_tex: true
 params:
   raw_data_filename_reactive: NA
   experiment_name_reactive: NA
