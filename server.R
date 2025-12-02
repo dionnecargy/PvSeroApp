@@ -27,10 +27,12 @@ require(rsconnect)
 require(httr)
 require(jsonlite)
 require(ranger)
+require(meltr)
 require(rlang) # used in the classifyResults
 require(spsComps) # shinyCatch function
 require(waiter)
 
+# devtools::install_github("r-lib/meltr")
 require(devtools)
 # devtools::install_github("dionnecargy/SeroTrackR")
 require(SeroTrackR)
@@ -664,7 +666,7 @@ shinyServer(function(input, output, session){
       # --- Case 1: Single master layout file ---
       final_plate_layout <- readPlateLayout(
         plate_layout = plate_file_path,
-        serodata_output = readSeroData_output()
+        sero_data = readSeroData_output()
       )
       
     } else if (n_files > 1) {
@@ -674,7 +676,7 @@ shinyServer(function(input, output, session){
       
       final_plate_layout <-  readPlateLayout(
         plate_layout = plate_list_path,
-        serodata_output = readSeroData_output()
+        sero_data = readSeroData_output()
       )
       
       return(final_plate_layout)
@@ -864,11 +866,11 @@ shinyServer(function(input, output, session){
   mfi_to_rau_output <- reactive({
     req(readSeroData_output(), readPlateLayout_output(), location(), getCountsQC_output())
     if(location() == "PNG"){
-      MFItoRAU_PNG(serodata_output = readSeroData_output(), 
+      MFItoRAU(sero_data = readSeroData_output(), 
                    plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     } else if (location() == "ETH"){
-      MFItoRAU_ETH(serodata_output = readSeroData_output(), 
+      MFItoRAU_ETH(sero_data = readSeroData_output(), 
                    plate_list = readPlateLayout_output(), 
                    counts_QC_output = getCountsQC_output())
     }
@@ -878,7 +880,7 @@ shinyServer(function(input, output, session){
   model_plot <- reactive({
     req(mfi_to_rau_output(), readSeroData_output(), location())
     if(location() == "PNG"){
-      plotModel_PNG(mfi_to_rau_output(), readSeroData_output())
+      plotModel(mfi_to_rau_output(), readSeroData_output())
     } else if (location() == "ETH"){
       plotModel_ETH(mfi_to_rau_output(), readSeroData_output())
     }
@@ -1636,7 +1638,7 @@ shinyServer(function(input, output, session){
           # Single master layout
           readPlateLayout(
             plate_layout = plate_file_path, 
-            serodata_output = readSeroData_output()
+            sero_data = readSeroData_output()
           )
         } else if (n_files > 1) {
           # Multiple plate layouts
@@ -1644,15 +1646,15 @@ shinyServer(function(input, output, session){
           
           # Validation
           sheet_names <- names(plate_file_master$data)
-          serodata_output_results <- readSeroData_output()$results
+          sero_data_results <- readSeroData_output()$results
           
-          if (!"Plate" %in% colnames(serodata_output_results)) {
+          if (!"Plate" %in% colnames(sero_data_results)) {
             stop("ERROR: 'Plate' column is missing from readSeroData_output$results.")
           }
           
-          serodata_output_levels <- levels(as.factor(serodata_output_results$Plate))
+          sero_data_levels <- levels(as.factor(sero_data_results$Plate))
           
-          if (all(serodata_output_levels %in% sheet_names)) {
+          if (all(sero_data_levels %in% sheet_names)) {
             message("Plate layouts correctly identified!")
           } else {
             stop("Plate layout sheets and plates labeled in raw data file names do not match. Ensure plate sheets are correctly labeled.")
