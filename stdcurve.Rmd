@@ -2,8 +2,9 @@
 title: "PvSeroApp Serological Assay Quality Control Report"
 date: "`r format(Sys.Date(), '%d-%m-%y')`"
 header-includes:
-   - \usepackage[default]{sourcesanspro}
-   - \usepackage[T1]{fontenc}
+  - \usepackage[default]{sourcesanspro}
+  - \usepackage[T1]{fontenc}
+  - \usepackage{booktabs}
 mainfont: SourceSansPro
 output: 
   pdf_document: default
@@ -61,19 +62,12 @@ check_repats_table_pdf <- params$check_repats_table_pdf
 
 if (is.data.frame(check_repeats_output)) {
   # If it's a table, print it using kable
-  tablel <- check_repats_table_pdf %>% 
-    knitr::kable(
-      format = "latex",
-      align = "l",
-      booktabs = TRUE,
-      longtable = TRUE,
-      linesep = "",
-      ) %>%
-    kableExtra::kable_styling(
-        position = "center",
-        latex_options = c("striped", "repeat_header"),
-        stripe_color = "gray!15"
-      )
+  tablel <- knitr::kable(
+    check_repats_table_pdf,
+    format = "latex",
+    booktabs = TRUE,
+    align = "l"
+  )
   print(tablel)
 } else {
   # If it's text, print it normally
