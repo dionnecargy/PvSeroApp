@@ -221,13 +221,6 @@ logLik(m_MBL)
 ## ----MBL-Colr-ci, echo = TRUE, cache = TRUE-----------------------------------
 (ci_all <- ci(m_MBL))
 
-## ----MBL-orm, echo = TRUE-----------------------------------------------------
-(m_MBL_orm <- orm(as.formula(paste("MBL ~ ", fm)), data = blood))
-### OR and confidence interval for F. XIII 
-### (sign of the coefficient is different in rms::orm and tram::Colr)
-exp(-coef(m_MBL_orm)["F13.Akt.prae"])
-exp(-rev(confint(m_MBL_orm)["F13.Akt.prae",]))
-
 ## ----MBL-Colr-Cesar, echo = TRUE, cache = TRUE--------------------------------
 m_MBL_C <- Colr(as.formula(paste("MBLsurv | VCmode ~ VCmode:(", fm, ")")), 
                 data = blood, bounds = c(0, Inf), support = c(250, 2000))

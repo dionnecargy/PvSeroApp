@@ -401,18 +401,24 @@ corresponding odds ratios, the confidence intervals exclude one:
 (ci_all <- ci(m_MBL))
 @
 
-The same model (although not under interval-censoring, we used the
-raw measurements of blood loss) but with negative log-odds ratios 
-can be estimated as
-<<MBL-orm, echo = TRUE>>=
-(m_MBL_orm <- orm(as.formula(paste("MBL ~ ", fm)), data = blood))
-### OR and confidence interval for F. XIII 
-### (sign of the coefficient is different in rms::orm and tram::Colr)
-exp(-coef(m_MBL_orm)["F13.Akt.prae"])
-exp(-rev(confint(m_MBL_orm)["F13.Akt.prae",]))
-@
-The estimated odds ratio for F.~XIII and it's confidence interval match
-the results reported on above very closely.
+%%% fails under Windows with
+%%%
+%%%--- re-building ‘blood_loss_report.Rnw’ using knitr
+%%%
+%%%fatal Fortran runtime error(/tmp/RtmpLOLCZO/R.INSTALLaccff22fea350/rms/src/ormll.f90:97): Internal error: RUNTIME_CHECK(maskType && maskType->first == TypeCategory::Logical) failed at flang/runtime/transformational.cpp(639)
+%%%Aborted
+%The same model (although not under interval-censoring, we used the
+%raw measurements of blood loss) but with negative log-odds ratios 
+%can be estimated as
+%<<MBL-orm, echo = TRUE>>=
+%(m_MBL_orm <- orm(as.formula(paste("MBL ~ ", fm)), data = blood))
+%### OR and confidence interval for F. XIII 
+%### (sign of the coefficient is different in rms::orm and tram::Colr)
+%exp(-coef(m_MBL_orm)["F13.Akt.prae"])
+%exp(-rev(confint(m_MBL_orm)["F13.Akt.prae",]))
+%@
+%The estimated odds ratio for F.~XIII and it's confidence interval match
+%the results reported on above very closely.
 
 The model was furthermore estimated using mode of delivery as stratum. Thus, 
 two separate models for vaginal delivery and Cesarean section were

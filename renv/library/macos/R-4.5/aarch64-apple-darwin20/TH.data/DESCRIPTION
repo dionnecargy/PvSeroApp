@@ -1,7 +1,7 @@
 Package: TH.data
 Title: TH's Data Archive
-Date: 2025-09-02
-Version: 1.1-4
+Date: 2025-11-17
+Version: 1.1-5
 Authors@R: c(person("Torsten", "Hothorn", role = c("aut", "cre"),
                     email = "Torsten.Hothorn@R-project.org"))
 Description: Contains data sets used in other packages Torsten Hothorn
@@ -13,9 +13,9 @@ LazyData: yes
 VignetteBuilder: knitr
 License: GPL-3
 NeedsCompilation: no
-Packaged: 2025-09-02 08:55:00 UTC; hothorn
+Packaged: 2025-11-17 15:44:06 UTC; hothorn
 Author: Torsten Hothorn [aut, cre]
 Maintainer: Torsten Hothorn <Torsten.Hothorn@R-project.org>
 Repository: CRAN
-Date/Publication: 2025-09-02 11:30:09 UTC
-Built: R 4.5.0; ; 2025-09-03 22:07:34 UTC; unix
+Date/Publication: 2025-11-17 16:50:08 UTC
+Built: R 4.5.2; ; 2025-11-19 04:43:49 UTC; unix
