@@ -1,7 +1,7 @@
 Type: Package
 Package: broom
 Title: Convert Statistical Objects into Tidy Tibbles
-Version: 1.0.11
+Version: 1.0.12
 Authors@R: c(
     person("David", "Robinson", , "admiral.david@gmail.com", role = "aut"),
     person("Alex", "Hayes", , "alexpghayes@gmail.com", role = "aut",
@@ -227,7 +227,7 @@ Collate: 'aaa-documentation-helper.R' 'null-and-default.R' 'aer.R'
         'survival-survfit.R' 'survival-survreg.R' 'systemfit.R'
         'tseries.R' 'utilities.R' 'vars.R' 'zoo.R' 'zzz.R'
 NeedsCompilation: no
-Packaged: 2025-12-03 20:26:44 UTC; emilhvitfeldt
+Packaged: 2026-01-26 22:57:49 UTC; emilhvitfeldt
 Author: David Robinson [aut],
   Alex Hayes [aut] (ORCID: <https://orcid.org/0000-0002-4985-5160>),
   Simon Couch [aut] (ORCID: <https://orcid.org/0000-0001-5676-5107>),
@@ -364,5 +364,10 @@ Author: David Robinson [aut],
   Alex Reinhart [ctb] (ORCID: <https://orcid.org/0000-0002-6658-514X>)
 Maintainer: Emil Hvitfeldt <emil.hvitfeldt@posit.co>
 Repository: CRAN
-Date/Publication: 2025-12-04 12:00:09 UTC
-Built: R 4.5.2; ; 2025-12-04 12:14:28 UTC; unix
+Date/Publication: 2026-01-27 06:10:51 UTC
+Built: R 4.5.2; ; 2026-01-27 07:05:03 UTC; unix
+RemoteType: standard
+RemotePkgRef: broom
+RemoteRef: broom
+RemoteRepos: https://cloud.r-project.org
+RemoteSha: 1.0.12

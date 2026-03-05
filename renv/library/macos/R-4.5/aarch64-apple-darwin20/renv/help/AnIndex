@@ -55,3 +55,4 @@ upgrade	upgrade
 use	embed
 use_python	use_python
 vendor	vendor
+vulns	vulns
