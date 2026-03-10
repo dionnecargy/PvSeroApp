@@ -54,6 +54,57 @@ antibody_model                <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016       <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap                      <- read.csv(here::here("data/platemap.csv"))
 
+# troubleshooting readPlateLayout in shiny 
+
+readPlateLayoutv2 <- function(plate_layout, sero_data) {
+  
+  if (is.null(plate_layout) || !file.exists(plate_layout)) {
+    stop("ERROR: Invalid plate layout file provided.")
+  }
+  
+  sheet_names <- tryCatch({
+    openxlsx::getSheetNames(plate_layout)
+  }, error = function(e) {
+    stop("ERROR: Failed to read sheet names. Ensure the file is a valid Excel file.")
+  })
+  
+  # Step 1: Get the sheet names to confirm
+  sheet_names <- openxlsx::getSheetNames(plate_layout)
+  
+  # Step 2: Read all sheets into plate_list using indices
+  plate_list <- lapply(1:length(sheet_names), function(i) {
+    openxlsx::read.xlsx(plate_layout, sheet = i)
+  })
+  
+  # Step 3: Name each element in the list after the corresponding sheet name
+  names(plate_list) <- sheet_names
+  
+  # Step 4: Check if 'Plate' column exists in sero_data$results
+  antigen_output_results <- sero_data$results
+  
+  if (!"Plate" %in% colnames(antigen_output_results)) {
+    stop("ERROR: 'Plate' column is missing from sero_data$results.")
+  }
+  
+  # Step 5: Extract levels from 'Plate' column
+  antigen_output_levels <- unique(as.character(sero_data$results$Plate))  # Convert factor to character
+  
+  # Step 6: Compare plate names
+  sheet_names_clean <- trimws(sheet_names)
+  
+  plate_levels_clean <- unique(
+    na.omit(trimws(as.character(sero_data$results$Plate)))
+  )
+  
+  if (all(plate_levels_clean %in% sheet_names_clean)) {
+    message("Plate layouts correctly identified!")
+  } else {
+    stop("Plate layout sheets and plates labeled in raw data file names do not match.")
+  }
+  
+  return(plate_list)
+}
+
 ###############################################################################
 # Server
 ###############################################################################
@@ -169,13 +220,16 @@ shinyServer(function(input, output, session){
       )
     )
     colnames(example_data) <- c("Accepted Antigen Names", "Alternative Names")
-    datatable(example_data, 
-              options = list(dom = 't',                    # 't' means only the table (no pagination, search, etc.)
-                             searching = FALSE,            # Disable search box
-                             paging  = FALSE,              # Disable pages box
-                             lengthChange = FALSE          # Disable number of entries dropdown
-              ), 
-              rownames = FALSE)                            # Remove row numbers
+    datatable(
+      example_data, 
+      options = list(
+        dom = 't',                    # 't' means only the table (no pagination, search, etc.)
+        searching = FALSE,            # Disable search box
+        paging  = FALSE,              # Disable pages box
+        lengthChange = FALSE          # Disable number of entries dropdown
+      ), 
+      rownames = FALSE                # Remove row numbers
+    )
   })
   
   # table example for how standards should be included. 
@@ -190,16 +244,43 @@ shinyServer(function(input, output, session){
     # Convert to a tibble with proper row names
     example_standards_final <- as_tibble(example_standards_t, .name_repair = "minimal")
     
-    datatable(example_standards_final, 
-              options = list(dom = 't',                    # 't' means only the table (no pagination, search, etc.)
-                             searching = FALSE,            # Disable search box
-                             paging  = FALSE,              # Disable pages box
-                             lengthChange = FALSE,         # Disable number of entries dropdown
-                             ordering = FALSE              # No column sorting
-              ), 
-              rownames = FALSE)                            # Remove row numbers
+    datatable(
+      example_standards_final, 
+      options = list(
+        dom = 't',                    # 't' means only the table (no pagination, search, etc.)
+        searching = FALSE,            # Disable search box
+        paging  = FALSE,              # Disable pages box
+        lengthChange = FALSE,         # Disable number of entries dropdown
+        ordering = FALSE              # No column sorting
+        ), 
+      rownames = FALSE                # Remove row numbers
+    )
   })
   
+  # table example of the 5-point standard curve that should be included 
+  output$fivept_stds <- renderDT({
+    example_standards_5pt <- data.frame(
+      `Standard Label` = c("S1", "S2", "S3", "S4", "S5"), 
+      `Dilution` =  c("1/50", "1/250", "1/1250", "1/6250", "1/31250")
+    )
+    # Transpose and create the desired tibble
+    example_standards_5pt_t <- t(example_standards_5pt)
+    
+    # Convert to a tibble with proper row names
+    example_standards_final_5pt <- as_tibble(example_standards_5pt_t, .name_repair = "minimal")
+    
+    datatable(
+      example_standards_final_5pt, 
+      options = list(
+        dom = 't',                    # 't' means only the table (no pagination, search, etc.)
+        searching = FALSE,            # Disable search box
+        paging  = FALSE,              # Disable pages box
+        lengthChange = FALSE,         # Disable number of entries dropdown
+        ordering = FALSE              # No column sorting
+      ), 
+      rownames = FALSE                # Remove row numbers
+    )
+  })
   
   # APP RESPONSE: Read imported plate layout file and print template
   plate_image_list <- reactive({
@@ -338,14 +419,18 @@ shinyServer(function(input, output, session){
     ),
     list(
       headline = "Step 4: Choose the platform",
-      content = "Did you run your experiment on a MAGPIX, BioPlex or Intelliflex machine? Please choose the platform here!"
+      content = "Did you run your experiment on a MAGPIX, BioPlex or INTELLIFLEX machine? Please choose the platform here!"
     ),
     list(
-      headline = "Step 5: Uploading your files",
+      headline = "Step 5: Choose the standard curve type", 
+      content = "Did you use a standard curve following a 5 or 10-point dilution? See the tutorial page for more information."
+    ),
+    list(
+      headline = "Step 6: Uploading your files",
       content = "Click the input buttons to add your RAW DATA file/s and your PLATE LAYOUT file!"
     ),
     list(
-      headline = "Step 6: Final step",
+      headline = "Step 7: Final step",
       content = "Press the button to save all of these data to use throughout the app. If you want to change your inputs, you will have to press this button again!"
     ),
     list(
@@ -397,10 +482,11 @@ shinyServer(function(input, output, session){
                           "3" = "#date",
                           "4" = "#experiment_notes",
                           "5" = "#platform",
-                          "6" = "#raw_data",
-                          "7" = "#save_inputs",
-                          "8" = "#resetAll",
-                          "9" = "#target"
+                          "6" = "#std_point",
+                          "7" = "#raw_data",
+                          "8" = "#save_inputs",
+                          "9" = "#resetAll",
+                          "10" = "#target"
       )
       
       req(target_id)
@@ -617,6 +703,31 @@ shinyServer(function(input, output, session){
     req(input$std_point)
     input$std_point
   })
+  
+  magpix_version <- reactive({
+    req(input$magpix_version)  # Ensure platform is selected
+    input$magpix_version
+  })
+  
+  # platform_config <- reactive({
+  #   if (input$platform == "magpix") {
+  #     req(input$magpix_version)
+  #     paste(
+  #       "Platform selected: Magpix.",
+  #       "Software version:", input$magpix_version,
+  #       "- Magpix-specific commands will be used."
+  #     )
+  #   } else if (input$platform == "bioplex") {
+  #     "Platform selected: Bioplex – Bioplex-specific commands will be used."
+  #   } else if (input$platform == "intelliflex") {
+  #     "Platform selected: Intelliflex – Intelliflex-specific commands will be used."
+  #   }
+  # })
+  # 
+  # output$platform_test <- renderText({
+  #   platform_config()
+  # })
+  # 
 
   ###############################################################################
   ## ----- Reactive values to store user inputs ----- 
@@ -624,7 +735,7 @@ shinyServer(function(input, output, session){
   app_data <- reactiveValues()
   
   observeEvent(input$save_inputs, {
-    req(experiment_name(), date(), raw_data(), raw_data_filename(), platform(), plate_layout(), std_point())
+    req(experiment_name(), date(), raw_data(), raw_data_filename(), platform(), plate_layout(), std_point(), magpix_version())
     
     # Store App Data 
     app_data$experiment_name      <- experiment_name()
@@ -634,6 +745,7 @@ shinyServer(function(input, output, session){
     app_data$platform             <- platform()
     app_data$plate_layout         <- plate_layout()
     app_data$std_point            <- std_point()
+    app_data$magpix_version       <- magpix_version()
     
     # Relay message that App Data is "Saved"
     output$notification <- renderUI({
@@ -652,6 +764,7 @@ shinyServer(function(input, output, session){
   raw_data_filename_reactive      <- reactive({ app_data$raw_data_filename })
   platform_reactive               <- reactive({ app_data$platform })
   plate_layout_reactive           <- reactive({ app_data$plate_layout })
+  magpix_version_reactive         <- reactive({ app_data$magpix_version })
   
   ###############################################################################
   ## ----- Run functions only once ----- 
@@ -660,13 +773,16 @@ shinyServer(function(input, output, session){
   # Read Serological Data 
   readSeroData_output <- reactive({
     req(raw_data_reactive(), raw_data_filename_reactive())
-    file_paths <- raw_data_reactive()$datapath
+    
     readSeroData(
-      raw_data = file_paths, 
-      platform = platform_reactive())
+      raw_data = raw_data_reactive()$datapath, 
+      raw_data_filenames = raw_data_filename_reactive(),
+      platform = platform_reactive(),
+      version = magpix_version_reactive()
+    )
+    
   })
   
-  # Read Plate Layout 
   readPlateLayout_output <- reactive({
     req(plate_layout_reactive(), readSeroData_output())
     
@@ -677,29 +793,24 @@ shinyServer(function(input, output, session){
     n_files <- length(plate_file_path)
     
     if (n_files == 1) {
-      # --- Case 1: Single master layout file ---
-      final_plate_layout <- readPlateLayout(
+      # Case 1: Single master layout file
+      readPlateLayoutv2(
         plate_layout = plate_file_path,
         sero_data = readSeroData_output()
       )
       
     } else if (n_files > 1) {
-      # --- Case 2: Multiple plate layouts ---
-      plate_file_master   <- getPlateLayout(plate_file_path)
-      plate_list_path     <- plate_file_master$path
-      
-      final_plate_layout <-  readPlateLayout(
-        plate_layout = plate_list_path,
+      # Case 2: Multiple plate layouts
+      plate_file_master <- getPlateLayout(plate_file_path)
+      readPlateLayoutv2(
+        plate_layout = plate_file_master$path,
         sero_data = readSeroData_output()
       )
-      
-      return(final_plate_layout)
       
     } else {
       stop("No files were uploaded.")
     }
   })
-  
   ###############################################################################
   ## ----- App Responses ----- 
   ###############################################################################
@@ -828,26 +939,31 @@ shinyServer(function(input, output, session){
   # APP RESPONSE: Create standard curves plot
   stdcurve_plot <- reactive({
     req(readSeroData_output(), location(), experiment_name()) 
-    plotStds(readSeroData_output(), location(), experiment_name())
+    plotStds(
+      sero_data = readSeroData_output(), 
+      std_point = std_point(),
+      location = location(), 
+      experiment_name = experiment_name()
+    )
   })
   
   # APP RESPONSE: Creating plate QC plot
   num_facets_qc <- reactive({
-    req(getCounts_output())
-    length(levels(factor(getCounts_output()$Plate)))
+    req(runQC_output())
+    qc_df <- runQC_output()$getCounts_output
+    length(levels(factor(qc_df$Plate)))
   })
   
   # APP RESPONSE: Create plate QC plot
   plateqc_plot <- reactive({
     req(runQC_output(), experiment_name())
-    # getCounts_output <- runQC_output()$ ############################################ this is where i'm up to ! 
-    plotCounts(getCounts_output(), experiment_name()) 
+    plotCounts(runQC_output(), experiment_name()) 
   })
   
   # APP RESPONSE: Create Repeats Check
   check_repeats_output <- reactive({
-    req(processCounts_output())
-    getRepeats(getCounts_output(), processCounts_output(), readPlateLayout_output())
+    req(runQC_output(), readPlateLayout_output())
+    getRepeats(runQC_output(), readPlateLayout_output())
   })
   
   # APP RESPONSE: Create blanks plot
@@ -858,15 +974,21 @@ shinyServer(function(input, output, session){
   
   # APP RESPONSE: Run MFI to RAU 
   mfi_to_rau_output <- reactive({
-    req(readSeroData_output(), readPlateLayout_output(), location(), getCountsQC_output())
+    req(readSeroData_output(), readPlateLayout_output(), runQC_output(), location(), std_point())
     if(location() == "PNG"){
-      MFItoRAU(sero_data = readSeroData_output(), 
-                   plate_list = readPlateLayout_output(), 
-                   counts_QC_output = getCountsQC_output())
+      MFItoRAU(
+        sero_data = readSeroData_output(), 
+        plate_list = readPlateLayout_output(), 
+        qc_results = runQC_output(),
+        std_point = std_point()
+      )
     } else if (location() == "ETH"){
-      MFItoRAU_ETH(sero_data = readSeroData_output(), 
-                   plate_list = readPlateLayout_output(), 
-                   counts_QC_output = getCountsQC_output())
+      MFItoRAU_Adj(
+        sero_data = readSeroData_output(), 
+        plate_list = readPlateLayout_output(), 
+        qc_results = runQC_output(),
+        std_point = std_point()
+      )
     }
   })
   
@@ -876,7 +998,7 @@ shinyServer(function(input, output, session){
     if(location() == "PNG"){
       plotModel(mfi_to_rau_output(), readSeroData_output())
     } else if (location() == "ETH"){
-      plotModel_ETH(mfi_to_rau_output(), readSeroData_output())
+      plotModel_Adj(mfi_to_rau_output(), readSeroData_output())
     }
   })
   
@@ -918,15 +1040,17 @@ shinyServer(function(input, output, session){
   output$check_repeats_table <- DT::renderDataTable({
     req(check_repeats_output())
     if (is.data.frame(check_repeats_output())) {
-      datatable(check_repeats_output(), 
-                options = list(dom = 't',                    # 't' means only the table (no pagination, search, etc.)
-                               searching = FALSE,            # Disable search box
-                               paging  = FALSE,              # Disable pages box
-                               lengthChange = FALSE,         # Disable number of entries dropdown
-                               scrollX = TRUE
-                ), 
-                rownames = FALSE)                            # Remove row numbers
-      
+      datatable(
+        check_repeats_output(), 
+        options = list(
+          dom = 't',                    # 't' means only the table (no pagination, search, etc.)
+          searching = FALSE,            # Disable search box
+          paging  = FALSE,              # Disable pages box
+          lengthChange = FALSE,         # Disable number of entries dropdown
+          scrollX = TRUE
+          ), 
+        rownames = FALSE                # Remove row numbers
+      )
     }
   })
   
@@ -1036,9 +1160,11 @@ shinyServer(function(input, output, session){
     if(platform_reactive() == "magpix") {
       
       calibration <- raw_data_info_saved() %>%
-        filter(Program == "Last CAL Calibration" |
-                 Program == "Last VER Verification" |
-                 Program == "Last Fluidics Test") %>%
+        filter(
+          Program == "Last CAL Calibration" |
+            Program == "Last VER Verification" |
+            Program == "Last Fluidics Test"
+        ) %>%
         dplyr::select(Plate, `Recent Calibration and Verification results` = Program, Result = xPONENT)
       paste(paste0(calibration$Plate, ": ", calibration$`Recent Calibration and Verification results`, ": ", calibration$`Result`), collapse = ", ")
       
@@ -1047,9 +1173,11 @@ shinyServer(function(input, output, session){
     } else if(platform_reactive() == "intelliflex") {
       
       calibration <- raw_data_info_saved() %>%
-        filter(Program == "Last Calibration" |
-                 Program == "Last Verification" |
-                 Program == "Last Fluidics Test") %>%
+        filter(
+          Program == "Last Calibration" |
+            Program == "Last Verification" |
+            Program == "Last Fluidics Test"
+        ) %>%
         dplyr::select(Plate, `Recent Calibration and Verification results` = Program, Result = xPONENT)
       paste(paste0(calibration$Plate, ": ", calibration$`Recent Calibration and Verification results`, ": ", calibration$`Result`), collapse = ", ")
       
@@ -1149,8 +1277,10 @@ shinyServer(function(input, output, session){
     std_output_1 <- readSeroData_output()$stds
     std_output_2 <- readSeroData_output()$blanks
     std_output_all <- 
-      dplyr::bind_rows(std_output_1 %>% dplyr::mutate(Std = "StandardCurve"), 
-                       std_output_2 %>% dplyr::mutate(Std = "Blanks")) %>% 
+      dplyr::bind_rows(
+        std_output_1 %>% dplyr::mutate(Std = "StandardCurve"), 
+        std_output_2 %>% dplyr::mutate(Std = "Blanks")
+      ) %>% 
       dplyr::mutate(Sample = factor(Sample, levels = unique(Sample[order(as.numeric(str_extract(Sample, "\\d+")))]))) %>% # reorder by number
       dplyr::arrange(Plate, Std, Sample) %>% 
       dplyr::select(-Std)
@@ -1378,7 +1508,7 @@ shinyServer(function(input, output, session){
   
   # Run Classification 
   classified_data <- reactive({
-    req(mfi_to_rau_output(), algorithm(), sens_spec(), getCountsQC_output())
+    req(mfi_to_rau_output(), algorithm(), sens_spec(), runQC_output())
     results_of_classification <- classifyResults(
       # Step 1: specify data to classify.
       mfi_to_rau_output = mfi_to_rau_output(),
@@ -1386,15 +1516,16 @@ shinyServer(function(input, output, session){
       algorithm_type = algorithm(),
       # Step 3: Select sensitivity/specificity of interest. 
       sens_spec = sens_spec(), 
-      # Step 4: Add the final QC Counts Output dataset.
-      counts_QC_output = getCountsQC_output())
+      # Step 4: Add the final QC Results Output dataset.
+      qc_results = runQC_output()
+    )
     
     #############################################################################
     # Rename pred_class_max to the threshold chosen
     #############################################################################
     
-    new_name <- if (sens_spec() == "maximised") {
-      "maximised_class"
+    new_name <- if (sens_spec() == "balanced") {
+      "balanced_class"
     } else if (sens_spec() == "85% sensitivity") {
       "85_sensitivity_class"
     } else if (sens_spec() == "90% sensitivity") {
@@ -1479,8 +1610,8 @@ shinyServer(function(input, output, session){
   
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
-    req(mfi_to_rau_output(), algorithm(),  getCountsQC_output())
-    sens_spec_all <- c("maximised", "85% sensitivity", "90% sensitivity", "95% sensitivity", 
+    req(mfi_to_rau_output(), algorithm(),  runQC_output())
+    sens_spec_all <- c("balanced", "85% sensitivity", "90% sensitivity", "95% sensitivity", 
                        "85% specificity", "90% specificity", "95% specificity")
     
     all_classifications <- purrr::map_dfr(sens_spec_all, ~{
@@ -1488,7 +1619,7 @@ shinyServer(function(input, output, session){
         mfi_to_rau_output = mfi_to_rau_output(),
         algorithm_type = algorithm(),
         sens_spec = .x,
-        counts_QC_output = getCountsQC_output()
+        qc_results = runQC_output()
       ) %>%
         as.data.frame() %>%  # Ensure it's a data frame
         mutate(sens_spec = .x)  # Add the sens_spec column
@@ -1504,10 +1635,15 @@ shinyServer(function(input, output, session){
     classified_data_all() %>% 
       group_by(sens_spec, pred_class_max) %>% 
       summarise(n = n()) %>% 
-      pivot_wider(names_from = pred_class_max, values_from = n) %>% 
-      dplyr::select(`Sensitivity/Specificity` = sens_spec, 
-                    Seropositive = seropositive, 
-                    Seronegative = seronegative)
+      pivot_wider(
+        names_from = pred_class_max, 
+        values_from = n
+      ) %>% 
+      dplyr::select(
+        `Sensitivity/Specificity` = sens_spec, 
+        Seropositive = seropositive, 
+        Seronegative = seronegative
+      )
     
   })
   
@@ -1517,38 +1653,58 @@ shinyServer(function(input, output, session){
   
   output$allclassifytable <- renderDataTable({
     df <- allclassify_df() %>% 
-      mutate(`Sensitivity/Specificity` = factor(`Sensitivity/Specificity`, 
-                                                levels = c("maximised",
-                                                           "85% sensitivity", "90% sensitivity", "95% sensitivity",
-                                                           "85% specificity", "90% specificity", "95% specificity"), 
-                                                labels = c("Maximised: 81% Sensitivity / 81% Specificity",
-                                                           "85% Sensitivity / 75% Specificity",
-                                                           "90% Sensitivity / 61.6% Specificity",
-                                                           "95% Sensitivity / 43.4% Specificity",
-                                                           "75% Sensitivity / 85% Specificity", 
-                                                           "67.5% Sensitivity / 90% Specificity", 
-                                                           "52.4% Sensitivity / 95% Specificity"))) %>% 
+      mutate(
+        `Sensitivity/Specificity` = factor(
+          `Sensitivity/Specificity`, 
+          levels = c(
+            "balanced", 
+            "85% sensitivity", 
+            "90% sensitivity", 
+            "95% sensitivity",
+            "85% specificity",
+            "90% specificity",
+            "95% specificity"
+          ), 
+          labels = c(
+            "Balanced: 81% Sensitivity / 81% Specificity",
+            "85% Sensitivity / 75% Specificity",
+            "90% Sensitivity / 61.6% Specificity",
+            "95% Sensitivity / 43.4% Specificity",
+            "75% Sensitivity / 85% Specificity", 
+            "67.5% Sensitivity / 90% Specificity", 
+            "52.4% Sensitivity / 95% Specificity"
+          )
+        )
+      ) %>% 
       arrange(`Sensitivity/Specificity`)
     
-    df$Order <- as.numeric(factor(df$`Sensitivity/Specificity`, 
-                                  levels = c("Maximised: 81% Sensitivity / 81% Specificity",
-                                             "85% Sensitivity / 75% Specificity",
-                                             "90% Sensitivity / 61.6% Specificity",
-                                             "95% Sensitivity / 43.4% Specificity",
-                                             "75% Sensitivity / 85% Specificity",
-                                             "67.5% Sensitivity / 90% Specificity",
-                                             "52.4% Sensitivity / 95% Specificity")))
+    df$Order <- as.numeric(
+      factor(
+        df$`Sensitivity/Specificity`, 
+        levels = c(
+          "Balanced: 81% Sensitivity / 81% Specificity",
+          "85% Sensitivity / 75% Specificity",
+          "90% Sensitivity / 61.6% Specificity",
+          "95% Sensitivity / 43.4% Specificity",
+          "75% Sensitivity / 85% Specificity",
+          "67.5% Sensitivity / 90% Specificity",
+          "52.4% Sensitivity / 95% Specificity"
+        )
+      )
+    )
     
     df <- df[order(df$Order), ]  # <-- Enforce order
     
-    datatable(df %>% dplyr::select(-Order), selection = "single",
-              options = list(
-                pageLength = 7, 
-                dom = 't',
-                searching = FALSE,
-                lengthChange = FALSE
-              ), 
-              rownames = FALSE
+    datatable(
+      df %>%  dplyr::select(-Order), 
+      selection = "single",
+      options = list(
+        pageLength = 7, 
+        dom = 't',
+        searching = FALSE,
+        lengthChange = FALSE
+        ), 
+      rownames = FALSE
     )
   })
   
@@ -1601,9 +1757,11 @@ shinyServer(function(input, output, session){
   })
   
   output$bead_count_plotly <- renderPlotly({
-    req(getAntigenCounts_output())
-    plotly_bead_count <- plotBeadCounts(getAntigenCounts_output())
-    plotly_bead_count_1 <- ggplotly(plotly_bead_count, tooltip = "text") %>%
+    req(runQC_output())
+    plotly_bead_count <- plotBeadCounts(runQC_output())
+    plotly_bead_count_1 <- ggplotly(
+        plotly_bead_count, tooltip = "text"
+      ) %>%
       layout(
         showlegend = TRUE, 
         legend = list(tracegroupgap = 0), 
