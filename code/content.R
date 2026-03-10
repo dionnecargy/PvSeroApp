@@ -884,18 +884,10 @@ algorithm_page <- function() {
                                       Increasing <b>sensitivity</b> allows us to improve the ability to correctly identify true positive cases, while increasing <b>specificity</b> improves the ability to correctly identify true negative cases.")),
         Text(variant = "medium", HTML(r"(In our <a href='#model' class-`link`>classification page</a>, we have provided multiple options for you to choose which classification you would like to run:<ul>
                                         <li><b>Balanced: 81% Sensitivity / 81% Specificity</b>: Sensitity and specificity are both at their highest</li>
-                                        <li><b>85% Sensitivity / 75% Specificity</b>: 85% sensitivity has an <span style="color:#107C10; font-weight: bold">increased*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but 
-                                              <span style="color:#C50F1F; font-weight: bold">lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
                                         <li><b>90% Sensitivity / 61.6% Specificity</b>: 90% sensitivity has an <span style="color:#107C10; font-weight: bold">even better*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but
                                              <span style="color:#C50F1F; font-weight: bold">even lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
-                                        <li><b>95% Sensitivity / 43.4% Specificity</b>: 95% sensitivity has a <span style="color:#107C10; font-weight: bold">much greater*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but
-                                              <span style="color:#C50F1F; font-weight: bold">much lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
-                                        <li><b>75% Sensitivity / 85% Specificity</b>: 85% specificity is chosen a <span style="color:#C50F1F; font-weight: bold">lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
-                                      an <span style="color:#107C10; font-weight: bold">increased**</span> ability to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                         <li><b>67.5% Sensitivity / 90% Specificity</b>: 90% specificity is chosen an <span style="color:#C50F1F; font-weight: bold">even lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
                                       an <span style="color:#107C10; font-weight: bold">even greater**</span> ability to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
-                                        <li><b>52.4% Sensitivity / 95% Specificity</b>: 95% specificity is chosen a <span style="color:#C50F1F; font-weight: bold">much lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but
-                                      a <span style="color:#107C10; font-weight: bold">much greater**</span> resolution to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                     </ul>)")), 
         Text(variant = "medium", "* = Than the sensitivity in the balanced threshold; ** = Than the specificity in the balanced threshold"), 
         renderTwoCols(
@@ -1043,17 +1035,6 @@ input_page <- function() {
                       style = "margin-left: 20px; margin-top: 10px;"
                     )
                   ),
-                  # Confirmation message about which platform is used (used in troubleshooting)
-                  # div(
-                  #   textOutput("platform_test"),
-                  #   style = "
-                  #     margin-top: 15px;
-                  #     padding: 10px;
-                  #     background-color: #f3f2f1;
-                  #     border-left: 4px solid #0078d4;
-                  #     font-style: italic;
-                  #   "
-                  # ),
                   # Input for standard curve only or not  (optional)
                   Label(HTML("5. Are you only looking at the standard curve? <span style='color:#a4262c;'>*</span>")),
                   div(
@@ -1329,12 +1310,12 @@ model_page <- function() {
               label = NULL,
               choices = list(
                 "Balanced: 81% Sensitivity / 81% Specificity" = "balanced",
-                "85% Sensitivity / 75% Specificity" = "85% sensitivity",
+                # "85% Sensitivity / 75% Specificity" = "85% sensitivity",
                 "90% Sensitivity / 61.6% Specificity" = "90% sensitivity",
-                "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
-                "75% Sensitivity / 85% Specificity" = "85% specificity",
-                "67.5% Sensitivity / 90% Specificity" = "90% specificity",
-                "52.4% Sensitivity / 95% Specificity" = "95% specificity"
+                # "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
+                # "75% Sensitivity / 85% Specificity" = "85% specificity",
+                "67.5% Sensitivity / 90% Specificity" = "90% specificity"#,
+                # "52.4% Sensitivity / 95% Specificity" = "95% specificity"
               ),
               selected = "balanced"
             ),

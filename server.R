@@ -1611,8 +1611,15 @@ shinyServer(function(input, output, session){
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
     req(mfi_to_rau_output(), algorithm(),  runQC_output())
-    sens_spec_all <- c("balanced", "85% sensitivity", "90% sensitivity", "95% sensitivity", 
-                       "85% specificity", "90% specificity", "95% specificity")
+    sens_spec_all <- c(
+      "balanced", 
+      # "85% sensitivity", 
+      "90% sensitivity", 
+      # "95% sensitivity", 
+      # "85% specificity", 
+      "90% specificity"#, 
+      # "95% specificity"
+    )
     
     all_classifications <- purrr::map_dfr(sens_spec_all, ~{
       classifyResults(
@@ -1658,21 +1665,21 @@ shinyServer(function(input, output, session){
           `Sensitivity/Specificity`, 
           levels = c(
             "balanced", 
-            "85% sensitivity", 
+            # "85% sensitivity", 
             "90% sensitivity", 
-            "95% sensitivity",
-            "85% specificity",
-            "90% specificity",
-            "95% specificity"
+            # "95% sensitivity",
+            # "85% specificity",
+            "90% specificity"#,
+            # "95% specificity"
           ), 
           labels = c(
             "Balanced: 81% Sensitivity / 81% Specificity",
-            "85% Sensitivity / 75% Specificity",
+            # "85% Sensitivity / 75% Specificity",
             "90% Sensitivity / 61.6% Specificity",
-            "95% Sensitivity / 43.4% Specificity",
-            "75% Sensitivity / 85% Specificity", 
-            "67.5% Sensitivity / 90% Specificity", 
-            "52.4% Sensitivity / 95% Specificity"
+            # "95% Sensitivity / 43.4% Specificity",
+            # "75% Sensitivity / 85% Specificity", 
+            "67.5% Sensitivity / 90% Specificity"#, 
+            # "52.4% Sensitivity / 95% Specificity"
           )
         )
       ) %>% 
@@ -1683,12 +1690,12 @@ shinyServer(function(input, output, session){
         df$`Sensitivity/Specificity`, 
         levels = c(
           "Balanced: 81% Sensitivity / 81% Specificity",
-          "85% Sensitivity / 75% Specificity",
+          # "85% Sensitivity / 75% Specificity",
           "90% Sensitivity / 61.6% Specificity",
-          "95% Sensitivity / 43.4% Specificity",
-          "75% Sensitivity / 85% Specificity",
-          "67.5% Sensitivity / 90% Specificity",
-          "52.4% Sensitivity / 95% Specificity"
+          # "95% Sensitivity / 43.4% Specificity",
+          # "75% Sensitivity / 85% Specificity",
+          "67.5% Sensitivity / 90% Specificity"#,
+          # "52.4% Sensitivity / 95% Specificity"
         )
       )
     )
