@@ -1,3 +1,17 @@
+# later 1.4.7
+
+* Fixed #256: compilation failure with glibc >= 2.43 and GCC >= 15, caused by the C11 `once_flag` type now being defined in `<stdlib.h>` under C23. Renamed internal tinycthread symbols to avoid the namespace collision (#257).
+
+# later 1.4.6
+
+* Improved responsiveness when idle at the R console on POSIX systems (#251).
+
+* Fixes #249: Moved the contents of `inst/include/later.h` into `later_api.h` to ensure R headers are not included before Rcpp headers when Rcpp auto-includes `$PACKAGE.h` in RcppExports.cpp. The public API header remains `later_api.h` (#250).
+
+# later 1.4.5
+
+* Now requires R >= 3.5.0 (for `R_UnwindProtect()`) and Rcpp >= 1.0.10. Removed legacy non-unwind-protect code paths that were previously used as a fallback on older R versions (#241).
+
 # later 1.4.4
 
 * Fixed timings in a test (#237). No user-facing changes.

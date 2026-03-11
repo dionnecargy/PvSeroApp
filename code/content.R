@@ -113,7 +113,8 @@ tutorial_page <- function() {
                     </ul>The application expects standards to start with "S" and blanks to start with "B", but everything else with a label will be considered an unknown sample.
                     If you have other types of samples, for example a positive control, you can use a different sample label to the other unknown study samples
                     (i.e. "PositiveControl" in addition to the "ABC" study codes).)")),
-                fluentPage(Text(variant = "medium", "The standards S1-10 correspond to the following dilution concentrations:"), DTOutput("standards")),
+                fluentPage(Text(variant = "medium", "If using the 10-point standard curve, the standards S1-10 correspond to the following dilution concentrations:"), DTOutput("standards")),
+                fluentPage(Text(variant = "medium", "If using the 5-point standard curve, the standards S1-5 correspond to the following dilution concentrations:"), DTOutput("fivept_stds")),
                 MessageBar(messageBarType = 3, "Make sure that there are no extra cells filled out other than the plate wells and sample names. You can use the example plate layout as a template to fill 
                     in with your sample details."),
                 Text(variant = "medium", "If you downloaded the example plate layout, it should look like this, otherwise make sure your plate layout looks similar:"),
@@ -628,8 +629,8 @@ tutorial_page <- function() {
               id = "tutorial/data_vis/class_boxplot",
               title = "7.1. Relative Antibody Units (RAU) per Antigen stratified by Classification", 
               content = list(
-                Text(variant = "medium", "Here are the results of all classification thresholds explored in the PvSeroApp: maximised, 85%, 90% and 95% sensitivity, 85%, 90% and 95% specificity. The N's for the random forest model classifications based on
-                     these classifications are displayed. You can visualise the RAU values for seropositive and seronegative isolates for each threshold by clicking on the threshold of interest (shown in blue here: clicking on the maximised threshold) and then 
+                Text(variant = "medium", "Here are the results of all classification thresholds explored in the PvSeroApp: balanced, 85%, 90% and 95% sensitivity, 85%, 90% and 95% specificity. The N's for the random forest model classifications based on
+                     these classifications are displayed. You can visualise the RAU values for seropositive and seronegative isolates for each threshold by clicking on the threshold of interest (shown in blue here: clicking on the balanced threshold) and then 
                      visualising the boxplot (median, min and max RAU IQR values)."),
                 p(),
                 Image(src = "2_tutorial/7.1_datavis_tute_1.png", width = "auto", height = "auto")
@@ -882,31 +883,23 @@ algorithm_page <- function() {
         Text(variant = "medium", HTML("The Receiver Operator Characteristic (ROC) Curve is an indicator of the trade-off between a classification algorithm's sensitivity and specificity.
                                       Increasing <b>sensitivity</b> allows us to improve the ability to correctly identify true positive cases, while increasing <b>specificity</b> improves the ability to correctly identify true negative cases.")),
         Text(variant = "medium", HTML(r"(In our <a href='#model' class-`link`>classification page</a>, we have provided multiple options for you to choose which classification you would like to run:<ul>
-                                        <li><b>Maximised: 81% Sensitivity / 81% Specificity</b>: Sensitity and specificity are both at their highest</li>
-                                        <li><b>85% Sensitivity / 75% Specificity</b>: 85% sensitivity has an <span style="color:#107C10; font-weight: bold">increased*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but 
-                                              <span style="color:#C50F1F; font-weight: bold">lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
+                                        <li><b>Balanced: 81% Sensitivity / 81% Specificity</b>: Sensitity and specificity are both at their highest</li>
                                         <li><b>90% Sensitivity / 61.6% Specificity</b>: 90% sensitivity has an <span style="color:#107C10; font-weight: bold">even better*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but
                                              <span style="color:#C50F1F; font-weight: bold">even lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
-                                        <li><b>95% Sensitivity / 43.4% Specificity</b>: 95% sensitivity has a <span style="color:#107C10; font-weight: bold">much greater*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but
-                                              <span style="color:#C50F1F; font-weight: bold">much lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
-                                        <li><b>75% Sensitivity / 85% Specificity</b>: 85% specificity is chosen a <span style="color:#C50F1F; font-weight: bold">lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
-                                      an <span style="color:#107C10; font-weight: bold">increased**</span> ability to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                         <li><b>67.5% Sensitivity / 90% Specificity</b>: 90% specificity is chosen an <span style="color:#C50F1F; font-weight: bold">even lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
                                       an <span style="color:#107C10; font-weight: bold">even greater**</span> ability to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
-                                        <li><b>52.4% Sensitivity / 95% Specificity</b>: 95% specificity is chosen a <span style="color:#C50F1F; font-weight: bold">much lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but
-                                      a <span style="color:#107C10; font-weight: bold">much greater**</span> resolution to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                     </ul>)")), 
-        Text(variant = "medium", "* = Than the sensitivity in the maximised threshold; ** = Than the specificity in the maximised threshold"), 
+        Text(variant = "medium", "* = Than the sensitivity in the balanced threshold; ** = Than the specificity in the balanced threshold"), 
         renderTwoCols(
           first_col = list(
             Image(src = "3_algorithm/roc_longitudinal.png", width = "auto", height = "auto"), 
             Text(variant = "small", HTML(r"(Figure 1. Receiver Operating Characteristic (ROC) curves for the random forest classification algorithm thrained on the Thailand, Solomon Islands, Brazil and Australia serological data. The Area under the ROC (AUC) is 0.874. 
-                 The red dashed lines are provided to highlight the "maximised" sensitivity and specificity according to the "maximised" random forest votes threshold.)"))
+                 The red dashed lines are provided to highlight the "balanced" sensitivity and specificity according to the "balanced" random forest votes threshold.)"))
           ),
           
           second_col = list(
             Image(src = "3_algorithm/rf_votes_sens_spec.png", width = "auto", height = "auto"), 
-            Text(variant = "small", HTML(r"(Figure 2. Random forest votes threshold for the sensitivity and specificity values. The value where sensitivity and specificity overlap is known as the "maximised" random forest votes threshold (or "maximised threshold" for short).)"))
+            Text(variant = "small", HTML(r"(Figure 2. Random forest votes threshold for the sensitivity and specificity values. The value where sensitivity and specificity overlap is known as the "balanced" random forest votes threshold (or "balanced threshold" for short).)"))
           )
         ),
         p(),
@@ -916,7 +909,7 @@ algorithm_page <- function() {
             Text(variant = "medium", HTML(r"(The confusion matrix provides a measure of the classifier's accuracy and is a 2x2 table of the "Truth" from our longitudinal dataset (columns) and the models's "Prediction" when we classify these data (rows)
                                       based on our trained model. The Top Left are the <span style="color:#9373C0; font-weight: bold">True Positives</span> and the Bottom Right are the <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>. )")),
             p(),
-            Text(variant = "medium", HTML(r"(In our dataset, for the "maximised" threshold, 366 individuals of 780 were correctly identified as "seropositive", while 1,769 of 1,855 were correctly identified as "seronegative". 
+            Text(variant = "medium", HTML(r"(In our dataset, for the "balanced" threshold, 366 individuals of 780 were correctly identified as "seropositive", while 1,769 of 1,855 were correctly identified as "seronegative". 
                                           The <b>PPV</b> is 0.469, <b>NPV</b> is 0.954, indicating that this model (a) may result in many false positives (b) and when the test result is <b>negative</b>, it is very likely that the individual truly does not have a recent infection.
                                           This is important in <b>low transmission</b> of <em>P. vivax</em> settings where the prevalence is low (e.g., in hypendemic countries where parasite rate is 0-10% in children aged 2-9 years as per the 
                                           <a href='https://www.who.int/publications/i/item/9789240038400' class-`link`>World Health Organisation Terminology, 2021</a>), therefore the rate of false positives is expected (low PPV). Here we are able to define the majority of 
@@ -993,6 +986,7 @@ input_page <- function() {
               div(
                 tokens = list(childrenGap = 15),
                 children = list(
+                  # Input experiment name (default: experiment1)
                   TextField.shinyInput(
                     inputId = "experiment_name",
                     label = "1. Enter your Experiment Name:",
@@ -1001,6 +995,7 @@ input_page <- function() {
                     required = TRUE,
                     styles = list(root = list(width = 300))
                   ),
+                  # Input the date (default: today's date)
                   DatePicker.shinyInput(
                     inputId = "date",
                     placeholder = Sys.Date(),
@@ -1009,21 +1004,38 @@ input_page <- function() {
                     isRequired = TRUE,
                     style = list(width = 300)
                   ),
+                  # Input the date (optional)
                   TextField.shinyInput(
                     inputId = "experiment_notes",
                     label = "3. Enter any Experiment Notes:",
                     placeholder = "Enter experiment details/notes here",
                     styles = list(root = list(width = 300))
                   ),
+                  # Input the platform used (default: magpix)
                   Label(HTML("4. Select Platform: <span style='color:#a4262c;'>*</span>")),
                   div(
                     radioButtons(
                       "platform",
                       label = NULL,
-                      choices = list("Magpix" = "magpix", "Bioplex" = "bioplex", "Intelliflex" = "intelliflex"),
+                        choices = list("Bio-Plex" = "bioplex", "MAGPIX" = "magpix", "INTELLIFLEX" = "intelliflex"),
                       selected = "magpix"),
                     style = "margin-top: 10px;"
-                  ),                  
+                  ), 
+                  # Only shown when Magpix is selected
+                  conditionalPanel(
+                    condition = "input.platform == 'magpix'",
+                    Label("Magpix software version"),
+                    div(
+                      radioButtons(
+                        "magpix_version",
+                        label = NULL,
+                        choices = c("4.2", "4.3"),
+                        selected = "4.2"
+                      ),
+                      style = "margin-left: 20px; margin-top: 10px;"
+                    )
+                  ),
+                  # Input for standard curve only or not  (optional)
                   Label(HTML("5. Are you only looking at the standard curve? <span style='color:#a4262c;'>*</span>")),
                   div(
                     radioButtons(
@@ -1032,16 +1044,18 @@ input_page <- function() {
                       choices = list("Yes", "No"),
                       selected = "No"),
                     style = "margin-top: 10px;"
-                  )#,
-                  # Label(HTML("6. What type of standard curve are you using? <span style='color:#a4262c;'>*</span>")),
-                  # div(
-                  #   radioButtons(
-                  #     "std_point",
-                  #     label = NULL,
-                  #     choices = list("5-point" = 5, "10-point" = 10),
-                  #     selected = "No"),
-                  #   style = "margin-top: 10px;"
-                  # )
+                  ),
+                  # Input type of standard curve (default: 10-point)
+                  Label(HTML("6. What type of standard curve are you using? <span style='color:#a4262c;'>*</span>")),
+                  div(
+                    radioButtons(
+                      "std_point",
+                      label = NULL,
+                      choices = list("5-point" = 5, "10-point" = 10),
+                      selected = 10
+                    ),
+                    style = "margin-top: 10px;"
+                  )
                 )
               )
             ), 
@@ -1049,14 +1063,14 @@ input_page <- function() {
               div(
                 tokens = list(childrenGap = 15),
                 children = list(
-                  Label(HTML("6. Upload Files: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("7. Upload Files: <span style='color:#a4262c;'>*</span>")),
                   Text(variant = "medium", "Upload Raw Data Files (.xlsx or .csv):"),
                   fileInput("raw_data", label = NULL, multiple = TRUE, accept = c(".csv", ".xlsx"), buttonLabel = NULL),
                   uiOutput("uploadMessage1"),  # Output to display the success message
                   Text(variant = "medium", "Upload Plate Layout (.xlsx):"),
                   fileInput("plate_layout", label = NULL, multiple = TRUE, accept = ".xlsx", buttonLabel = NULL),
                   uiOutput("uploadMessage2"), # Output to display the success message
-                  Label(HTML("7. Save Inputs: <span style='color:#a4262c;'>*</span>")),
+                  Label(HTML("8. Save Inputs: <span style='color:#a4262c;'>*</span>")),
                   div(
                     style = "margin-bottom: 10px;",  # Space for the text above the button
                     PrimaryButton.shinyInput(
@@ -1218,7 +1232,7 @@ check_page <- function() {
       ), 
       PivotItem(
         headerText = "Sample Results",
-        MessageBar("The table below displays the RAU conversions and is interactive (i.e., you can search and filter as required), go to the next tab to download your processed data."), 
+        MessageBar("The table below displays the RAU conversions and is interactive (i.e., you can search and filter as required). Click above to download your processed data."), 
         DT::dataTableOutput("results")
       )
     )
@@ -1295,15 +1309,15 @@ model_page <- function() {
               "sens_spec",
               label = NULL,
               choices = list(
-                "Maximised: 81% Sensitivity / 81% Specificity" = "maximised",
-                "85% Sensitivity / 75% Specificity" = "85% sensitivity",
+                "Balanced: 81% Sensitivity / 81% Specificity" = "balanced",
+                # "85% Sensitivity / 75% Specificity" = "85% sensitivity",
                 "90% Sensitivity / 61.6% Specificity" = "90% sensitivity",
-                "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
-                "75% Sensitivity / 85% Specificity" = "85% specificity",
-                "67.5% Sensitivity / 90% Specificity" = "90% specificity",
-                "52.4% Sensitivity / 95% Specificity" = "95% specificity"
+                # "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
+                # "75% Sensitivity / 85% Specificity" = "85% specificity",
+                "67.5% Sensitivity / 90% Specificity" = "90% specificity"#,
+                # "52.4% Sensitivity / 95% Specificity" = "95% specificity"
               ),
-              selected = "maximised"
+              selected = "balanced"
             ),
             style = "margin-top: 10px;"
           )
@@ -1387,8 +1401,8 @@ apphistory_page <- function() {
   fluentPage(
     Text(variant = "xxLarge", "PvSeroApp Version History"),
     Separator(),
-    Image(src = "4_feedback/app_history.png", width = "800px", height = "auto"),
-    p(),
+    # Image(src = "4_feedback/app_history.png", width = "800px", height = "auto"),
+    # p(),
     Text(variant = "large", HTML("<b>v0</b>")),
     Text(variant = "medium", "All version numbers starting with 0 indicate working releases where the developer was making updates regularly and troubleshooting features. The classification algorithm remains the same as version 1.0.0 onwards and each future release will be defined by the algorithm updates."),
     p(),
@@ -1438,6 +1452,15 @@ apphistory_page <- function() {
               <li>Fixed typos throughout the application</li>
               <li>Added multiple plate layout capability inputs (see pull request #10)</li>
               <li>All functions are now solely from the SeroTrackR R package</li>
+              </ul>
+         )")),    
+    p(),
+    Text(variant = "large", HTML("<b>v1.5.0.</b>")),
+    Text(variant = "medium", 
+         HTML(r"(This new release includes:<ul>
+              <li>Added xPONENT software compatibility to the application</li>
+              <li>Added standard curve types as an input to the application</li>
+              <li>Updated functions to be compatible with SeroTrackR v1.0.0</li>
               </ul>
          )"))
   )

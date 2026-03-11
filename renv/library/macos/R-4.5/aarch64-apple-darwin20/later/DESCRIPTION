@@ -2,9 +2,10 @@ Type: Package
 Package: later
 Title: Utilities for Scheduling Functions to Execute Later with Event
         Loops
-Version: 1.4.4
+Version: 1.4.7
 Authors@R: c(
-    person("Winston", "Chang", , "winston@posit.co", role = "aut"),
+    person("Winston", "Chang", , "winston@posit.co", role = "aut",
+           comment = c(ORCID = "0000-0002-1576-2126")),
     person("Joe", "Cheng", , "joe@posit.co", role = "aut"),
     person("Charlie", "Gao", , "charlie.gao@posit.co", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-0750-061X")),
@@ -21,18 +22,20 @@ Description: Executes arbitrary R or C functions some time after the
 License: MIT + file LICENSE
 URL: https://later.r-lib.org, https://github.com/r-lib/later
 BugReports: https://github.com/r-lib/later/issues
-Imports: Rcpp (>= 0.12.9), rlang
-Suggests: knitr, nanonext, rmarkdown, testthat (>= 3.0.0)
+Depends: R (>= 3.5)
+Imports: Rcpp (>= 1.0.10), rlang
+Suggests: knitr, nanonext, promises, rmarkdown, testthat (>= 3.0.0)
 LinkingTo: Rcpp
 VignetteBuilder: knitr
+Config/build/compilation-database: true
 Config/Needs/website: tidyverse/tidytemplate
 Config/testthat/edition: 3
 Config/usethis/last-upkeep: 2025-07-18
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 NeedsCompilation: yes
-Packaged: 2025-08-27 07:27:24 UTC; cg334
-Author: Winston Chang [aut],
+Packaged: 2026-02-23 21:52:58 UTC; cg334
+Author: Winston Chang [aut] (ORCID: <https://orcid.org/0000-0002-1576-2126>),
   Joe Cheng [aut],
   Charlie Gao [aut, cre] (ORCID: <https://orcid.org/0000-0002-0750-061X>),
   Posit Software, PBC [cph, fnd] (ROR: <https://ror.org/03wc8by49>),
@@ -42,6 +45,11 @@ Author: Winston Chang [aut],
     https://tinycthread.github.io/)
 Maintainer: Charlie Gao <charlie.gao@posit.co>
 Repository: CRAN
-Date/Publication: 2025-08-27 08:40:03 UTC
-Built: R 4.5.0; aarch64-apple-darwin20; 2025-09-01 01:32:24 UTC; unix
+Date/Publication: 2026-02-24 06:10:09 UTC
+Built: R 4.5.2; aarch64-apple-darwin20; 2026-02-24 08:54:19 UTC; unix
 Archs: later.so.dSYM
+RemoteType: standard
+RemotePkgRef: later
+RemoteRef: later
+RemoteRepos: https://cloud.r-project.org
+RemoteSha: 1.4.7
