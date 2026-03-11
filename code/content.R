@@ -1401,8 +1401,8 @@ apphistory_page <- function() {
   fluentPage(
     Text(variant = "xxLarge", "PvSeroApp Version History"),
     Separator(),
-    Image(src = "4_feedback/app_history.png", width = "800px", height = "auto"),
-    p(),
+    # Image(src = "4_feedback/app_history.png", width = "800px", height = "auto"),
+    # p(),
     Text(variant = "large", HTML("<b>v0</b>")),
     Text(variant = "medium", "All version numbers starting with 0 indicate working releases where the developer was making updates regularly and troubleshooting features. The classification algorithm remains the same as version 1.0.0 onwards and each future release will be defined by the algorithm updates."),
     p(),
@@ -1459,8 +1459,8 @@ apphistory_page <- function() {
     Text(variant = "medium", 
          HTML(r"(This new release includes:<ul>
               <li>Added xPONENT software compatibility to the application</li>
+              <li>Added standard curve types as an input to the application</li>
               <li>Updated functions to be compatible with SeroTrackR v1.0.0</li>
-              <li>Changed name of application from dionnecargy.shinyapps.io/PvSeroApp to vispa-malaria.shinyapps.io/PvSeroApp</li>
               </ul>
          )"))
   )
