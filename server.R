@@ -55,7 +55,6 @@ antibody_model_excLF016       <- readRDS(here::here("model/random_forest_excludi
 platemap                      <- read.csv(here::here("data/platemap.csv"))
 
 # troubleshooting readPlateLayout in shiny 
-
 readPlateLayoutv2 <- function(plate_layout, sero_data) {
   
   if (is.null(plate_layout) || !file.exists(plate_layout)) {
@@ -1528,16 +1527,16 @@ shinyServer(function(input, output, session){
       "balanced_class"
     } else if (sens_spec() == "85% sensitivity") {
       "85_sensitivity_class"
-    } else if (sens_spec() == "90% sensitivity") {
-      "90_sensitivity_class"
-    } else if (sens_spec() == "95% sensitivity") {
-      "95_sensitivity_class"
-    } else if (sens_spec() == "85% specificity") {
-      "85_specificity_class"
+    # } else if (sens_spec() == "90% sensitivity") {
+    #   "90_sensitivity_class"
+    # } else if (sens_spec() == "95% sensitivity") {
+    #   "95_sensitivity_class"
+    # } else if (sens_spec() == "85% specificity") {
+    #   "85_specificity_class"
     } else if (sens_spec() == "90% specificity") {
       "90_specificity_class"
-    } else if (sens_spec() == "95% specificity") {
-      "95_specificity_class"
+    # } else if (sens_spec() == "95% specificity") {
+      # "95_specificity_class"
     } else {
       "No Sensitivity/Specificity Threshold Chosen"
     }
@@ -1614,7 +1613,7 @@ shinyServer(function(input, output, session){
     sens_spec_all <- c(
       "balanced", 
       # "85% sensitivity", 
-      "90% sensitivity", 
+      # "90% sensitivity", 
       # "95% sensitivity", 
       # "85% specificity", 
       "90% specificity"#, 
@@ -1666,19 +1665,19 @@ shinyServer(function(input, output, session){
           levels = c(
             "balanced", 
             # "85% sensitivity", 
-            "90% sensitivity", 
+            # "90% sensitivity", 
             # "95% sensitivity",
             # "85% specificity",
             "90% specificity"#,
             # "95% specificity"
           ), 
           labels = c(
-            "Balanced: 81% Sensitivity / 81% Specificity",
+            "Balanced: 81% Specificity / 81% Sensitivity",
             # "85% Sensitivity / 75% Specificity",
-            "90% Sensitivity / 61.6% Specificity",
+            # "90% Sensitivity / 61.6% Specificity",
             # "95% Sensitivity / 43.4% Specificity",
             # "75% Sensitivity / 85% Specificity", 
-            "67.5% Sensitivity / 90% Specificity"#, 
+            "90% Specificity / 67.5% Sensitivity"#, 
             # "52.4% Sensitivity / 95% Specificity"
           )
         )
@@ -1689,12 +1688,12 @@ shinyServer(function(input, output, session){
       factor(
         df$`Sensitivity/Specificity`, 
         levels = c(
-          "Balanced: 81% Sensitivity / 81% Specificity",
+          "Balanced: 81% Specificity / 81% Sensitivity",
           # "85% Sensitivity / 75% Specificity",
-          "90% Sensitivity / 61.6% Specificity",
+          # "90% Sensitivity / 61.6% Specificity",
           # "95% Sensitivity / 43.4% Specificity",
           # "75% Sensitivity / 85% Specificity",
-          "67.5% Sensitivity / 90% Specificity"#,
+          "90% Specificity / 67.5% Sensitivity"#,
           # "52.4% Sensitivity / 95% Specificity"
         )
       )

@@ -883,10 +883,8 @@ algorithm_page <- function() {
         Text(variant = "medium", HTML("The Receiver Operator Characteristic (ROC) Curve is an indicator of the trade-off between a classification algorithm's sensitivity and specificity.
                                       Increasing <b>sensitivity</b> allows us to improve the ability to correctly identify true positive cases, while increasing <b>specificity</b> improves the ability to correctly identify true negative cases.")),
         Text(variant = "medium", HTML(r"(In our <a href='#model' class-`link`>classification page</a>, we have provided multiple options for you to choose which classification you would like to run:<ul>
-                                        <li><b>Balanced: 81% Sensitivity / 81% Specificity</b>: Sensitity and specificity are both at their highest</li>
-                                        <li><b>90% Sensitivity / 61.6% Specificity</b>: 90% sensitivity has an <span style="color:#107C10; font-weight: bold">even better*</span> ability to correctly identify <span style="color:#9373C0; font-weight: bold">True Positives</span> but
-                                             <span style="color:#C50F1F; font-weight: bold">even lower**</span> ability to correctly identify <span style="color:#2AA0A4;">True Negatives</span>.</li>
-                                        <li><b>67.5% Sensitivity / 90% Specificity</b>: 90% specificity is chosen an <span style="color:#C50F1F; font-weight: bold">even lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
+                                        <li><b>Balanced: 81% Specificity / 81% Sensitivity</b>: Specificity and sensitivity are both at their highest</li>
+                                        <li><b>90% Specificity / 67.5% Sensitivity</b>: 90% specificity is chosen an <span style="color:#C50F1F; font-weight: bold">even lower*</span> ability to correctly identify <span style="color:#9373C0;">True Positives</span> but 
                                       an <span style="color:#107C10; font-weight: bold">even greater**</span> ability to correctly identify <span style="color:#2AA0A4; font-weight: bold">True Negatives</span>.</li>
                                     </ul>)")), 
         Text(variant = "medium", "* = Than the sensitivity in the balanced threshold; ** = Than the specificity in the balanced threshold"), 
@@ -1309,12 +1307,12 @@ model_page <- function() {
               "sens_spec",
               label = NULL,
               choices = list(
-                "Balanced: 81% Sensitivity / 81% Specificity" = "balanced",
+                "Balanced: 81% Specificity / 81% Sensitivity" = "balanced",
                 # "85% Sensitivity / 75% Specificity" = "85% sensitivity",
-                "90% Sensitivity / 61.6% Specificity" = "90% sensitivity",
+                # "90% Sensitivity / 61.6% Specificity" = "90% sensitivity",
                 # "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
                 # "75% Sensitivity / 85% Specificity" = "85% specificity",
-                "67.5% Sensitivity / 90% Specificity" = "90% specificity"#,
+                "90% Specificity / 67.5% Sensitivity" = "90% specificity"#,
                 # "52.4% Sensitivity / 95% Specificity" = "95% specificity"
               ),
               selected = "balanced"
