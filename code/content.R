@@ -71,7 +71,7 @@ tutorial_page <- function() {
             <a href='https://int.diasorin.com/en/luminex-ltg/tools/magpix-system' class-'link'>MAGPIX</a> and 
             <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a> machines.
             For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/pvserotat' class-'link'>download the example data</a>. 
-            The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTaT Luminex 
+            The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTAT Luminex 
             Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."))
           )
         ),
@@ -90,7 +90,7 @@ tutorial_page <- function() {
               content = list(
                 MessageBar(messageBarType = 3, "Make sure you label your antigens the same way in all plate runs!"),
                 renderTwoCols(
-                  first_col = Text(variant = "medium", HTML(r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSeroTaT Luminex Assay</b>.
+                  first_col = Text(variant = "medium", HTML(r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSeroTAT Luminex Assay</b>.
                          For the purposes of data processing, it is important that the antigens are named with the convention listed here.<br><br>
                          The data processing in this app will be able to decipher any of these options, differing capitalisations, and any "Pv" prefixes.<br><br>
                          If you have run other antigens in your assay that are not included in the current PvSeroApp model, then the data processing with automatically remove these columns when you reach 
@@ -201,10 +201,10 @@ tutorial_page <- function() {
                 Text(variant = "medium", HTML("This is where you can run the classification algorithm on your data to determine whether unknown samples are seropositive or seronegative, (i.e. exposure to <em>Plasmodium vivax</em> in the last 9 months, or not).")),
                 Text(variant = "medium", HTML(r"(We have developed two algorithms that were trained on the same dataset but differ on antigen choice:
                                           <ul>
-                                            <li>If you are processing data for all eight antigens in the <b>PvSeroTaT</b> sero-surveillance tool, please use "PvSeroTaT Algorithm",</li>
-                                            <li>If you are processing data <b>without LF016</b>, please use "PvSeroTaT Algorithm without LF016".</li>
+                                            <li>If you are processing data for all eight antigens in the <b>PvSeroTAT</b> sero-surveillance tool, please use "PvSeroTAT Algorithm",</li>
+                                            <li>If you are processing data <b>without LF016</b>, please use "PvSeroTAT Algorithm without LF016".</li>
                                           </ul>)")),
-                Text(variant = "medium", HTML(r"(Note that this app <b>cannot</b> be used for data processing of samples with a different antigen panel to the one from <b>PvSeroTaT</b> sero-surveillance tool. 
+                Text(variant = "medium", HTML(r"(Note that this app <b>cannot</b> be used for data processing of samples with a different antigen panel to the one from <b>PvSeroTAT</b> sero-surveillance tool. 
                                           For more details, see the section <a href='#tutorial/classify' class-`link`>Classifying your Samples</a>.)")),
                 Text(variant = "large", "3.4. Data Visualisation"),
                 Text(variant = "medium", HTML("This is where you can visualise your data interactively within the app. You can take a look at box plots of the antibody data for each antigen in your panel based
@@ -309,7 +309,7 @@ tutorial_page <- function() {
                     renderTwoCols(
                       first_width = "40%", second_width = "60%",
                       first_col = list(
-                        Text(variant = "medium", HTML(r"(1. Let's change the experiment name to "tutorial_example", enter today's date, the experiment notes to "This is an example of the QC and processing of the example data for the PvSeroTaT tutorial".)")),
+                        Text(variant = "medium", HTML(r"(1. Let's change the experiment name to "tutorial_example", enter today's date, the experiment notes to "This is an example of the QC and processing of the example data for the PvSeroTAT tutorial".)")),
                         p(),
                         Text(variant = "medium", HTML(r"(2. We are using a <b>Magpix</b> raw data file so we click the "Magpix" button.)")),
                         p(),
@@ -369,7 +369,7 @@ tutorial_page <- function() {
                         p(),
                         Text(variant = "medium", HTML(r"(In the case of the example data, the <span style="color:#C50F1F; font-weight: bold">Batch</span> should be labeled
                                                   <span style="color:#C50F1F; font-weight: bold">"Example Plate"</span>, the <span style="color:#4C3867; font-weight: bold">Protocol</span> should be labeled 
-                                                  <span style="color:#4C3867; font-weight: bold">"PvSeroTaT_v1.0"</span>, and the <span style="color:#2C72A8; font-weight: bold">Sample Volume</span> should be 
+                                                  <span style="color:#4C3867; font-weight: bold">"PvSeroTAT_v1.0"</span>, and the <span style="color:#2C72A8; font-weight: bold">Sample Volume</span> should be 
                                                   <span style="color:#2C72A8; font-weight: bold">"50uL"</span> as we can see in the right hand side image here. )"))
                       ), 
                       second_col = Image(src = "2_tutorial/4.2_check_data_2.png", width = "550px", height = "auto") 
@@ -443,7 +443,7 @@ tutorial_page <- function() {
                     first_col = list(
                       Text(variant = "medium", "The standard curve plots are generated from the antibody data from the standards you indicated in your plate layout (e.g. S1-S10) and Median Fluorescent Intensity (MFI) units are displayed in log10-scale."),
                       p(),
-                      Text(variant = "medium", "In the case of the PvSeroTaT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
+                      Text(variant = "medium", "In the case of the PvSeroTAT multi-antigen panel, the antigens will be displayed and in general your standard curves should look relatively linear (only when the y-axis is on logarithmic scale)"),
                       p(),
                       Text(variant = "medium", "The figure is interactive! You can hover over each dot point to see the Standard Curve Refernce ID (Sample), MFI and Plate [image below]."),
                       p(),
@@ -554,7 +554,7 @@ tutorial_page <- function() {
           Stack(
             tokens = list(childrenGap = 10),
             Separator(Text(variant = "xxLarge", "6. Classifying Your Samples"), alignContent = "start"),
-            Text(variant = "medium", HTML("The built-in classification algorithm in this application should only be applied to data generated from the PvSeroTaT Multi-Antigen Luminex Assay to read more about this algorithm 
+            Text(variant = "medium", HTML("The built-in classification algorithm in this application should only be applied to data generated from the PvSeroTAT Multi-Antigen Luminex Assay to read more about this algorithm 
                                           click on the <a href = '#algorithm_page' class-'link'>Algorithm</a> section.")), 
             makeCard(
               id = "tutorial/classify/select", 
@@ -578,7 +578,7 @@ tutorial_page <- function() {
               id = "tutorial/classify/perform", 
               title = "6.2. Perform Classification", 
               content = list(
-                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see above). The example data was generated using the PvSeroTaT assay with all eight antigens 
+                Text(variant = "medium", HTML(r"(You can select the algorithm that is appropriate for your data by clicking on the buttons on the left panel (see above). The example data was generated using the PvSeroTAT assay with all eight antigens 
                  and therefore you should select the "PvSeroApp Algorithm" for this tutorial.)"))
               )
             ), 
@@ -795,7 +795,7 @@ tutorial_page <- function() {
 
 algorithm_page <- function() {
   fluentPage(
-    Text(variant = "xxLarge", "The PvSeroTaT Algorithm"),
+    Text(variant = "xxLarge", "The PvSeroTAT Algorithm"),
     Separator(),
     Text(variant = "medium", HTML("Here we present the machine learning method to identify individuals recently infected with <em>Plasmodium vivax<em> (within the last 9 months).")),
     p(),
@@ -857,7 +857,7 @@ algorithm_page <- function() {
         Text(variant = "medium", HTML(r"(*Random sampling of the training dataset (e.g., 90% of the data) to then assess the predictive accuracy on the remaining (e.g., 10% of the data), for example using bootstrap aggregation (i.e., "bagging"). 
                                       This is repeated multiple times to perform "cross-validation" to give a clearer indication of the predictive accuracy of decision trees.)")),
         p(),
-        Text(variant = "medium", HTML(r"(With respect to the PvSeroTaT classiciation model:<ul>
+        Text(variant = "medium", HTML(r"(With respect to the PvSeroTAT classiciation model:<ul>
                                       <li>A decision tree makes a decision to "classify" whether someone has been recently infected with <em>P. vivax</em>.</li>
                                       <li>These sets of decision trees are uncorrelated.</li>
                                       <li>This results in a tree-like model of decisions with various possible outcomes. /li>
@@ -1246,11 +1246,18 @@ model_page <- function() {
     waiterOnBusy(html = spin_3(), color = transparent(.5)),
     Text(variant = "xxLarge", "Classify exposure"),
     Separator(),
-    Text(variant = "medium", HTML("Using this tool, you can classify individuals as seropositive or seronegative for recent <em>Plasmodium vivax</em> exposure (i.e. within previous 9 months). 
-                                    You can include additional columns, such as sample IDs.")), 
+    Text(
+      variant = "medium", 
+      HTML(
+        "Using this tool, you can classify individuals as seropositive or seronegative for recent <em>Plasmodium vivax</em> exposure 
+        (i.e. within previous 9 months). Results will be presented for each plate after you press the 'Run Classification' button."
+        )
+    ), 
     p(),
-    MessageBar(messageBarType = 3, # 0 = info (default), 1 = error, 2 = blocked, 3 = warning, 4 = success
-               "Disclaimer: the results obtained from this classification are for research purposes only and should not be considered a diagnosis."),
+    MessageBar(
+      messageBarType = 3, # 0 = info (default), 1 = error, 2 = blocked, 3 = warning, 4 = success
+      "Disclaimer: the results obtained from this classification are for research purposes only and should not be considered a diagnosis."
+    ),
     p(),
     Stack(
       horizontal = TRUE,
@@ -1291,7 +1298,7 @@ model_page <- function() {
               label = NULL,
               choices = list(
                 "PvSeroApp Algorithm" = "antibody_model",
-                "PvSeroApp Algorithm without LF016" = "antibody_model_excLF016"
+                "PvSeroApp Algorithm without PvMSP1-19" = "antibody_model_excLF016"
               ),
               selected = "antibody_model"
             ),
@@ -1332,16 +1339,21 @@ model_page <- function() {
         )
       )
     ),
-    Label(HTML("Classification results:")),
     Separator(),
-    textOutput("result"),
-    tableOutput("classification_summary"),
-    PrimaryButton.shinyInput(
-      "downloadButtonClassify",
-      text = "Download Classification Data (.CSV)",
-      iconProps = list(iconName = "Download")
-    ),
-    div(style = "visibility: hidden;", downloadButton("download_classification", label = ""))
+    conditionalPanel(
+      condition = "output.classification_summary",
+      Label("Classification results:"),
+      textOutput("result"),
+      p(),
+      DTOutput("classification_summary"),
+      p(),
+      PrimaryButton.shinyInput(
+        "downloadButtonClassify",
+        text = "Download Classification Data (.CSV)",
+        iconProps = list(iconName = "Download")
+      ),
+      div(style = "visibility: hidden;", downloadButton("download_classification", label = ""))
+    )
   )
 }
 

@@ -54,56 +54,6 @@ antibody_model                <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
 antibody_model_excLF016       <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap                      <- read.csv(here::here("data/platemap.csv"))
 
-# troubleshooting readPlateLayout in shiny 
-readPlateLayoutv2 <- function(plate_layout, sero_data) {
-  
-  if (is.null(plate_layout) || !file.exists(plate_layout)) {
-    stop("ERROR: Invalid plate layout file provided.")
-  }
-  
-  sheet_names <- tryCatch({
-    openxlsx::getSheetNames(plate_layout)
-  }, error = function(e) {
-    stop("ERROR: Failed to read sheet names. Ensure the file is a valid Excel file.")
-  })
-  
-  # Step 1: Get the sheet names to confirm
-  sheet_names <- openxlsx::getSheetNames(plate_layout)
-  
-  # Step 2: Read all sheets into plate_list using indices
-  plate_list <- lapply(1:length(sheet_names), function(i) {
-    openxlsx::read.xlsx(plate_layout, sheet = i)
-  })
-  
-  # Step 3: Name each element in the list after the corresponding sheet name
-  names(plate_list) <- sheet_names
-  
-  # Step 4: Check if 'Plate' column exists in sero_data$results
-  antigen_output_results <- sero_data$results
-  
-  if (!"Plate" %in% colnames(antigen_output_results)) {
-    stop("ERROR: 'Plate' column is missing from sero_data$results.")
-  }
-  
-  # Step 5: Extract levels from 'Plate' column
-  antigen_output_levels <- unique(as.character(sero_data$results$Plate))  # Convert factor to character
-  
-  # Step 6: Compare plate names
-  sheet_names_clean <- trimws(sheet_names)
-  
-  plate_levels_clean <- unique(
-    na.omit(trimws(as.character(sero_data$results$Plate)))
-  )
-  
-  if (all(plate_levels_clean %in% sheet_names_clean)) {
-    message("Plate layouts correctly identified!")
-  } else {
-    stop("Plate layout sheets and plates labeled in raw data file names do not match.")
-  }
-  
-  return(plate_list)
-}
-
 ###############################################################################
 # Server
 ###############################################################################
@@ -793,7 +743,7 @@ shinyServer(function(input, output, session){
     
     if (n_files == 1) {
       # Case 1: Single master layout file
-      readPlateLayoutv2(
+      readPlateLayout(
         plate_layout = plate_file_path,
         sero_data = readSeroData_output()
       )
@@ -801,7 +751,7 @@ shinyServer(function(input, output, session){
     } else if (n_files > 1) {
       # Case 2: Multiple plate layouts
       plate_file_master <- getPlateLayout(plate_file_path)
-      readPlateLayoutv2(
+      readPlateLayout(
         plate_layout = plate_file_master$path,
         sero_data = readSeroData_output()
       )
@@ -1550,37 +1500,104 @@ shinyServer(function(input, output, session){
     
     class_col <- names(classified_data())[grepl("class$", names(classified_data()))]
     
-    summary_table <- classified_data() %>%
-      group_by(.data[[class_col]]) %>%
-      summarise(n = n(), .groups = "drop")
+    # summary_table <- classified_data() %>%
+    #   group_by(.data[[class_col]]) %>%
+    #   summarise(n = n(), .groups = "drop")
+    # 
+    # colnames(summary_table) <- c("Status", "Count")
     
-    colnames(summary_table) <- c("Status", "Count")
-    summary_table
+    df <- classified_data()
+    
+    class_col <- names(df)[grepl("class$", names(df))]
+    plate_col <- names(df)[grepl("^plate$", names(df), ignore.case = TRUE)]
+    
+    req(class_col, plate_col)  # prevents crashing if missing
+    
+    summary_table <- df %>%
+      dplyr::group_by(.data[[plate_col]], .data[[class_col]]) %>%
+      dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
+      
+      # calculate % within each Plate
+      dplyr::group_by(.data[[plate_col]]) %>%
+      dplyr::mutate(
+        Percent = round(100 * n / sum(n), 1),
+        Count = paste0(n, " (", Percent, "%)")
+      ) %>%
+      dplyr::ungroup() %>%
+      dplyr::rename(
+        Plate = !!plate_col,
+        Status = !!class_col
+      ) %>%
+      dplyr::select(Plate, Status, Count) %>% 
+      tidyr::pivot_wider(
+        id_cols = Plate,
+        names_from = Status,
+        values_from = Count
+      ) %>% 
+      dplyr::rename(
+        Seronegative = seronegative,
+        Seropositive = seropositive
+      ) %>% 
+      dplyr::select(Plate, Seropositive, Seronegative)
+    
+    DT::datatable(
+      summary_table,
+      options = list(
+        dom = 't',                    # 't' means only the table (no pagination, search, etc.)
+        searching = FALSE,            # Disable search box
+        paging  = FALSE,              # Disable pages box
+        lengthChange = FALSE          # Disable number of entries dropdown
+      ), 
+      rownames = FALSE                # Remove row numbers
+    )
+    
   })
   
   ###############################################################################
   ## ----- Outputs -----
   ###############################################################################
   
-  output$algorithm_choice <- renderText(paste0("Algorithm choice: ", algorithm()))
-  output$algorithm_choice_remind <- renderText(paste0("Based on your algorithm choice (", algorithm(), ") download your data below:"))
+  # helper function
+  tidy_algorithm <- function(x) {
+    dplyr::case_when(
+      x == "antibody_model" ~ "PvSeroApp Algorithm",
+      x == "antibody_model_excLF016" ~ "PvSeroApp Algorithm without PvMSP1-19",
+      TRUE ~ x
+    )
+  }
+  tidy_sens_spec <- function(x){
+    dplyr::case_when(
+      x == "balanced" ~ "Balanced Specificity/Sensitivty",
+      x == "90% specificity" ~ "90% Specificity/67.5% Sensitivity",
+      TRUE ~ x
+    )
+  }
   
   # APP RESPONSE: Render the classification summary table and cross-check choices
   observeEvent(input$run_classification, {
+    
     req(sens_spec(), algorithm(), classification_results_summary())
     
     sens_spec_val <- sens_spec()
     algorithm_val <- algorithm()
     
-    result <- paste0("Classification run with the ", algorithm_val,
-                     " Algorithm and Sensitivity/Specificity: ", sens_spec_val)
+    result <- paste0(
+      "Classification run with the ",
+      tidy_algorithm(algorithm_val),
+      " and" ,
+      tidy_sens_spec(sens_spec_val)
+    )
     
     # 1. Render the result text
-    output$result <- renderText({result})
+    output$result <- renderText({
+      result
+    })
     
     # 2. Render the classification summary table
-    output$classification_summary <- renderTable({
-      classification_results_summary()})
+    output$classification_summary <- renderDT({
+      classification_results_summary()
+    })
+    
   })
   
   ###############################################################################
