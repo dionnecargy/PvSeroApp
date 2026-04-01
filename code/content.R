@@ -1623,8 +1623,8 @@ input_page <- function() {
       messageBarType = 0, 
       HTML(
         r"(You can label your raw data files using "luminexfile_plate1.csv" or if it is a <b>repeat</b> 
-        plate then you can use the convention "luminexfile_repeatplate1.csv". See the 
-        a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more 
+        plate then you can use the convention "luminexfile_repeatplate1.csv". See the
+        <a href='https://github.com/dionnecargy/PvSeroApp' class='_blank'>FAQs</a> on our GitHub for more 
         details. For security reasons the app does not allow you to add multiple files from different folders. 
         For ease, please create a new folder with all of the files you would like to upload to the 
         PvSeroApp so that you can add the files at once.)"
@@ -1700,24 +1700,14 @@ input_page <- function() {
                     radioButtons(
                       "platform",
                       label = NULL,
-                      choices = list("Bio-Plex" = "bioplex", "MAGPIX" = "magpix", "INTELLIFLEX" = "intelliflex"),
+                      choices = list(
+                        "Bio-Plex" = "bioplex", 
+                        "MAGPIX" = "magpix", 
+                        "INTELLIFLEX" = "intelliflex"
+                      ),
                       selected = "magpix"),
                     style = "margin-top: 10px;"
                   ), 
-                  # # Only shown when Magpix is selected
-                  # conditionalPanel(
-                  #   condition = "input.platform == 'magpix'",
-                  #   Label("Magpix software version"),
-                  #   div(
-                  #     radioButtons(
-                  #       "magpix_version",
-                  #       label = NULL,
-                  #       choices = c("4.2", "4.3"),
-                  #       selected = "4.2"
-                  #     ),
-                  #     style = "margin-left: 20px; margin-top: 10px;"
-                  #   )
-                  # ),
                   # Input for standard curve only or not  (optional)
                   Label(HTML("5. Are you only looking at the standard curve? <span style='color:#a4262c;'>*</span>")),
                   div(
@@ -1858,7 +1848,10 @@ check_page <- function() {
       textOutput("dropdownValue")
     ),
     p(),
-    MessageBar("Click the buttons below to download the data and quality control report. The report and .zip file may take some time to load."),
+    MessageBar(
+      "Click the buttons below to download the data and quality control report. 
+      The report and .zip file may take some time to load."
+    ),
     p(),
     waiterOnBusy(html = spin_3(), color = transparent(.5)),
     div(
@@ -2058,20 +2051,19 @@ model_page <- function() {
       )
     ),
     Separator(),
-    conditionalPanel(
-      condition = "output.classification_summary",
-      Label("Classification results:"),
-      textOutput("result"),
-      p(),
-      DTOutput("classification_summary"),
-      p(),
-      PrimaryButton.shinyInput(
-        "downloadButtonClassify",
-        text = "Download Classification Data (.CSV)",
-        iconProps = list(iconName = "Download")
-      ),
-      div(style = "visibility: hidden;", downloadButton("download_classification", label = ""))
-    )
+    
+    Label("Classification results:"),
+    textOutput("result"),
+    p(),
+    DTOutput("classification_summary"),
+    p(),
+    PrimaryButton.shinyInput(
+      "downloadButtonClassify",
+      text = "Download Classification Data (.CSV)",
+      iconProps = list(iconName = "Download")
+    ),
+    div(style = "visibility: hidden;", downloadButton("download_classification", label = ""))
+    
   )
 }
 
