@@ -131,15 +131,17 @@ shinyServer(function(input, output, session){
   
   # code output showing file display
   output$code_display <- renderText({
-    "└── PvSeroApp/
-    ├── rawdata                      # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
+    "
+    └── PvSeroApp/
+    ├── data/                        # All output data from the Luminex platforms with suffix `plate1`, `plate2`, `plate3`...
     │   ├── rawdata_plate1.csv
     │   ├── rawdata_plate2.csv
     │   ├── #### OR
     │   ├── rawdata_plate1.xlsx
     │   └── rawdata_plate2.xlsx
     ├── platelayout.xlsx             # Plate layout xlsx file where each tab is labelled `plate1`, `plate2`, `plate3`....
-    └── outputs/                     # Where all outputs from the App can be stored!"
+    └── outputs/                     # Where all outputs from the App can be stored!
+    "
   })
   
   # table example for how antigens should be included.
@@ -654,29 +656,10 @@ shinyServer(function(input, output, session){
   })
   
   magpix_version <- reactive({
-    req(input$magpix_version)  # Ensure platform is selected
-    input$magpix_version
+    # req(input$magpix_version)  # Ensure platform is selected
+    # input$magpix_version
+    "4.2"
   })
-  
-  # platform_config <- reactive({
-  #   if (input$platform == "magpix") {
-  #     req(input$magpix_version)
-  #     paste(
-  #       "Platform selected: Magpix.",
-  #       "Software version:", input$magpix_version,
-  #       "- Magpix-specific commands will be used."
-  #     )
-  #   } else if (input$platform == "bioplex") {
-  #     "Platform selected: Bioplex – Bioplex-specific commands will be used."
-  #   } else if (input$platform == "intelliflex") {
-  #     "Platform selected: Intelliflex – Intelliflex-specific commands will be used."
-  #   }
-  # })
-  # 
-  # output$platform_test <- renderText({
-  #   platform_config()
-  # })
-  # 
 
   ###############################################################################
   ## ----- Reactive values to store user inputs ----- 
