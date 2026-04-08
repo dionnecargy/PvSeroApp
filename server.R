@@ -24,6 +24,7 @@ require(glue)                 # Formatting strings
 
 # Outputs, Figures, Tables 
 require(rmarkdown)            # Markdown compatibility 
+require(zip)                  # Save PDFs as ZIP files 
 require(plotly)               # Interactive figures 
 require(ggpubr)               # Join figures together into one figure 
 require(ggrepel)              # Graphing label repels
@@ -39,7 +40,7 @@ require(rlang)                # Used in the classifyResults
 require(spsComps)             # shinyCatch function for troubleshooting
 require(waiter)               # Loading spinners
 require(devtools)             # R developer tools 
-# devtools::install_github("dionnecargy/SeroTrackR")
+# pak::pak("dionnecargy/SeroTrackR")
 require(SeroTrackR)           # Key R package for serology data analysis 
 
 # Link to content for UI 
@@ -1051,7 +1052,8 @@ shinyServer(function(input, output, session){
   
   # Save raw data information
   raw_data_info_saved <- reactive({
-    readSeroData_output()$data_raw
+    readSeroData_output()$data_raw %>% 
+      janitor::clean_names()
   })
   
   # Operator: Who ran the plate
@@ -1059,8 +1061,11 @@ shinyServer(function(input, output, session){
     req(raw_data_info_saved(), platform_reactive())
     if(platform_reactive() == "magpix" | platform_reactive() == "intelliflex") {
       
-      operator <- raw_data_info_saved() %>% filter(Program == "Operator") %>% dplyr::select(Plate, Operator = xPONENT)
-      paste(paste0(operator$Plate, ": ", operator$Operator), collapse = ", ")
+      operator <- raw_data_info_saved() %>% 
+        dplyr::filter(program == "Operator") %>% 
+        dplyr::select(plate, operator = x_ponent)
+      
+      paste(paste0(operator$plate, ": ", operator$operator), collapse = ", ")
       
     } else if (platform_reactive() == "bioplex") {
       print("Information not available for bioplex machine run.")
@@ -1072,17 +1077,22 @@ shinyServer(function(input, output, session){
     req(raw_data_info_saved(), platform_reactive())
     if(platform_reactive() == "magpix") {
       
-      volume <- raw_data_info_saved() %>% filter(Program == "SampleVolume") %>% dplyr::select(Plate, `Acquisition Volume` = xPONENT)
-      paste(paste0(volume$Plate, ": ", volume$`Acquisition Volume`), collapse = ", ")
+      volume <- raw_data_info_saved() %>% 
+        dplyr::filter(program == "SampleVolume") %>% 
+        dplyr::select(plate, `Acquisition Volume` = x_ponent)
+      
+      paste(paste0(volume$plate, ": ", volume$`Acquisition Volume`), collapse = ", ")
       
     } else if (platform_reactive() == "bioplex") {
       print("Information not available for bioplex machine run.")
     
     } else if(platform_reactive() == "intelliflex") {
+      
       volume <- raw_data_info_saved() %>% 
-        dplyr::filter(Program == "MaxSampleUptakeVolume") %>% 
-        dplyr::select(Plate, `Acquisition Volume` = xPONENT)
-      paste(paste0(volume$Plate, ": ", volume$`Acquisition Volume`), collapse = ", ")
+        dplyr::filter(program == "MaxSampleUptakeVolume") %>% 
+        dplyr::select(plate, `Acquisition Volume` = x_ponent)
+      
+      paste(paste0(volume$plate, ": ", volume$`Acquisition Volume`), collapse = ", ")
     }
   })
   
@@ -1093,12 +1103,21 @@ shinyServer(function(input, output, session){
       
       calibration <- raw_data_info_saved() %>%
         filter(
-          Program == "Last CAL Calibration" |
-            Program == "Last VER Verification" |
-            Program == "Last Fluidics Test"
+          program == "Last CAL Calibration" |
+            program == "Last VER Verification" |
+            program == "Last Fluidics Test"
         ) %>%
-        dplyr::select(Plate, `Recent Calibration and Verification results` = Program, Result = xPONENT)
-      paste(paste0(calibration$Plate, ": ", calibration$`Recent Calibration and Verification results`, ": ", calibration$`Result`), collapse = ", ")
+        dplyr::select(
+          plate, 
+          `Recent Calibration and Verification results` = program, 
+          Result = x_ponent
+        )
+      
+      paste(paste0(
+        calibration$plate, ": ", 
+        calibration$`Recent Calibration and Verification results`, ": ", 
+        calibration$Result
+      ), collapse = ", ")
       
     } else if (platform_reactive() == "bioplex") {
       print("Information not available for bioplex machine run.")
@@ -1106,12 +1125,21 @@ shinyServer(function(input, output, session){
       
       calibration <- raw_data_info_saved() %>%
         filter(
-          Program == "Last Calibration" |
-            Program == "Last Verification" |
-            Program == "Last Fluidics Test"
+          program == "Last Calibration" |
+            program == "Last Verification" |
+            program == "Last Fluidics Test"
         ) %>%
-        dplyr::select(Plate, `Recent Calibration and Verification results` = Program, Result = xPONENT)
-      paste(paste0(calibration$Plate, ": ", calibration$`Recent Calibration and Verification results`, ": ", calibration$`Result`), collapse = ", ")
+        dplyr::select(
+          plate, 
+          `Recent Calibration and Verification results` = program, 
+          Result = x_ponent
+        )
+      
+      paste(paste0(
+        calibration$plate, ": ", 
+        calibration$`Recent Calibration and Verification results`, ": ", 
+        calibration$`Result`
+      ), collapse = ", ")
       
     }
     
@@ -1137,21 +1165,28 @@ shinyServer(function(input, output, session){
       # Remove indices that are out of bounds (i.e., last row has no row below it)
       below_indices <- below_indices[below_indices <= nrow(filtered_df)]
       # Filter the data frame for these rows
-      machine <- filtered_df[below_indices, , drop = FALSE] %>% dplyr::rename(`Machine Serial Number` = col_name)
-      machine_levels <- unique(raw_data_info_saved()$Plate)
+      machine <- filtered_df[below_indices, , drop = FALSE] %>% 
+        dplyr::rename(`Machine Serial Number` = col_name)
+      machine_levels <- unique(raw_data_info_saved()$plate)
       paste(paste0(machine_levels, ": ", machine$`Machine Serial Number`), collapse = ", ")
       
     } else if (platform_reactive() == "bioplex") {
       
-      machine <- raw_data_info_saved() %>% filter(str_detect(Run, "Reader Serial Number")) %>% mutate(Run = gsub("Reader Serial Number: ", "", Run)) %>% dplyr::select(Run)
-      machine_levels <- unique(raw_data_info_saved()$Plate)
-      paste(paste0(machine_levels, ": ", machine$Run), collapse = ", ")
+      machine           <- raw_data_info_saved() %>% 
+        dplyr::filter(stringr::str_detect(run_column, "Reader Serial Number")) %>% 
+        dplyr::mutate(run_column = gsub("Reader Serial Number: ", "", run_column)) %>% 
+        dplyr::select(run_column)
+      machine_levels    <- unique(raw_data_info_saved()$plate)
+      
+      paste(paste0(machine_levels, ": ", machine$run_column), collapse = ", ")
       
     } else if(platform_reactive() == "intelliflex"){
+      
       machine <- raw_data_info_saved() %>% 
-        dplyr::filter(Program == "SN") %>% 
-        dplyr::select(Plate, `Machine Serial Number` = xPONENT)
-      paste(paste0(machine$Plate, ": ", machine$`Machine Serial Number`), collapse = ", ")
+        dplyr::filter(program == "SN") %>% 
+        dplyr::select(plate, `Machine Serial Number` = x_ponent)
+      
+      paste(paste0(machine$plate, ": ", machine$`Machine Serial Number`), collapse = ", ")
     }
     
   })
@@ -1221,7 +1256,12 @@ shinyServer(function(input, output, session){
   # 1. Downloadable csv of MFI/RAU results file
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_MFI_RAU.csv")
+      paste0(
+        experiment_name_reactive(), "_", 
+        date_reactive(), "_", 
+        location() , "_", 
+        version(), "_MFI_RAU.csv"
+      )
     },
     content = function(file) {
       write.csv(mfi_to_rau_output()[[1]], file, row.names = FALSE)
@@ -1230,77 +1270,102 @@ shinyServer(function(input, output, session){
   # 2. Downloadable csv of standards
   output$downloadStds <- downloadHandler(
     filename = function() {
-      paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv")
+      paste0(
+        experiment_name_reactive(), "_", 
+        date_reactive(), "_", 
+        location() , "_", 
+        version(), "_stdcurve.csv"
+      )
     },
     content = function(file) {
       write.csv(stdcurve_blanks_output(), file, row.names = FALSE)
     }
   )
+  
   observe({
     if (standardcurveonly()=="Yes") {
       output$report <- downloadHandler(
         filename = function() {
-          paste0(experiment_name_reactive(), "_", date_reactive(), "_", location(), "_", version(), "_QCreport.pdf")
+          paste0(
+            experiment_name_reactive(), "_", 
+            date_reactive(), "_", 
+            location(), "_", 
+            version(), "_QCreport.pdf"
+          )
         },
         content = function(file) {
           stdcurveReport <- file.path(tempdir(), "stdcurve.Rmd")
           file.copy("stdcurve.Rmd", stdcurveReport, overwrite = TRUE)
           
           params <- list(
-            raw_data_filename_reactive = raw_data_filename_reactive(),
-            experiment_name_reactive = experiment_name_reactive(),
-            date_reactive = date_reactive(),
-            experiment_notes = experiment_notes(),
-            platform_reactive = platform_reactive(),
-            stdcurve_plot = stdcurve_plot(),
-            plateqc_plot = plateqc_plot(),
-            blanks_plot = blanks_plot(),
-            check_repeats_output = check_repeats_output(),
-            check_repats_table_pdf = check_repats_table_pdf(),
-            operator_output = operator_output(),    
-            volume_output = volume_output(),   
-            calibration_output = calibration_output(),  
-            machine_output = machine_output(),
-            plate_list_output = plate_list_output()
+            raw_data_filename_reactive     = raw_data_filename_reactive(),
+            experiment_name_reactive       = experiment_name_reactive(),
+            date_reactive                  = date_reactive(),
+            experiment_notes               = experiment_notes(),
+            platform_reactive              = platform_reactive(),
+            stdcurve_plot                  = stdcurve_plot(),
+            plateqc_plot                   = plateqc_plot(),
+            blanks_plot                    = blanks_plot(),
+            check_repeats_output           = check_repeats_output(),
+            check_repats_table_pdf         = check_repats_table_pdf(),
+            operator_output                = operator_output(),    
+            volume_output                  = volume_output(),   
+            calibration_output             = calibration_output(),  
+            machine_output                 = machine_output(),
+            plate_list_output              = plate_list_output()
           )
           
           callr::r(
             renderReport,
-            list(input = stdcurveReport, output = file, params = params)
+            list(
+              input = stdcurveReport, 
+              output = file, 
+              params = params
+            )
           )
         }
       )
     } else {
       output$report <- downloadHandler(
         filename = function() {
-          paste0(experiment_name_reactive(), "_", date_reactive(), "_", location(), "_", version(), "_QCreport.pdf")
+          paste0(
+            experiment_name_reactive(), "_", 
+            date_reactive(), "_", 
+            location(), "_", 
+            version(), "_QCreport.pdf"
+          )
         },
         content = function(file) {
+          
           tempReport <- file.path(tempdir(), "template.Rmd")
           file.copy("template.Rmd", tempReport, overwrite = TRUE)
           
           params <- list(
-            raw_data_filename_reactive = raw_data_filename_reactive(),
-            experiment_name_reactive = experiment_name_reactive(),
-            date_reactive = date_reactive(),
-            experiment_notes = experiment_notes(),
-            platform_reactive = platform_reactive(),
-            stdcurve_plot = stdcurve_plot(),
-            plateqc_plot = plateqc_plot(),
-            blanks_plot = blanks_plot(),
-            check_repeats_output = check_repeats_output(),
-            check_repats_table_pdf = check_repats_table_pdf(),
-            model_plot = model_plot(), 
-            operator_output = operator_output(),    
-            volume_output = volume_output(),   
-            calibration_output = calibration_output(),  
-            machine_output = machine_output(),
-            plate_list_output = plate_list_output()
+            raw_data_filename_reactive     = raw_data_filename_reactive(),
+            experiment_name_reactive       = experiment_name_reactive(),
+            date_reactive                  = date_reactive(),
+            experiment_notes               = experiment_notes(),
+            platform_reactive              = platform_reactive(),
+            stdcurve_plot                  = stdcurve_plot(),
+            plateqc_plot                   = plateqc_plot(),
+            blanks_plot                    = blanks_plot(),
+            check_repeats_output           = check_repeats_output(),
+            check_repats_table_pdf         = check_repats_table_pdf(),
+            model_plot                     = model_plot(), 
+            operator_output                = operator_output(),    
+            volume_output                  = volume_output(),   
+            calibration_output             = calibration_output(),  
+            machine_output                 = machine_output(),
+            plate_list_output              = plate_list_output()
           )
         
           callr::r(
             renderReport,
-            list(input = tempReport, output = file, params = params)
+            list(
+              input = tempReport, 
+              output = file, 
+              params = params
+            )
           )
           
         }
@@ -1313,7 +1378,10 @@ shinyServer(function(input, output, session){
     if (standardcurveonly()=="Yes") {
       output$download_zip <- downloadHandler(
         filename = function() {
-          paste0(experiment_name_reactive(), "_", date_reactive(),  "_all_files.zip")
+          paste0(
+            experiment_name_reactive(), "_", 
+            date_reactive(),  "_all_files.zip"
+          )
         },
         content = function(file) {
           temp_dir <- file.path(tempdir(), "export_files")
@@ -1321,8 +1389,24 @@ shinyServer(function(input, output, session){
           dir.create(temp_dir, showWarnings = FALSE)
           
           # Define file paths inside temp_dir
-          stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv"))
-          report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"))
+          stds_file <- file.path(
+            temp_dir, 
+            paste0(
+              experiment_name_reactive(), "_", 
+              date_reactive(), "_", 
+              location() , "_", 
+              version(), "_stdcurve.csv"
+            )
+          )
+          report_file <- file.path(
+            temp_dir, 
+            paste0(
+              experiment_name_reactive(), "_", 
+              date_reactive(), "_", 
+              location() , "_", 
+              version(), "_QCreport.pdf"
+            )
+          )
           
           # Generate files
           write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
@@ -1330,32 +1414,40 @@ shinyServer(function(input, output, session){
           # Render the report
           stdcurveReport <- file.path(tempdir(), "stdcurve.Rmd")
           file.copy("stdcurve.Rmd", stdcurveReport, overwrite = TRUE)
+          
           params <- list(
-            raw_data_filename_reactive = raw_data_filename_reactive(),
-            experiment_name_reactive = experiment_name_reactive(),
-            date_reactive = date_reactive(),
-            experiment_notes = experiment_notes(),
-            platform_reactive = platform_reactive(),
-            stdcurve_plot = stdcurve_plot(),
-            plateqc_plot = plateqc_plot(),
-            blanks_plot = blanks_plot(),
-            check_repeats_output = check_repeats_output(),
-            check_repats_table_pdf = check_repats_table_pdf(),
-            operator_output = operator_output(),    
-            volume_output = volume_output(),   
-            calibration_output = calibration_output(),  
-            machine_output = machine_output(),
-            plate_list_output = plate_list_output()
+            raw_data_filename_reactive     = raw_data_filename_reactive(),
+            experiment_name_reactive       = experiment_name_reactive(),
+            date_reactive                  = date_reactive(),
+            experiment_notes               = experiment_notes(),
+            platform_reactive              = platform_reactive(),
+            stdcurve_plot                  = stdcurve_plot(),
+            plateqc_plot                   = plateqc_plot(),
+            blanks_plot                    = blanks_plot(),
+            check_repeats_output           = check_repeats_output(),
+            check_repats_table_pdf         = check_repats_table_pdf(),
+            operator_output                = operator_output(),    
+            volume_output                  = volume_output(),   
+            calibration_output             = calibration_output(),  
+            machine_output                 = machine_output(),
+            plate_list_output              = plate_list_output()
           )
-          str(params)
+          
           callr::r(
             renderReport,
-            list(input = stdcurveReport, output = report_file, params = params)
+            list(
+              input = stdcurveReport, 
+              output = report_file, 
+              params = params
+            )
           )
           # Create ZIP with a clean structure
-          old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
-          zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
-          setwd(old_wd)  # Restore original working directory
+          # Switch to temp_dir to avoid extra folders
+          old_wd <- setwd(temp_dir)  
+          # Zip only file names
+          zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  
+          # Restore original working directory
+          setwd(old_wd) 
         }
       )
     } else {
@@ -1369,46 +1461,76 @@ shinyServer(function(input, output, session){
           dir.create(temp_dir, showWarnings = FALSE)
           
           # Define file paths inside temp_dir
-          data_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_MFI_RAU.csv"))
-          stds_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_stdcurve.csv"))
-          # counts_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_counts.csv"))
-          report_file <- file.path(temp_dir, paste0(experiment_name_reactive(), "_", date_reactive(), "_", location() , "_", version(), "_QCreport.pdf"))
+          data_file <- file.path(
+            temp_dir, 
+            paste0(
+              experiment_name_reactive(), "_", 
+              date_reactive(), "_", 
+              location() , "_", 
+              version(), "_MFI_RAU.csv"
+            )
+          )
+          stds_file <- file.path(
+            temp_dir, 
+            paste0(
+              experiment_name_reactive(), "_", 
+              date_reactive(), "_", 
+              location() , "_", 
+              version(), "_stdcurve.csv"
+            )
+          )
+          report_file <- file.path(
+            temp_dir, 
+            paste0(
+              experiment_name_reactive(), "_", 
+              date_reactive(), "_", 
+              location() , "_", 
+              version(), "_QCreport.pdf"
+            )
+          )
           
           # Generate files
           write.csv(mfi_to_rau_output()[[1]], data_file, row.names = FALSE)
           write.csv(stdcurve_blanks_output(), stds_file, row.names = FALSE)
-          # write.csv(getCountsQC_output(), counts_file, row.names = FALSE)
           
           # Render the report
           tempReport <- file.path(tempdir(), "template.Rmd")
           file.copy("template.Rmd", tempReport, overwrite = TRUE)
+          
           params <- list(
-            raw_data_filename_reactive = raw_data_filename_reactive(),
-            experiment_name_reactive = experiment_name_reactive(),
-            date_reactive = date_reactive(),
-            experiment_notes = experiment_notes(),
-            platform_reactive = platform_reactive(),
-            stdcurve_plot = stdcurve_plot(),
-            plateqc_plot = plateqc_plot(),
-            blanks_plot = blanks_plot(),
-            check_repeats_output = check_repeats_output(),
-            check_repats_table_pdf = check_repats_table_pdf(),
-            model_plot = model_plot(), 
-            operator_output = operator_output(),    
-            volume_output = volume_output(),   
-            calibration_output = calibration_output(),  
-            machine_output = machine_output(),
-            plate_list_output = plate_list_output()
+            raw_data_filename_reactive     = raw_data_filename_reactive(),
+            experiment_name_reactive       = experiment_name_reactive(),
+            date_reactive                  = date_reactive(),
+            experiment_notes               = experiment_notes(),
+            platform_reactive              = platform_reactive(),
+            stdcurve_plot                  = stdcurve_plot(),
+            plateqc_plot                   = plateqc_plot(),
+            blanks_plot                    = blanks_plot(),
+            check_repeats_output           = check_repeats_output(),
+            check_repats_table_pdf         = check_repats_table_pdf(),
+            model_plot                     = model_plot(), 
+            operator_output                = operator_output(),    
+            volume_output                  = volume_output(),   
+            calibration_output             = calibration_output(),  
+            machine_output                 = machine_output(),
+            plate_list_output              = plate_list_output()
           )
           
           callr::r(
             renderReport,
-            list(input = tempReport, output = report_file, params = params)
+            list(
+              input = tempReport, 
+              output = report_file, 
+              params = params
+            )
           )
           # Create ZIP with a clean structure
-          old_wd <- setwd(temp_dir)  # Switch to temp_dir to avoid extra folders
-          zip::zip(file, files = list.files(temp_dir, full.names = FALSE))  # Zip only file names
-          setwd(old_wd)  # Restore original working directory
+          # Switch to temp_dir to avoid extra folders
+          old_wd <- setwd(temp_dir) 
+          # Zip only file names
+          zip::zip(file, files = list.files(temp_dir, full.names = FALSE)) 
+          # Restore original working directory
+          setwd(old_wd)  
         }
       )
     }

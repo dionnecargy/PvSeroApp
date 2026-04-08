@@ -33,6 +33,12 @@ home_page <- function() {
       )
     ),
     Image(src = "1_main/pvseroapp_overview.png", width = "1000px", height = "auto"),
+    Text(variant = "large", "How to Cite the PvSeroApp"),
+    Text(variant = "medium", "A formal peer-reviewed paper is currently under preparation. In the meantime, please cite the PvSeroApp using the following:"),
+    MessageBar(
+      "Argyropoulos, DC and Smith, L (2026). PvSeroApp: A fit-for-purpose tool to support Plasmodium vivax sero-surveillance via 
+      serological data processing and statistical analysis. R Shiny App version 1.5.1. https://dionnecargy.shinyapps.io/PvSeroApp/."
+    ),
     Text(variant = "large", "Acknowledgements"),
     Text(
       variant = "medium", 
@@ -80,8 +86,9 @@ tutorial_page <- function() {
               variant = "medium", 
               HTML(
                 "This web application was designed fit-for-purpose to process raw serology data exported from 
+              <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a>, 
               <a href='https://int.diasorin.com/en/luminex-ltg/tools/magpix-system' class-'link'>MAGPIX</a> and 
-              <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a> machines.
+              <a href='https://www.thermofisher.com/order/catalog/product/APX2020' class-'link'>INTELLIFLEX</a> machines.
               For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/pvserotat' class-'link'>download the example data</a>. 
               The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTAT Luminex 
               Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."
@@ -546,10 +553,7 @@ tutorial_page <- function() {
                           indicating whether the raw data and plate layouts are read correctly."
                         ),
                         p(),
-                        renderTwoCols(
-                          first_col = Image(src = "2_tutorial/4.1_input_data_6.png", width = "200px", height = "auto"), 
-                          second_col = Image(src = "2_tutorial/4.1_input_data_7.png", width = "200px", height = "auto")
-                        ),
+                        Image(src = "2_tutorial/4.1_input_data_6.png", width = "200px", height = "auto"), 
                         p(),
                         Text(variant = "medium", "Congratulations 🎉")
                       ), 
