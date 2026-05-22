@@ -2244,6 +2244,21 @@ apphistory_page <- function() {
         </ul>
         )"
       )
+    ),
+    p(),
+    
+    Text(variant = "large", HTML("<b>v1.5.2.</b>")),
+    Text(
+      variant = "medium", 
+      HTML(
+        r"(This new release includes:<ul>
+          <li>Renamed PvSeroTAT assay and algorithm to PvSEM assay and algorithm</li>
+          <li>Updated classification table of results so that when seropositive = 0 it can render</li>
+          <li>Removed algorithm without PvMSP1-19 as it is no longer required</li>
+          <li>Updated tutorial images to reflect all new changes</li>
+        </ul>
+        )"
+      )
     )
   )
 }

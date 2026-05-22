@@ -1760,7 +1760,7 @@ shinyServer(function(input, output, session){
   allclassify_df <- reactive({
     req(classified_data_all())
     
-    classified_data_all() %>% 
+    result <- classified_data_all() %>% 
       group_by(sens_spec, pred_class_max) %>% 
       summarise(n = n(), .groups = "drop") %>% 
       pivot_wider(
@@ -1768,13 +1768,26 @@ shinyServer(function(input, output, session){
         values_from = n
       ) %>% 
       # Replace NA with 0 for missing columns
-      replace(is.na(.), 0) %>%
+      replace(is.na(.), 0)
+    
+    # Ensure both columns exist before selecting
+    if (!"seropositive" %in% names(result)) {
+      result <- result %>% mutate(seropositive = 0)
+    }
+    
+    if (!"seronegative" %in% names(result)) {
+      result <- result %>% mutate(seronegative = 0)
+    }
+    
+    # Now safe to select
+    result %>%
       dplyr::select(
         `Sensitivity/Specificity` = sens_spec, 
         Seropositive = seropositive, 
         Seronegative = seronegative
       )
   })
+  
   
   ###############################################################################
   ## ----- Outputs -----
