@@ -52,7 +52,6 @@ options(repos = c(CRAN = "https://cloud.r-project.org/"))
 
 # Load key PvSeroTAT resources 
 antibody_model                <- readRDS(here::here("model/PvSeroTaTmodel.rds"))
-antibody_model_excLF016       <- readRDS(here::here("model/random_forest_excludingLF016.rds"))
 platemap                      <- read.csv(here::here("data/platemap.csv"))
 
 ###############################################################################
@@ -1580,18 +1579,8 @@ shinyServer(function(input, output, session){
     
     new_name <- if (sens_spec() == "balanced") {
       "balanced_class"
-    } else if (sens_spec() == "85% sensitivity") {
-      "85_sensitivity_class"
-    # } else if (sens_spec() == "90% sensitivity") {
-    #   "90_sensitivity_class"
-    # } else if (sens_spec() == "95% sensitivity") {
-    #   "95_sensitivity_class"
-    # } else if (sens_spec() == "85% specificity") {
-    #   "85_specificity_class"
     } else if (sens_spec() == "90% specificity") {
       "90_specificity_class"
-    # } else if (sens_spec() == "95% specificity") {
-      # "95_specificity_class"
     } else {
       "No Sensitivity/Specificity Threshold Chosen"
     }
@@ -1604,12 +1593,6 @@ shinyServer(function(input, output, session){
   classification_results_summary <- reactive({
     
     class_col <- names(classified_data())[grepl("class$", names(classified_data()))]
-    
-    # summary_table <- classified_data() %>%
-    #   group_by(.data[[class_col]]) %>%
-    #   summarise(n = n(), .groups = "drop")
-    # 
-    # colnames(summary_table) <- c("Status", "Count")
     
     df <- classified_data()
     
@@ -1637,28 +1620,40 @@ shinyServer(function(input, output, session){
       tidyr::pivot_wider(
         id_cols = Plate,
         names_from = Status,
-        values_from = Count
-      ) %>% 
+        values_from = Count,
+        values_fill = "0 (0%)"
+      )
+    
+    # Add missing columns if they don't exist
+    if (!"seropositive" %in% names(summary_table)) {
+      summary_table <- summary_table %>%
+        dplyr::mutate(seropositive = "0 (0%)")
+    }
+    
+    if (!"seronegative" %in% names(summary_table)) {
+      summary_table <- summary_table %>%
+        dplyr::mutate(seronegative = "0 (0%)")
+    }
+    
+    summary_table <- summary_table %>%
       dplyr::rename(
-        Seronegative = seronegative,
-        Seropositive = seropositive
+        Seropositive = seropositive,
+        Seronegative = seronegative
       ) %>% 
       dplyr::select(Plate, Seropositive, Seronegative)
     
     DT::datatable(
       summary_table,
       options = list(
-        dom = 't',                    # 't' means only the table (no pagination, search, etc.)
-        searching = FALSE,            # Disable search box
-        paging  = FALSE,              # Disable pages box
-        lengthChange = FALSE          # Disable number of entries dropdown
+        dom = 't',
+        searching = FALSE,
+        paging  = FALSE,
+        lengthChange = FALSE
       ), 
-      rownames = FALSE                # Remove row numbers
+      rownames = FALSE
     )
     
   })
-  
-  
   
   ###############################################################################
   ## ----- Outputs -----
@@ -1667,8 +1662,7 @@ shinyServer(function(input, output, session){
   # helper function
   tidy_algorithm <- function(x) {
     dplyr::case_when(
-      x == "antibody_model" ~ "PvSeroApp Algorithm",
-      x == "antibody_model_excLF016" ~ "PvSeroApp Algorithm without PvMSP1-19",
+      x == "antibody_model" ~ "PvSEM Algorithm",
       TRUE ~ x
     )
   }
@@ -1691,7 +1685,7 @@ shinyServer(function(input, output, session){
     result <- paste0(
       "Classification run with the ",
       tidy_algorithm(algorithm_val),
-      " and" ,
+      " and " ,
       tidy_sens_spec(sens_spec_val)
     )
     
@@ -1717,7 +1711,15 @@ shinyServer(function(input, output, session){
   
   output$download_classification <- downloadHandler(
     filename = function() {
-      paste0(experiment_name_reactive(), "_", date_reactive(), "_", sens_spec(), "_", algorithm(), "_", location() , "_", version(), "_classification.csv", sep = "")
+      paste0(
+        experiment_name_reactive(), "_", 
+        date_reactive(), "_", 
+        sens_spec(), "_", 
+        algorithm(), "_", 
+        location() , "_", 
+        version(), "_classification.csv", 
+        sep = ""
+      )
     },
     content = function(file) {
       write.csv(classified_data(), file, row.names = FALSE)
@@ -1731,17 +1733,14 @@ shinyServer(function(input, output, session){
   ## ----- Run functions only once -----
   ###############################################################################
   
+  rv <- reactiveValues(table_data = NULL)
+  
   # Run classification for each specificity/sensitivity
   classified_data_all <- reactive({
     req(mfi_to_rau_output(), algorithm(),  runQC_output())
     sens_spec_all <- c(
       "balanced", 
-      # "85% sensitivity", 
-      # "90% sensitivity", 
-      # "95% sensitivity", 
-      # "85% specificity", 
-      "90% specificity"#, 
-      # "95% specificity"
+      "90% specificity"
     )
     
     all_classifications <- purrr::map_dfr(sens_spec_all, ~{
@@ -1758,23 +1757,23 @@ shinyServer(function(input, output, session){
     all_classifications # Return the combined data frame
   })
   
-  # Reactive table creation
   allclassify_df <- reactive({
     req(classified_data_all())
     
     classified_data_all() %>% 
       group_by(sens_spec, pred_class_max) %>% 
-      summarise(n = n()) %>% 
+      summarise(n = n(), .groups = "drop") %>% 
       pivot_wider(
         names_from = pred_class_max, 
         values_from = n
       ) %>% 
+      # Replace NA with 0 for missing columns
+      replace(is.na(.), 0) %>%
       dplyr::select(
         `Sensitivity/Specificity` = sens_spec, 
         Seropositive = seropositive, 
         Seronegative = seronegative
       )
-    
   })
   
   ###############################################################################
@@ -1786,23 +1785,10 @@ shinyServer(function(input, output, session){
       mutate(
         `Sensitivity/Specificity` = factor(
           `Sensitivity/Specificity`, 
-          levels = c(
-            "balanced", 
-            # "85% sensitivity", 
-            # "90% sensitivity", 
-            # "95% sensitivity",
-            # "85% specificity",
-            "90% specificity"#,
-            # "95% specificity"
-          ), 
+          levels = c("balanced", "90% specificity"),
           labels = c(
             "Balanced: 81% Specificity / 81% Sensitivity",
-            # "85% Sensitivity / 75% Specificity",
-            # "90% Sensitivity / 61.6% Specificity",
-            # "95% Sensitivity / 43.4% Specificity",
-            # "75% Sensitivity / 85% Specificity", 
-            "90% Specificity / 67.5% Sensitivity"#, 
-            # "52.4% Sensitivity / 95% Specificity"
+            "90% Specificity / 67.5% Sensitivity"
           )
         )
       ) %>% 
@@ -1813,27 +1799,24 @@ shinyServer(function(input, output, session){
         df$`Sensitivity/Specificity`, 
         levels = c(
           "Balanced: 81% Specificity / 81% Sensitivity",
-          # "85% Sensitivity / 75% Specificity",
-          # "90% Sensitivity / 61.6% Specificity",
-          # "95% Sensitivity / 43.4% Specificity",
-          # "75% Sensitivity / 85% Specificity",
-          "90% Specificity / 67.5% Sensitivity"#,
-          # "52.4% Sensitivity / 95% Specificity"
+          "90% Specificity / 67.5% Sensitivity"
         )
       )
     )
     
-    df <- df[order(df$Order), ]  # <-- Enforce order
+    df <- df[order(df$Order), ]
+    
+    rv$table_data <- df %>% dplyr::select(-Order)
     
     datatable(
-      df %>%  dplyr::select(-Order), 
+      rv$table_data, 
       selection = "single",
       options = list(
         pageLength = 7, 
         dom = 't',
         searching = FALSE,
         lengthChange = FALSE
-        ), 
+      ), 
       rownames = FALSE
     )
   })
@@ -1844,9 +1827,20 @@ shinyServer(function(input, output, session){
   
   output$classify_plots <- renderPlotly({
     req(input$allclassifytable_rows_selected)
+    req(rv$table_data)
     
     selected_row <- input$allclassifytable_rows_selected
-    selected_value <- allclassify_df()[selected_row, "Sensitivity/Specificity", drop = TRUE]
+    selected_label <- rv$table_data[selected_row, "Sensitivity/Specificity", drop = TRUE]
+    
+    # ← Map the formatted label back to the original value
+    label_to_value <- c(
+      "Balanced: 81% Specificity / 81% Sensitivity" = "balanced",
+      "90% Specificity / 67.5% Sensitivity" = "90% specificity"
+    )
+    
+    selected_value <- as.character(label_to_value[as.character(selected_label)])
+    
+    # print(paste("Mapped to:", selected_value))
     
     gg <- plotBoxPlotClassification(classified_data_all(), selected_value)
     ggplotly(gg) %>%
@@ -1854,8 +1848,6 @@ shinyServer(function(input, output, session){
         showlegend = TRUE,
         font = list(family = "Helvetica", size = 20, colour = "black")
       )
-    gg
-    
   })
   
   output$mfi_plotly <- renderPlotly({

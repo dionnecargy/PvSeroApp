@@ -43,7 +43,7 @@ home_page <- function() {
     Text(
       variant = "medium", 
       HTML(
-        "The code and scripts used to develop this R Shiny web application are available on <a href='https://github.com/dionnecargy/pvserotat' class-'link'>GitHub</a>. 
+        "The code and scripts used to develop this R Shiny web application are available on <a href='https://github.com/dionnecargy/PvSeroApp' class-'link'>GitHub</a>. 
     The scripts and functions used in this application were developed by Lauren Smith and Dionne Argyropoulos, with contributions from the following researchers:
       <ul>
         <li>Lauren Smith, WEHI (classification algorithm development)</li>
@@ -89,8 +89,8 @@ tutorial_page <- function() {
               <a href='https://www.bio-rad.com/en-au/category/bio-plex-reader-tools?ID=317582a5-ac11-4e2c-8ee6-4cf0799352fd' class-'link'>Bioplex</a>, 
               <a href='https://int.diasorin.com/en/luminex-ltg/tools/magpix-system' class-'link'>MAGPIX</a> and 
               <a href='https://www.thermofisher.com/order/catalog/product/APX2020' class-'link'>INTELLIFLEX</a> machines.
-              For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/pvserotat' class-'link'>download the example data</a>. 
-              The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSeroTAT Luminex 
+              For an example of the raw data output from each machine, <a href='https://github.com/dionnecargy/PvSeroApp' class-'link'>download the example data</a>. 
+              The built-in classification algorithms are applicable to perform quality control, analyse the data from the <em>Plasmodium vivax</em> PvSEM Luminex 
               Assay as per <a href='https://doi.org/10.1038/s41591-020-0841-4' target='_blank'>Longley et al. (2020)</a>, and perform preliminary data visualisations."
               )
             )
@@ -114,7 +114,7 @@ tutorial_page <- function() {
                   first_col = Text(
                     variant = "medium", 
                     HTML(
-                      r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSeroTAT Luminex Assay</b>.
+                      r"(In the MAGPIX or Bioplex machines you can add the name for each antigen in the <b>PvSEM Luminex Assay</b>.
                          For the purposes of data processing, it is important that the antigens are named with the convention listed here.<br><br>
                          The data processing in this app will be able to decipher any of these options, differing capitalisations, and any "Pv" prefixes.<br><br>
                          If you have run other antigens in your assay that are not included in the current PvSeroApp model, then the data processing with automatically remove these columns when you reach 
@@ -306,18 +306,14 @@ tutorial_page <- function() {
                 Text(
                   variant = "medium", 
                   HTML(
-                    r"(We have developed two algorithms that were trained on the same dataset but differ on antigen choice:
-                    <ul>
-                      <li>If you are processing data for all eight antigens in the <b>PvSeroTAT</b> sero-surveillance tool, please use "PvSeroTAT Algorithm",</li>
-                      <li>If you are processing data <b>without PvMSP1-19 (also known as LF016)</b>, please use "PvSeroTAT Algorithm without PvMSP1-19".</li>
-                    </ul>)"
+                    r"(We have developed an algorithm trained on eight antigens in the <b>PvSEM</b> algorithm: "PvSEM Algorithm".)"
                   )
                 ),
                 Text(
                   variant = "medium", 
                   HTML(
                     r"(Note that this app <b>can</b> be used for data processing of samples with a different 
-                    antigen panel to the one from <b>PvSeroTAT</b> sero-surveillance tool <b>except for classification</b>. 
+                    antigen panel to the one from <b>PvSEM</b> sero-surveillance tool <b>except for classification</b>. 
                     For more details, see the section <a href='#tutorial/classify' class-`link`>Classifying your Samples</a>.)"
                   )
                 ),
@@ -521,7 +517,7 @@ tutorial_page <- function() {
                           HTML(
                             r"(1. Let's change the experiment name to "tutorial_example", enter today's date, 
                             the experiment notes to "This is an example of the QC and processing of the 
-                            example data for the PvSeroTAT tutorial".)"
+                            example data for the PvSEM tutorial".)"
                           )
                         ),
                         p(),
@@ -776,7 +772,7 @@ tutorial_page <- function() {
                       p(),
                       Text(
                         variant = "medium", 
-                        "In the case of the PvSeroTAT multi-antigen panel, the antigens will be displayed and 
+                        "In the case of the PvSEM multi-antigen panel, the antigens will be displayed and 
                         in general your standard curves should look relatively linear (only when the y-axis is on logarithmic (base 10) scale)."
                       ),
                       p(),
@@ -982,7 +978,7 @@ tutorial_page <- function() {
               variant = "medium", 
               HTML(
                 "The built-in classification algorithm in this application should only be applied to data 
-                generated from the PvSeroTAT Multi-Antigen Luminex Assay to read more about this algorithm 
+                generated from the PvSEM Multi-Antigen Luminex Assay to read more about this algorithm 
                 click on the <a href = '#algorithm_page' class-'link'>Algorithm</a> section."
               )
             ), 
@@ -994,13 +990,7 @@ tutorial_page <- function() {
                   first_col = list(
                     Text(
                       variant = "medium", 
-                      HTML(
-                        "We have developed two algorithms that were trained on the same datasets but have 
-                        silghtly different antigen profiles.<br><br>
-                        <ul>
-                          <li><b>PvSeroApp Algorithm</b>: The PvSeroApp Model contains all top 8 antigens as described in the<a href='#algorithm' class-'link'>Algorithm Section</a>.</li>
-                          <li><b>PvSeroApp without PvMSP1-19</b>: As the name suggests, this model contains the antigens in PvSeroApp except for PvMSP1-19</li>
-                        <ul>")), 
+                      HTML("We have developed the PvSEM algorithm which is trained all top 8 antigens as described in the<a href='#algorithm' class-'link'>Algorithm Section</a>.")), 
                     Text(
                       variant = "medium", 
                       HTML(
@@ -1022,8 +1012,8 @@ tutorial_page <- function() {
                   variant = "medium",
                   HTML(
                     r"(You can select the algorithm that is appropriate for your data by clicking on the buttons
-                    on the left panel (see above). The example data was generated using the PvSeroTAT assay with all 
-                    eight antigensand therefore you should select the "PvSeroApp Algorithm" for this tutorial.)"
+                    on the left panel (see above). The example data was generated using the PvSEM assay with all 
+                    eight antigensand therefore you should select the "PvSEM Algorithm" for this tutorial.)"
                   )
                 )
               )
@@ -1331,7 +1321,7 @@ tutorial_page <- function() {
 
 algorithm_page <- function() {
   fluentPage(
-    Text(variant = "xxLarge", "The PvSeroTAT Algorithm"),
+    Text(variant = "xxLarge", "The PvSEM Algorithm"),
     Separator(),
     Text(
       variant = "medium", 
@@ -1462,7 +1452,7 @@ algorithm_page <- function() {
         Text(
           variant = "medium", 
           HTML(
-            r"(With respect to the PvSeroTAT classiciation model:<ul>
+            r"(With respect to the PvSEM classiciation model:<ul>
               <li>A decision tree makes a decision to "classify" whether someone has been recently infected with <em>P. vivax</em>.</li>
               <li>These sets of decision trees are uncorrelated.</li>
               <li>This results in a tree-like model of decisions with various possible outcomes. /li>
@@ -2012,8 +2002,7 @@ model_page <- function() {
               "algorithm",
               label = NULL,
               choices = list(
-                "PvSeroApp Algorithm" = "antibody_model",
-                "PvSeroApp Algorithm without PvMSP1-19" = "antibody_model_excLF016"
+                "PvSEM Algorithm" = "antibody_model"
               ),
               selected = "antibody_model"
             ),
@@ -2030,12 +2019,7 @@ model_page <- function() {
               label = NULL,
               choices = list(
                 "Balanced: 81% Specificity / 81% Sensitivity" = "balanced",
-                # "85% Sensitivity / 75% Specificity" = "85% sensitivity",
-                # "90% Sensitivity / 61.6% Specificity" = "90% sensitivity",
-                # "95% Sensitivity / 43.4% Specificity" = "95% sensitivity",
-                # "75% Sensitivity / 85% Specificity" = "85% specificity",
-                "90% Specificity / 67.5% Sensitivity" = "90% specificity"#,
-                # "52.4% Sensitivity / 95% Specificity" = "95% specificity"
+                "90% Specificity / 67.5% Sensitivity" = "90% specificity"
               ),
               selected = "balanced"
             ),
