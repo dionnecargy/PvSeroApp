@@ -3,8 +3,16 @@
 # <img src="https://github.com/dionnecargy/pvseroapp/blob/main/www/hex/PvSeroApp_sticker.png" width="25%" height="25%" align="left"/> PvSeroApp
 The source code for the PvSeroApp Shiny web application, which streamlines the data processing of the multi-antigen Luminex-based <em>Plasmodium vivax</em> serological data and applies the machine learning classification algorithm to identify individuals with recent exposure to <em>P. vivax</em>.
 
-# FAQs
-## Question 1. 
+## Citing PvSeroApp 
+
+If you are using the `{PvSeroApp}` in your work, please cite: 
+
+> Smith L, Argyropoulos DC, Bareng APN, Lin J, Kiernan-Walker N, Lamont M, Abraham A, Lim PS, Wu KW, William T, Anstey NM, Grigg MJ, Sattabongkot J, Lacerda M, Vahi V, Mazhari R, Mueller I, Longley RJ. *An optimised serological machine learning model enabling targeted test-and-treat for Plasmodium vivax malaria.* medRxiv 2026. <https://doi.org/10.64898/2026.08.09.26355326>
+
+If you would like to customise the outputs of the `{PvSeroApp}`, see the `{SeroTrackR}` R package [here](https://github.com/dionnecargy/SeroTrackR). This R package contains the source code used in the `{PvSeroApp}` and is intended for experienced users who are comfortable with implementing the code in their own R sessions. 
+
+## FAQs
+### Question 1. 
 >[!NOTE]
 >How do I name my raw luminex files?
 
@@ -24,13 +32,13 @@ As of v1.2.0 you can label your plates with "REPEATplate1" or "Repeatplate1" or 
 
 The code searches for the string `plate` and the number that follows. It also accepts `repeatplate` and the number that follows. The words `repeat` and `plate` are allowed to have any capitalisations. Other numbers are allowed in the name as well, but ensure they are spaced with an underscore or another string e.g., `02473292_experiment20238_plate1_03042025.csv` is acceptable. 
 
-## Question 2. 
+### Question 2. 
 >[!NOTE]
 >How do I name my plate layout files?
 
 You can label it however you like - however you only **need ONE plate layout .xlsx file**! Within this document, each **tab** should correspond to a **plate** and should be labelled `plate1`, `plate2`, ..., etc. (no capitals or spaces). 
 
-## Question 3. 
+### Question 3. 
 >[!TIP]
 >How can I access the "Step-by-Step tutorial"?
 
